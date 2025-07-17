@@ -81,6 +81,7 @@ model Room {
   slug String @unique
   owner User @relation("UserRooms" ,fields: [ownerId], references: [id])
   ownerId String
+  content String @default("")
   team Team? @relation(fields: [teamId], references: [id])
   teamId String?
   createdAt DateTime @default(now())

@@ -1,15 +1,63 @@
 'use client';
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Editor from '@monaco-editor/react';
+import { io, Socket } from "socket.io-client";
 
 const languages = ["javascript", "typescript", "python", "markdown"];
 const themes = ["vs-dark", "light"];
 
-export default function CodeEditor() {
-    const [ code, setCode ] = useState("// Start coding here");
+
+export default function CodeEditor({ slug }: { slug: string }) {
+    const [ code, setCode ] = useState("// Loading...");
     const [ language, setLanguage ] = useState("javascript");
     const [ theme, setTheme ] = useState("vs-dark");
+
+    const socketRef = useRef<Socket | null>(null);
+
+    useEffect(() => {
+        if(!socketRef.current) {
+            socketRef.current = io({ path: "/api/socket" });
+        }
+        
+        const sock = socketRef.current;
+        sock.emit('join-room', slug);
+        
+        sock.on('code-update', (newCode) => {
+            setCode(newCode);
+        });
+
+        return () => {
+            sock.off('code-update');
+        }
+    }, [slug]);
+
+    useEffect(() => {
+        fetch(`/api/room/${slug}`)
+            .then((res) => res.json())
+            .then((data) => {
+                setCode(data.content || "// Start coding here");
+            })
+            .catch(() => setCode("// Error loading code"));
+    }, [slug]);
+
+    const handleChange = (value: string | undefined) => {
+        const updateCode = value || "";
+        setCode(updateCode);
+        socketRef.current?.emit('code-change', { roomId: slug, code: updateCode });
+    }
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetch(`/api/room/${slug}`, {
+                method: 'PATCH',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: code })
+            });
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, [code, slug]);
 
     return (
         <div className="h-screen w-full flex flex-col">
