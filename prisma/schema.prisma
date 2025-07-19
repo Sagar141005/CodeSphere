@@ -84,5 +84,26 @@ model Room {
   content String @default("")
   team Team? @relation(fields: [teamId], references: [id])
   teamId String?
+  files File[]
   createdAt DateTime @default(now())
+}
+
+enum FileType {
+  file
+  folder
+}
+
+model File {
+  id String @id @default(cuid())
+  name String
+  content String @default("")
+  type FileType
+  language  String?
+  parentId String?
+  parent File? @relation("FileChildren", fields: [parentId], references: [id])
+  children File[] @relation("FileChildren")
+  room Room @relation(fields: [roomId], references: [id])
+  roomId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
