@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { io, Socket } from 'socket.io-client';
 import { useSession } from "next-auth/react";
+import { Users, Sparkles } from "lucide-react";
 
 interface UserPresence {
     id: string;
@@ -60,27 +61,39 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string, roomN
     }, [roomSlug, session, status]);
 
     return (
-        <div className="h-12 bg-gray-800 flex items-center justify-between px-4">
-            <span className="text-lg font-semibold">Room: {roomName}</span>
-            <div className="flex items-center gap-4">
-                <div className="flex -space-x-2">
-                    {users.map((user) => (
-                        <img
-                            key={user.id}
-                            src={user.image || "/default-avatar.jpg"}
-                            alt={user.name}
-                            title={user.name}
-                            className="w-8 h-8 rounded-full border-2 border-gray-800"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLImageElement).src = "/default-avatar.jpg";
-                            }}
-                        />
-                    ))}
-                </div>
-                <button className="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded">
-                    AI Assist
-                </button>
+        <div className="h-14 bg-[#1f1f1f] border-b border-gray-700 px-6 flex items-center justify-between">
+          {/* Left: Room name */}
+          <div className="flex items-center gap-2 text-white">
+            <Users className="w-5 h-5 text-blue-400" />
+            <span className="text-base font-semibold tracking-wide">Room: {roomName}</span>
+          </div>
+      
+          {/* Right: Users + AI Assist */}
+          <div className="flex items-center gap-4">
+            {/* Avatars */}
+            <div className="flex -space-x-2">
+              {users.map((user) => (
+                <img
+                  key={user.id}
+                  src={user.image || "/default-avatar.jpg"}
+                  alt={user.name}
+                  title={user.name}
+                  className="w-8 h-8 rounded-full border-2 border-gray-800 object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "/default-avatar.jpg";
+                  }}
+                />
+              ))}
             </div>
+      
+            {/* AI Assist Button */}
+            <button
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 transition px-3 py-1.5 rounded-md text-sm font-medium shadow-sm"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Assist
+            </button>
+          </div>
         </div>
-    );
+      );
 }

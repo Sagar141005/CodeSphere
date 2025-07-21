@@ -5,6 +5,7 @@ import Editor from '@monaco-editor/react';
 import { io, Socket } from "socket.io-client";
 import { loader } from "@monaco-editor/react";
 import { initMonaco } from "@/lib/monaco-snippets";
+import { Settings } from "lucide-react";
 
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
 
@@ -88,35 +89,44 @@ export default function CodeEditor({ slug, fileId }: CodeEditorProps) {
     }, [code, fileId, language]);
 
     return (
-        <div className="h-screen w-full flex flex-col">
-            <div className="flex items-center justify-between p-4 bg-gray-800 text-white">
-                <span className="text-sm">Language: {language}</span>
-                <select
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value)}
-                    className="bg-gray-800 px-3 py-1 rounded"
-                >
-                    {themes.map((theme) => (
-                        <option key={theme} value={theme}>
-                            {theme}
-                        </option>
-                    ))}
-                </select>
+        <div className="h-screen w-full flex flex-col bg-[#1e1e1e] text-white">
+          {/* Topbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-[#2a2a2a]">
+            <div className="flex items-center gap-3">
+              <Settings className="w-5 h-5 text-gray-400" />
+              <span className="text-sm font-semibold text-gray-300">Editor Settings</span>
             </div>
-            <Editor
-                height="90vh"
-                theme={theme}
-                language={language}
-                value={code}
-                onChange={handleChange}
-                options={{
-                    fontSize: 14,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    quickSuggestions: true,  
-                    automaticLayout: true,
-                }}
-            />
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              className="bg-[#333] text-sm px-3 py-1 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {themes.map((theme) => (
+                <option key={theme} value={theme}>
+                  {theme}
+                </option>
+              ))}
+            </select>
+          </div>
+      
+          {/* Editor */}
+          <Editor
+            height="100%"
+            theme={theme}
+            language={language}
+            value={code}
+            onChange={handleChange}
+            options={{
+              fontSize: 14,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              quickSuggestions: true,
+              automaticLayout: true,
+              fontFamily: "Fira Code, monospace",
+              fontLigatures: true,
+              padding: { top: 10 },
+            }}
+          />
         </div>
-    );
+      );
 }

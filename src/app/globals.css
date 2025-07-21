@@ -5,6 +5,31 @@
   --foreground: #171717;
 }
 
+@keyframes gradientBackground {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.bg-animated-gradient {
+  background: linear-gradient(-45deg, #0a0a0a, #1b0036, #004080, #7bbacc, #6fbcb5,#8a2be2, #0a0a0a);
+  background-size: 400% 400%;
+  animation: gradientBackground 15s ease infinite;
+}
+
+.cursor-blob {
+  @apply fixed rounded-full pointer-events-none z-[9999] transition-transform;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: difference;
+  transition: transform 0.15s ease;
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

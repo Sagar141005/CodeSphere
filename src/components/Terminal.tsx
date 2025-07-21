@@ -23,7 +23,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId }, ref) => {
       xterm.current = new XTerm({
         cursorBlink: true,
         fontSize: 14,
-        theme: { background: '#000000', foreground: '#ffffff' }
+        theme: { background: '#2A2A2A', foreground: '#ffffff' }
       });
       xterm.current.open(terminalRef.current);
       xterm.current.writeln('Welcome to Live Terminal!');

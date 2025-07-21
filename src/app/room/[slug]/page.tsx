@@ -3,7 +3,7 @@
 import { use } from 'react';
 import CodeEditor from "@/components/Editor";
 import Navbar from "@/components/Navbar";
-import Sidebar from "@/components/Sidebar";
+import EditorFIlePanel from "@/components/EditorFilePanel";
 import Tabs from "@/components/Tabs";
 import Terminal, { TerminalRef } from "@/components/Terminal";
 import { getSocket } from "@/lib/socket";
@@ -74,69 +74,71 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <Navbar roomSlug={slug} roomName={roomName} />
+    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white font-sans">
+  {/* Header/Navbar */}
+  <Navbar roomSlug={slug} roomName={roomName} />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          files={files}
-          onFileClick={openFile}
-          slug={slug}
-          onFileAdded={(file) =>
-            setFiles((prev) => {
-              if (prev.find((f) => f.id === file.id)) return prev; // already exists
-              return [...prev, file];
-            })
-          }
-          onFileDeleted={(id) => setFiles((prev) => prev.filter((f) => f.id !== id))}
-          onFileRenamed={(id, newName) =>
-            setFiles((prev) =>
-              prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
-            )
-          }
-        />
+  {/* Main Body */}
+  <div className="flex flex-1 overflow-hidden">
 
-<div className="flex flex-col flex-1 overflow-hidden">
-  {/* Tabs */}
-  <Tabs
-    tabs={openTabs}
-    activeFileId={activeFile?.id || ""}
-    onTabClick={(file) => setActiveFile(file)}
-    onClose={closeFile}
-  />
+    {/* File Panel */}
+    <EditorFIlePanel
+      files={files}
+      onFileClick={openFile}
+      slug={slug}
+      onFileAdded={(file) =>
+        setFiles((prev) => (prev.find((f) => f.id === file.id) ? prev : [...prev, file]))
+      }
+      onFileDeleted={(id) => setFiles((prev) => prev.filter((f) => f.id !== id))}
+      onFileRenamed={(id, newName) =>
+        setFiles((prev) =>
+          prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
+        )
+      }
+    />
 
-  {/* Run Button */}
-  <div className="flex justify-end bg-gray-800 p-2">
-    <button
-      onClick={runCode}
-      className="bg-green-500 px-3 py-1 rounded hover:bg-green-600"
-    >
-      Run
-    </button>
-  </div>
+    {/* Code Editor Section */}
+    <div className="flex flex-col flex-1 overflow-hidden border-l border-gray-700">
 
-  {/* Editor + Terminal */}
-  <div className="flex flex-col flex-1 overflow-hidden">
-    {/* Editor Section */}
-    <div className="flex-1 overflow-auto">
-      {activeFile ? (
-        <CodeEditor fileId={activeFile.id} slug={slug} />
-      ) : (
-        <div className="flex flex-1 items-center justify-center text-gray-400">
-          Open a file to start editing
+      {/* Tabs */}
+      <Tabs
+        tabs={openTabs}
+        activeFileId={activeFile?.id || ""}
+        onTabClick={(file) => setActiveFile(file)}
+        onClose={closeFile}
+      />
+
+      {/* Run Button */}
+      <div className="flex justify-end bg-[#232323] px-4 py-2 border-b border-gray-700">
+        <button
+          onClick={runCode}
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-sm font-medium px-4 py-1.5 rounded shadow"
+        >
+          ▶ Run
+        </button>
+      </div>
+
+      {/* Editor + Terminal */}
+      <div className="flex flex-col flex-1 overflow-hidden">
+        {/* Editor View */}
+        <div className="flex-1 overflow-auto bg-[#1e1e1e]">
+          {activeFile ? (
+            <CodeEditor fileId={activeFile.id} slug={slug} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+              Select or create a file to start coding
+            </div>
+          )}
         </div>
-      )}
-    </div>
 
-    {/* Terminal Section */}
-    <div className="h-52 border-t border-gray-700 bg-black">
-    <Terminal ref={terminalRef} roomId={slug} />
-
+        {/* Terminal */}
+        <div className="h-52 border-t border-gray-700 bg-black">
+          <Terminal ref={terminalRef} roomId={slug} />
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-      </div>
-    </div>
   );
 }
