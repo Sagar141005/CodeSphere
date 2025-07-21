@@ -8,6 +8,7 @@ import Link from "next/link";
 interface Room {
   id: string;
   slug: string;
+  name: string,
   createdAt: string;
 }
 
@@ -125,7 +126,7 @@ export default function TeamDetailsPage() {
           {team.members.map(member => (
             <li key={member.id} className="flex justify-between items-center">
               <span>{member.name || member.email}</span>
-              {session?.user?.email === team.createdById &&
+              {session?.user?.id === team.createdById &&
                 member.email !== session.user.email && (
                   <button
                     onClick={() => removeMember(member.id)}
@@ -139,7 +140,7 @@ export default function TeamDetailsPage() {
         </ul>
 
         {/* Invite */}
-        {session?.user?.email === team.createdById && (
+        {session?.user?.id === team.createdById && (
           <div className="flex gap-2">
             <input
               type="email"
@@ -168,7 +169,7 @@ export default function TeamDetailsPage() {
             {team.rooms.map(room => (
               <li key={room.id}>
                 <Link href={`/room/${room.slug}`} className="text-blue-500 hover:underline">
-                  {room.slug}
+                  {room.name}
                 </Link>
               </li>
             ))}
@@ -183,7 +184,7 @@ export default function TeamDetailsPage() {
       </section>
 
       {/* Leave */}
-      {session?.user?.email !== team.createdById && (
+      {session?.user?.id !== team.createdById && (
         <button
           onClick={leaveTeam}
           className="text-sm text-gray-500 hover:underline"

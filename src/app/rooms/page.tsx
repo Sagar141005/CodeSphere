@@ -5,40 +5,48 @@ import { useRouter } from "next/navigation";
 
 interface Room {
     id: string,
+    name: string,
     slug: string,
     createdAt: string
 }
 
 export default function RoomsPage() {
-    const [ slug, setSlug ] = useState("");
     const [ rooms, setRooms ] = useState<Room[]>([]);
+    const [roomName, setRoomName] = useState("");
     const router = useRouter();
 
     useEffect(() => {
-        fetch('/api/rooms')
-            .then((res) => res.json())
-            .then((data) => setRooms(data));
-    }, []);
+        fetch('/api/rooms', { credentials: 'include' }) 
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data)) setRooms(data);
+            else {
+              console.error("Failed to load rooms:", data);
+              setRooms([]);
+            }
+          });
+    }, []);      
+    
 
     const handleCreate = async () => {
-        if(!slug.trim()) return alert("Please enter a room name");
+        if (!roomName.trim()) return alert("Please enter a room name");
 
         const res = await fetch('/api/rooms', {
             method: 'POST',
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug })
+            body: JSON.stringify({ name: roomName, slug: roomName.toLowerCase().replace(/\s+/g, "-") })
         });
-
-        if(res.ok) {
+    
+        if (res.ok) {
             const newRoom = await res.json();
             setRooms((prev) => [...prev, newRoom]);
-            setSlug("");
+            setRoomName("");
             router.push(`/room/${newRoom.slug}`);
         } else {
             const error = await res.json();
-            alert(error.error ||  "Failed to create room");
+            alert(error.error || "Failed to create room");
         }
-    }
+    };
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-900 text-white p-8">
@@ -47,8 +55,8 @@ export default function RoomsPage() {
                 <input 
                 type="text"
                 placeholder="Enter room name"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
                 className="px-3 py-2 bg-gray-600 text-black rounded" />
                 <button
                 onClick={handleCreate}

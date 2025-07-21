@@ -13,12 +13,18 @@ import type { FileData } from "@/types/FileData";
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
 
-  const [files, setFiles] = useState<FileData[]>([]);
-  const [openTabs, setOpenTabs] = useState<FileData[]>([]);
-  const [activeFile, setActiveFile] = useState<FileData | null>(null);
+  const [ files, setFiles] = useState<FileData[]>([]);
+  const [ roomName, setRoomName ] = useState<string>("");
+  const [ openTabs, setOpenTabs ] = useState<FileData[]>([]);
+  const [ activeFile, setActiveFile ] = useState<FileData | null>(null);
   const terminalRef = useRef<TerminalRef>(null);
 
   useEffect(() => {
+    fetch(`/api/room/${slug}`)
+    .then((res) => res.json())
+    .then((data) => setRoomName(data.name))
+    .catch(() => setRoomName(slug));
+
     fetch(`/api/room/${slug}/files`)
       .then((res) => res.json())
       .then((data) => {
@@ -69,14 +75,19 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
-      <Navbar roomSlug={slug} />
+      <Navbar roomSlug={slug} roomName={roomName} />
 
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           files={files}
           onFileClick={openFile}
           slug={slug}
-          onFileAdded={(file) => setFiles((prev) => [...prev, file])}
+          onFileAdded={(file) =>
+            setFiles((prev) => {
+              if (prev.find((f) => f.id === file.id)) return prev; // already exists
+              return [...prev, file];
+            })
+          }
           onFileDeleted={(id) => setFiles((prev) => prev.filter((f) => f.id !== id))}
           onFileRenamed={(id, newName) =>
             setFiles((prev) =>

@@ -3,6 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { NextResponse } from "next/server";
 
+function generateSlug(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-") // replace spaces and special chars with -
+    .replace(/(^-|-$)+/g, ""); // trim leading/trailing dashes
+}
+
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
 
@@ -31,6 +38,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const room = await prisma.room.create({
     data: {
+      name,
       slug: `${id}-${Date.now()}`,
       owner: { connect: { id: user?.id } },
       team: { connect: { id } },

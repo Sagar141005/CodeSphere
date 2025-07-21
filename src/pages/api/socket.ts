@@ -6,26 +6,74 @@ export const config = {
 }
 
 export default function SocketHandler(req: NextApiRequest, res: NextApiResponse) {
-    if(!(res.socket as any).server.io) {
+    if (!(res.socket as any).server.io) {
         console.log("Starting Socket.IO server...");
         const io = new SocketIOServer((res.socket as any).server, {
             path: '/api/socket'
         });
 
-        const roomUsers: Record<string, { id: string, name: string, image?: string }[]> = {};
+        // roomUsers = { roomId: Map<userId, {id, name, image, sockets: Set<string>}> }
+        const roomUsers: Record<string, Map<string, { id: string, name: string, image?: string, sockets: Set<string> }>> = {};
 
         io.on('connection', (socket) => {
             console.log("Client connected", socket.id);
 
-            socket.on('join-room', ({ roomId, user}) => {
+            socket.on('join-room', ({ roomId, user }) => {
                 socket.join(roomId);
 
-                if(!roomUsers[roomId]) roomUsers[roomId] = [];
-                roomUsers[roomId].push({ id: socket.id, ...user });
-                
-                io.to(roomId).emit('presence-update', roomUsers[roomId]);
+                if (!roomUsers[roomId]) {
+                    roomUsers[roomId] = new Map();
+                }
+
+                const existingUser = roomUsers[roomId].get(user.id);
+                if (existingUser) {
+                    existingUser.sockets.add(socket.id);
+                } else {
+                    roomUsers[roomId].set(user.id, { ...user, sockets: new Set([socket.id]) });
+                }
+
+                io.to(roomId).emit('presence-update', Array.from(roomUsers[roomId].values()));
             });
 
+            socket.on('leave-room', ({ roomId, userId }) => {
+                socket.leave(roomId);
+
+                const room = roomUsers[roomId];
+                if (room && room.has(userId)) {
+                    const user = room.get(userId)!;
+                    user.sockets.delete(socket.id);
+                    if (user.sockets.size === 0) {
+                        room.delete(userId);
+                    }
+                    io.to(roomId).emit('presence-update', Array.from(room.values()));
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log(`Socket ${socket.id} disconnected`);
+
+                // Cleanup socket from all rooms
+                for (const roomId in roomUsers) {
+                    const room = roomUsers[roomId];
+                    let changed = false;
+
+                    for (const [userId, user] of room) {
+                        if (user.sockets.has(socket.id)) {
+                            user.sockets.delete(socket.id);
+                            if (user.sockets.size === 0) {
+                                room.delete(userId);
+                            }
+                            changed = true;
+                        }
+                    }
+
+                    if (changed) {
+                        io.to(roomId).emit('presence-update', Array.from(room.values()));
+                    }
+                }
+            });
+
+            // Broadcast file/code events
             socket.on('code-change', ({ roomId, fileId, code }) => {
                 socket.to(roomId).emit('code-update', { fileId, code });
             });
@@ -44,26 +92,6 @@ export default function SocketHandler(req: NextApiRequest, res: NextApiResponse)
 
             socket.on('terminal-output', ({ roomId, output }) => {
                 io.to(roomId).emit('terminal-update', output);
-            });
-
-            socket.on('leave-room', ({ roomId }) => {
-                socket.leave(roomId);
-                if(roomUsers[roomId]) {
-                    roomUsers[roomId] = roomUsers[roomId].filter((u) => u.id !== socket.id);
-                    io.to(roomId).emit('presence-update', roomUsers[roomId]);
-                }
-            });
-
-            socket.on('disconnect', () => {
-                console.log(`Socket ${socket.id} disconnected`);
-                for(const roomId in roomUsers) {
-                    const before = roomUsers[roomId].length;
-                    roomUsers[roomId] = roomUsers[roomId].filter((u) => u.id !== socket.id);
-
-                    if(before !== roomUsers[roomId].length) {
-                        io.to(roomId).emit('presence-update', roomUsers[roomId])
-                    }
-                }
             });
         });
 

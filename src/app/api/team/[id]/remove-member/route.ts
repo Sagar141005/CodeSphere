@@ -9,8 +9,14 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { email } = await req.json();
-    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+    const { userId } = await req.json();
+    if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
+
+    const currentUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true }
+    });
+    if(!currentUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const team = await prisma.team.findUnique({
         where: { id },
@@ -18,17 +24,14 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     });
 
     if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
-    if(team.createdBy.id !== session.user.email) {
+    if(team.createdBy.id !== currentUser.id) {
         return NextResponse.json({ error: "Only team owner can remove members" }, { status: 403 });
     }
-
-    const userToRemove = await prisma.user.findUnique({ where: { email } });
-    if(!userToRemove) return NextResponse.json({ error: "User not found"}, { status: 404 });
 
     await prisma.team.update({
         where: { id },
         data: {
-            members: { disconnect: { id: userToRemove.id } }
+            members: { disconnect: { id: userId } }
         }
     });
 

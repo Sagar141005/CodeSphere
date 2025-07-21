@@ -15,12 +15,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const userToAdd = await prisma.user.findUnique({ where: { email } });
     if (!userToAdd) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const team = prisma.team.update({
+    const team = await prisma.team.update({
         where: { id },
         data: {
             members: { connect: { id: userToAdd.id } }
         },
-        include: { members: true }
+        include: { members: true, rooms: true }
     });
     return NextResponse.json(team);
 }

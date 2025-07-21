@@ -5,7 +5,21 @@ import { authOptions } from "../auth/[...nextauth]/route";
 
 export async function GET() {
     try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user?.email) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email: session.user.email },
+        });
+
+        if (!user) {
+            return NextResponse.json({ error: "User not found" }, { status: 404 });
+        }
+
         const rooms = await prisma.room.findMany({
+            where: { ownerId: user.id },
             orderBy: { createdAt: 'desc' }
         });
 
@@ -17,13 +31,13 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        const { slug } = await req.json();
-        if(!slug) {
-            return NextResponse.json({ error: "Slug is required" }, { status: 400 });
+        const { name, slug } = await req.json();
+        if (!name || !slug) {
+            return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
         }
 
         const session = await getServerSession(authOptions);
-        if(!session || !session.user?.email) {
+        if (!session || !session.user?.email) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -31,12 +45,13 @@ export async function POST(req: Request) {
             where: { email: session.user.email }
         });
 
-        if(!user) {
+        if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
 
         const newRoom = await prisma.room.create({
             data: {
+                name,
                 slug,
                 ownerId: user.id
             }

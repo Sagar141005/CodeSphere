@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { truncate } from "fs";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     const result = await signIn("credentials", {
-      redirect: false,
+      redirect: true,
       email,
       password,
     });

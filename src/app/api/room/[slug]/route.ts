@@ -6,13 +6,14 @@ export async function GET(_: Request, context: { params: Promise<{ slug: string 
   try {
     const room = await prisma.room.findUnique({
       where: { slug },
+      select: { name: true, content: true, slug: true } 
     });
 
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ content: room.content || "" });
+    return NextResponse.json(room);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch room" }, { status: 500 });
   }
