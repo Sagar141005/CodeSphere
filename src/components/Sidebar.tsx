@@ -7,7 +7,7 @@ import clsx from 'clsx';
 
 const navItems = [
   { href: '/rooms', label: 'Rooms', icon: Home },
-  { href: '/team', label: 'Teams', icon: Building2 },
+  { href: '/teams', label: 'Teams', icon: Building2 },
   { href: '/profile', label: 'Profile', icon: UserIcon },
 ];
 
@@ -30,7 +30,10 @@ export default function Sidebar() {
 
       <nav className="flex flex-col flex-grow space-y-3">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname?.startsWith(href);
+         const isActive =
+         href === '/teams'
+           ? pathname?.startsWith('/team')
+           : pathname?.startsWith(href);
           return (
             <Link
               key={href}
