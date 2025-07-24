@@ -232,7 +232,7 @@ export default function EditorFilePanel({
         <div
           ref={menuRef}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed bg-[#1f1f1f] text-white rounded-lg shadow-xl w-48 z-50 border border-gray-700 z-10"
+          className="fixed bg-[#1f1f1f] text-white rounded-lg shadow-xl w-48 z-50 border border-gray-700"
         >
           <button
             onClick={() => {
