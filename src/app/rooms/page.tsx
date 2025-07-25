@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightCircle, DoorClosed, DoorOpen } from "lucide-react";
+import { ArrowRightCircle, DoorClosed, Trash2 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 
 interface Room {
@@ -16,6 +16,8 @@ export default function RoomsPage() {
     const [ rooms, setRooms ] = useState<Room[]>([]);
     const [loading, setLoading] = useState(true);
     const [roomName, setRoomName] = useState("");
+    const [ showDeleteConfirm, setShowDeleteConfirm ] = useState(false);
+    const [ selectedRoomToDelete, setSelectedRoomToDelete ] = useState<Room | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -51,6 +53,19 @@ export default function RoomsPage() {
             alert(error.error || "Failed to create room");
         }
     };
+
+    const handleDelete = async ( slug: string) => {
+      const res = await fetch(`/api/room/${slug}`, {
+        method: 'DELETE'
+      });
+
+      if(res.ok) {
+        setRooms(prev => prev.filter((room) => room.slug !== slug));
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to delete room");
+      }
+    }
 
     return (
         <div className="min-h-screen flex bg-gradient-to-b from-gray-900 to-gray-950 text-white overflow-hidden">
@@ -111,9 +126,8 @@ export default function RoomsPage() {
                     {rooms.map((room) => (
                         <li
                         key={room.id}
-                        onClick={() => router.push(`/room/${room.slug}`)}
                         tabIndex={0}
-                        className="group relative cursor-pointer rounded-2xl border border-[#2a2a2e] bg-[#15151a]/80 hover:border-blue-500 
+                        className="group relative rounded-2xl border border-[#2a2a2e] bg-[#15151a]/80 hover:border-blue-500 
                                     transition-all duration-300 shadow-md hover:shadow-xl backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                         >
                         {/* Glow effect */}
@@ -121,14 +135,25 @@ export default function RoomsPage() {
 
                         <div className="relative z-10 p-5 space-y-3">
                             {/* Top Row */}
-                            <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg">
-                                {room.slug[0].toUpperCase()}
+                            <div className="flex items-baseline justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg">
+                                    {room.name[0].toUpperCase()}
+                                </div>
+                                <h3 className="text-lg font-semibold text-white truncate w-20 group-hover:text-blue-400 transition">
+                                    {room.slug}
+                                </h3>
+                              </div>
+                              <div 
+                              onClick={() => {
+                                setSelectedRoomToDelete(room)
+                                setShowDeleteConfirm(true)
+                              }}
+                              className="p-2 border border-gray-800 rounded-md hover:text-red-400 transition-colors cursor-pointer">
+                                <Trash2 width={15} height={15}  />
+                              </div>
                             </div>
-                            <h3 className="text-lg font-semibold text-white truncate w-20 group-hover:text-blue-400 transition">
-                                {room.slug}
-                            </h3>
-                            </div>
+                            
 
                             {/* Metadata Row */}
                             <div className="text-sm text-gray-400 flex items-center justify-between font-mono">
@@ -137,7 +162,9 @@ export default function RoomsPage() {
                             </div>
 
                             {/* CTA */}
-                            <div className="flex items-center justify-between pt-2 border-t border-gray-800 text-blue-500 group-hover:underline text-sm font-semibold">
+                            <div 
+                            onClick={() => router.push(`/room/${room.slug}`)}
+                            className="flex items-center justify-between pt-2 border-t border-gray-800 text-blue-500 group-hover:underline text-sm font-semibold cursor-pointer">
                             <span>Enter Room</span>
                             <ArrowRightCircle className="w-4 h-4" />
                             </div>
@@ -147,9 +174,45 @@ export default function RoomsPage() {
                     </ul>
                 )}
             </section>
-
+            {showDeleteConfirm && selectedRoomToDelete && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 sm:px-0">
+                <div className="relative max-w-md w-full bg-[#16161a] border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
+                  <div className="relative z-10 space-y-4 text-center">
+                    <h2 className="text-xl font-semibold text-white">
+                      Are you sure you want to delete this room?
+                    </h2>
+                    <p className="text-gray-400 text-sm leading-relaxed">
+                      <strong className="text-white">{selectedRoomToDelete.name}</strong> will be permanently removed. 
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-4">
+                    <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false)
+                      setSelectedRoomToDelete(null)
+                    }}
+                    className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
+                    >
+                    Cancel
+                    </button>
+                    <button
+                    onClick={() => {
+                      handleDelete(selectedRoomToDelete.slug)
+                      setShowDeleteConfirm(false)
+                      setSelectedRoomToDelete(null)
+                    }}
+                    className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                    >
+                    Confirm Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </main>
         </div>
-      );
+    );
       
 }

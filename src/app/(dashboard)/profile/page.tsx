@@ -372,7 +372,7 @@ export default function ProfilePage() {
                         </button>
                         <button
                         onClick={deleteAccount}
-                        className="px-5 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 shadow-lg transition"
+                        className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
                         >
                         Confirm Delete
                         </button>

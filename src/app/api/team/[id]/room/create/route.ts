@@ -25,13 +25,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const team = await prisma.team.findUnique({
     where: { id },
-    include: { members: true },
+    include: { createdBy: true },
   });
   if (!team) return NextResponse.json({ error: "Team not found" }, { status: 404 });
 
-  const isMember = team.members.some((m) => m.email === session.user?.email);
-  if (!isMember) {
-    return NextResponse.json({ error: "You are not a team member" }, { status: 403 });
+  if (team.createdBy.email !== session.user.email) {
+    return NextResponse.json({ error: "Forbidden: Only team owner can add members" }, { status: 403 });
   }
 
   const user = await prisma.user.findUnique({ where: { email: session.user.email } });

@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,4 +27,31 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   }
 
   return NextResponse.json(team);
+}
+
+export async function DELETE(_: Request, context: { params: Promise<{ id: string}> }) {
+  const { id } = await context.params;
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const team = await prisma.team.findUnique({
+    where: { id },
+    include: { createdBy: true },
+  });
+  if (!team) {
+    return NextResponse.json({ error: "Team not found" }, { status: 404 });
+  }
+
+  if (team.createdBy.email !== session.user.email) {
+    return NextResponse.json({ error: "Forbidden: Only team owner can delete team" }, { status: 403 });
+  }
+
+  await prisma.team.delete({
+    where: { id }
+  });
+
+  return NextResponse.json({ message: "Team deleted successfully" });
 }

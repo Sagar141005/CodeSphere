@@ -46,6 +46,9 @@ export default function TeamDetailsPage() {
   const [team, setTeam] = useState<Team | null>(null);
   const [ newRoomName, setNewRoomName ] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [ showDeleteConfirm, setShowDeleteConfirm ] = useState(false);
+  const [ showDeleteTeamConfirm, setShowDeleteTeamConfirm ] = useState(false);
+  const [ selectedRoomToDelete, setSelectedRoomToDelete ] = useState<Room | null>(null);
   const router = useRouter();
 
   // Fetch team details
@@ -105,17 +108,47 @@ export default function TeamDetailsPage() {
       setTeam(prev =>
         prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
       );
+      setNewRoomName("");
     }
   };
 
   // Leave Team
   const leaveTeam = async () => {
     if (!confirm("Are you sure you want to leave this team?")) return;
-    const res = await fetch(`/api/team/${id}/leave`, { method: "POST" });
+    const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
     if (res.ok) {
       router.push("/teams");
     }
   };
+
+  const handleDeleteRoom = async (slug: string) => {
+    const res = await fetch(`/api/room/${slug}`, {
+      method: 'DELETE'
+    });
+
+    if(res.ok) {
+      setTeam(prev =>
+        prev ? { ...prev, rooms: prev.rooms.filter((room) => room.slug !== slug) } : prev
+      );
+    } else {
+      const error = await res.json();
+      alert(error.error || "Failed to delete room");
+    }
+  }
+
+  const handleDeleteTeam = async (id: string) => {
+    const res = await fetch(`/api/team/${id}`, {
+      method: 'DELETE'
+    });
+
+    if(res.ok) {
+      alert("Team deleted successfully");
+      router.push("/teams");
+    } else {
+      const error = await res.json();
+      alert(error.error || "Failed to delete team");
+    }
+  }
 
   if (status === "loading") {
     return <p className="text-center mt-10">Loading session...</p>;
@@ -133,18 +166,33 @@ export default function TeamDetailsPage() {
 
       <main className="flex-1 max-w-7xl mx-auto px-10 py-12 flex flex-col gap-14 overflow-y-auto h-screen">
         {/* Header */}
-        <header className="max-w-5xl">
-          <h1 className="text-4xl font-extrabold tracking-wide mb-1 font-mono">
-            {team.name}
-          </h1>
-          <p className="text-gray-500 text-sm flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-400" />
-            Created by:{" "}
-            <code className="ml-1 px-1 rounded bg-gray-900 font-mono">
-              {team.createdById}
-            </code>
-          </p>
-        </header>
+        <div className="flex items-center justify-between">
+          <header className="max-w-5xl">
+            <h1 className="text-4xl font-extrabold tracking-wide mb-1 font-mono">
+              {team.name}
+            </h1>
+            <p className="text-gray-500 text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-gray-400" />
+              Created by:{" "}
+              <code className="ml-1 px-1 rounded bg-gray-900 font-mono">
+                {team.createdById}
+              </code>
+            </p>
+          </header>
+          {isOwner && (
+            <button
+              onClick={() => {
+                setShowDeleteTeamConfirm(true);
+              }}
+              aria-label="Delete Team"
+              className="flex items-center gap-1 px-3 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition"
+            >
+              <Trash2 className="w-6 h-6" />
+              Delete Team
+            </button>
+          )}
+        </div>
+       
 
         {/* Members Section */}
         <section className="max-w-5xl bg-[#16161a] rounded-3xl p-8 shadow-lg border border-[#2a2a2e]">
@@ -200,7 +248,7 @@ export default function TeamDetailsPage() {
                   {isOwner && member.email !== session?.user?.email && !isTeamOwner && (
                     <button
                       onClick={() => removeMember(member.id)}
-                      className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 rounded"
+                      className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
                       aria-label={`Remove ${member.name || member.email}`}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -248,49 +296,52 @@ export default function TeamDetailsPage() {
         {/* Rooms Section */}
         <section className="max-w-5xl">
           {/* Create Room Card */}
-        <section className="relative max-w-5xl mx-auto mb-6">
-          <div
-            className="group relative cursor-pointer rounded-2xl border border-[#2a2a2e] bg-gradient-to-br from-[#1d1d22] to-[#1a1a1f] 
-                      hover:border-blue-500 hover:shadow-xl transition-all duration-300 shadow-md backdrop-blur-sm p-6"
-          >
-            {/* Glowing background on hover */}
-            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none 
-                            bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-md" />
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors mb-1">
-                  Create a New Room
-                </h3>
-                <p className="text-sm text-gray-400 font-mono">Give your room a name and start collaborating instantly.</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
-                <input
-                  type="text"
-                  value={newRoomName}
-                  onChange={(e) => setNewRoomName(e.target.value)}
-                  placeholder="Enter room name"
-                  className="px-4 py-2.5 rounded-lg bg-[#121212] text-white border border-gray-700 placeholder-gray-500 
-                            focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm w-full sm:w-64 font-mono"
-                  aria-label="Room name input"
-                  spellCheck={false}
-                  autoComplete="off"
-                />
-                <button
-                onClick={createRoom}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1f1f22] border border-[#2e2e32] 
-                          hover:border-blue-500 hover:text-blue-400 text-gray-300 font-mono text-sm rounded-lg 
-                          transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+          {isOwner && (
+            <section className="relative max-w-5xl mx-auto mb-6">
+              <div
+                className="group relative cursor-pointer rounded-2xl border border-[#2a2a2e] bg-gradient-to-br from-[#1d1d22] to-[#1a1a1f] 
+                          hover:border-blue-500 hover:shadow-xl transition-all duration-300 shadow-md backdrop-blur-sm p-6"
               >
-                <DoorOpen className="w-4 h-4" />
-                Create Room
-              </button>
+                {/* Glowing background on hover */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none 
+                                bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-md" />
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors mb-1">
+                      Create a New Room
+                    </h3>
+                    <p className="text-sm text-gray-400 font-mono">Give your room a name and start collaborating instantly.</p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
+                    <input
+                      type="text"
+                      value={newRoomName}
+                      onChange={(e) => setNewRoomName(e.target.value)}
+                      placeholder="Enter room name"
+                      className="px-4 py-2.5 rounded-lg bg-[#121212] text-white border border-gray-700 placeholder-gray-500 
+                                focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm w-full sm:w-64 font-mono"
+                      aria-label="Room name input"
+                      spellCheck={false}
+                      autoComplete="off"
+                    />
+                    <button
+                    onClick={createRoom}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1f1f22] border border-[#2e2e32] 
+                              hover:border-blue-500 hover:text-blue-400 text-gray-300 font-mono text-sm rounded-lg 
+                              transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+                  >
+                    <DoorOpen className="w-4 h-4" />
+                    Create Room
+                  </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          )}
+        
           {team.rooms.length === 0 ? (
             <p className="text-gray-400 text-sm italic">No rooms yet.</p>
           ) : (
@@ -298,9 +349,8 @@ export default function TeamDetailsPage() {
               {team.rooms.map((room) => (
                 <li
                   key={room.id}
-                  onClick={() => window.location.assign(`/room/${room.slug}`)}
                   tabIndex={0}
-                  className="group relative cursor-pointer rounded-2xl border border-[#2a2a2e] bg-[#15151a]/80 hover:border-blue-500
+                  className="group relative rounded-2xl border border-[#2a2a2e] bg-[#15151a]/80 hover:border-blue-500
                   transition-all duration-300 shadow-md hover:shadow-xl backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
                   {/* Glow effect */}
@@ -308,15 +358,28 @@ export default function TeamDetailsPage() {
 
                   <div className="relative z-10 p-5 space-y-3">
                     {/* Top Row */}
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg">
-                        {room.slug[0].toUpperCase()}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg">
+                          {room.name[0].toUpperCase()}
+                        </div>
+                        <h3 className="text-lg font-semibold text-white truncate w-28 group-hover:text-blue-400 transition">
+                          {room.name}
+                        </h3>
                       </div>
-                      <h3 className="text-lg font-semibold text-white truncate w-28 group-hover:text-blue-400 transition">
-                        {room.name}
-                      </h3>
+                      {isOwner && (
+                        <div 
+                          onClick={() => {
+                            setSelectedRoomToDelete(room)
+                            setShowDeleteConfirm(true)
+                          }}
+                          className="p-2 border border-gray-800 rounded-md hover:text-red-400 transition-colors cursor-pointer">
+                            <Trash2 className="w-4 h-4"  />
+                        </div>
+                      )}
+                      
                     </div>
-
+                    
                     {/* Metadata Row */}
                     <div className="text-sm text-gray-400 flex items-center justify-between font-mono">
                       <span>Created</span>
@@ -324,7 +387,9 @@ export default function TeamDetailsPage() {
                     </div>
 
                     {/* CTA */}
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-800 text-blue-500 group-hover:underline text-sm font-semibold">
+                    <div 
+                    onClick={() => window.location.assign(`/room/${room.slug}`)}
+                    className="flex items-center justify-between pt-2 border-t border-gray-800 text-blue-500 group-hover:underline text-sm font-semibold cursor-pointer">
                       <span>Enter Room</span>
                       <ArrowRightCircle className="w-4 h-4" />
                     </div>
@@ -346,6 +411,77 @@ export default function TeamDetailsPage() {
               <LogOut className="w-5 h-5" />
               Leave Team
             </button>
+          </div>
+        )}
+
+        {showDeleteConfirm && selectedRoomToDelete && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 sm:px-0">
+            <div className="relative max-w-md w-full bg-[#16161a] border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
+              <div className="relative z-10 space-y-4 text-center">
+                <h2 className="text-xl font-semibold text-white">
+                  Are you sure you want to delete this room?
+                </h2>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  <strong className="text-white">{selectedRoomToDelete.name}</strong> will be permanently removed. 
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setSelectedRoomToDelete(null)
+                }}
+                className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
+                >
+                Cancel
+                </button>
+                <button
+                onClick={() => {
+                  handleDeleteRoom(selectedRoomToDelete.slug)
+                  setShowDeleteConfirm(false)
+                  setSelectedRoomToDelete(null)
+                }}
+                className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+                Confirm Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDeleteTeamConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 sm:px-0">
+            <div className="relative max-w-md w-full bg-[#16161a] border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
+              <div className="relative z-10 space-y-4 text-center">
+                <h2 className="text-xl font-semibold text-white">
+                  Are you sure you want to delete this team?
+                </h2>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  <strong className="text-white">{team?.name}</strong> and all its rooms and members will be permanently removed.
+                  This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex justify-end gap-4">
+                <button
+                  onClick={() => setShowDeleteTeamConfirm(false)}
+                  className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleDeleteTeam(team!.id);
+                    setShowDeleteTeamConfirm(false);
+                  }}
+                  className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                >
+                  Confirm Delete
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>
