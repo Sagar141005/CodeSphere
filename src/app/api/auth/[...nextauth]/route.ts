@@ -26,17 +26,20 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
+      
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
+      
         if (!user || !user.password) return null;
-
+      
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) return null;
-
-        return { id: user.id, email: user.email, name: user.name };
-      },
+      
+        // Omit password before returning
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      }
     }),
   ],
 
@@ -52,20 +55,37 @@ export const authOptions: AuthOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      if(user) {
-        token.id = user.id;
+      if (user) {
+        token.id = String(user.id);  // Ensure string
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
+      } else if (token.id && typeof token.id === "string") {
+        const freshUser = await prisma.user.findUnique({
+          where: { id: token.id },
+        });
+        if (freshUser) {
+          token.name = freshUser.name;
+          token.email = freshUser.email;
+          token.image = freshUser.image;
+        }
       }
       return token;
-    },
+    }
+    ,
     async session({ session, token }) {
       // Add user.id to session
       if (token && session.user) {
         session.user.id = token.id as string;
+        session.user.name = token.name;
+        session.user.email = token.email;
+        session.user.image = token.image as string;
+        session.user.createdAt = token.createdAt as string | undefined;
       }
       return session;
     },
     async redirect({ baseUrl }) {
-      return "/editor"; // always redirect to editor after login
+      return "/rooms"; // always redirect to editor after login
     },
   },
   debug: process.env.NODE_ENV === "development",
