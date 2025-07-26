@@ -7,11 +7,14 @@ import EditorFIlePanel from "@/components/EditorFilePanel";
 import Tabs from "@/components/Tabs";
 import Terminal, { TerminalRef } from "@/components/Terminal";
 import { getSocket } from "@/lib/socket";
+import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import type { FileData } from "@/types/FileData";
+import { Play } from 'lucide-react';
 
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const { data: session, status } = useSession();
 
   const [ files, setFiles] = useState<FileData[]>([]);
   const [ roomName, setRoomName ] = useState<string>("");
@@ -37,9 +40,21 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   }, [slug]);
 
   useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) return;
+  
     const socket = getSocket();
-    socket.emit("join-room", { roomId: slug, user: { name: "User" } });
-  }, [slug]);
+  
+    socket.emit("join-room", {
+      roomId: slug,
+      user: {
+        id: session.user.id,
+        name: session.user.name || "Anonymous",
+        image: session.user.image || null,
+        email: session.user.email || null,
+      },
+    });
+  }, [slug, session, status]);
+  
 
   const openFile = (file: FileData) => {
     if (!openTabs.find((f) => f.id === file.id)) {
@@ -86,6 +101,7 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       files={files}
       onFileClick={openFile}
       slug={slug}
+      activeFileId={activeFile?.id || null}
       onFileAdded={(file) =>
         setFiles((prev) => (prev.find((f) => f.id === file.id) ? prev : [...prev, file]))
       }
@@ -109,26 +125,36 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       />
 
       {/* Run Button */}
-      <div className="flex justify-end bg-[#232323] px-4 py-2 border-b border-gray-700">
+      <div className="flex justify-end bg-[#1e1e1e] px-4 py-2 border-b border-[#333] shadow-inner">
         <button
           onClick={runCode}
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-sm font-medium px-4 py-1.5 rounded shadow"
+          className="flex items-center gap-2 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
         >
           ▶ Run
         </button>
       </div>
 
+
       {/* Editor + Terminal */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Editor View */}
         <div className="flex-1 overflow-auto bg-[#1e1e1e]">
-          {activeFile ? (
-            <CodeEditor fileId={activeFile.id} slug={slug} />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-              Select or create a file to start coding
-            </div>
-          )}
+        {session && activeFile ? (
+          <CodeEditor
+            slug={slug}
+            fileId={activeFile.id}
+            user={{
+              id: session.user.id,
+              name: session.user.name || "Anonymous",
+              image: session.user.image,
+            }}
+          />
+        
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+            Select or create a file to start coding
+          </div>
+        )}
         </div>
 
         {/* Terminal */}

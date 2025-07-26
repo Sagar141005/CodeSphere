@@ -4,18 +4,19 @@ import { useState, useRef, useEffect } from "react";
 import { getSocket } from "@/lib/socket";
 import type { FileData } from "@/types/FileData";
 import { getIconForFile, getIconForFolder, getIconForOpenFolder } from "vscode-icons-js";
-import { ChevronDown, ChevronRight, Folder, FolderOpen, File, Plus, Trash2, Edit3 } from "lucide-react";
+import { ChevronDown, ChevronRight, Folder, FolderOpen, Plus, Trash2, Edit3 } from "lucide-react";
+import clsx from "clsx";
 
 interface SidebarProps {
   files: FileData[];
   onFileClick: (file: FileData) => void;
   slug: string;
+  activeFileId: string | null;
   onFileAdded: (file: FileData) => void;
   onFileDeleted: (id: string) => void;
   onFileRenamed: (id: string, newName: string) => void;
 }
 
-// Get colorful file icons
 const getFileIcon = (filename: string) => {
   const iconPath = getIconForFile(filename);
   const iconUrl = iconPath
@@ -24,19 +25,11 @@ const getFileIcon = (filename: string) => {
   return <img src={iconUrl} alt="file-icon" className="w-4 h-4 inline-block mr-1" />;
 };
 
-// Get folder icons (open/closed)
-const getFolderIcon = (name: string, isOpen: boolean) => {
-  const iconPath = isOpen ? getIconForOpenFolder(name) : getIconForFolder(name);
-  const iconUrl = iconPath
-    ? `https://raw.githubusercontent.com/vscode-icons/vscode-icons/master/icons/${iconPath}`
-    : `https://raw.githubusercontent.com/vscode-icons/vscode-icons/master/icons/default_folder.svg`;
-  return <img src={iconUrl} alt="folder-icon" className="w-4 h-4 inline-block mr-1" />;
-};
-
 export default function EditorFilePanel({
   files,
   onFileClick,
   slug,
+  activeFileId,
   onFileAdded,
   onFileDeleted,
   onFileRenamed,
@@ -46,18 +39,17 @@ export default function EditorFilePanel({
   const [newName, setNewName] = useState("");
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; fileId: string | null } | null>(null);
-
   const menuRef = useRef<HTMLDivElement | null>(null);
   const socket = getSocket();
 
   useEffect(() => {
-    socket.on("file-added", (file: FileData) => onFileAdded(file));
-    socket.on("file-deleted", (fileId: string) => onFileDeleted(fileId));
+    socket.on("file-added", onFileAdded);
+    socket.on("file-deleted", onFileDeleted);
     socket.on("file-renamed", ({ fileId, newName }) => onFileRenamed(fileId, newName));
 
     return () => {
-      socket.off("file-added");
-      socket.off("file-deleted");
+      socket.off("file-added", onFileAdded);
+      socket.off("file-deleted", onFileDeleted);
       socket.off("file-renamed");
     };
   }, [slug]);
@@ -80,7 +72,6 @@ export default function EditorFilePanel({
 
   const createItem = async (parentId: string | null) => {
     if (!newName.trim()) return;
-
     const type = detectType(newName);
     const res = await fetch(`/api/room/${slug}/files`, {
       method: "POST",
@@ -117,17 +108,23 @@ export default function EditorFilePanel({
     socket.emit("file-delete", { roomId: slug, fileId: id });
   };
 
-  const renderTree = (parentId: string | null) => {
+  const renderTree = (parentId: string | null, depth = 0) => {
     return files
       .filter((f) => f.parentId === parentId)
       .map((file) => (
         <div key={file.id} className="ml-1 relative">
           <div
-            className="flex items-center px-2 py-1 text-sm rounded cursor-pointer hover:bg-[#2a2a2a] transition"
+            className={clsx(
+              "flex items-center text-md rounded-md cursor-pointer transition-colors py-2",
+              file.id === activeFileId
+                ? "bg-[#2d2d2d] text-white font-medium"
+                : "hover:bg-[#2a2a2a] text-gray-300"
+            )}
             onContextMenu={(e) => {
               e.preventDefault();
               setContextMenu({ x: e.clientX, y: e.clientY, fileId: file.id });
             }}
+            style={{ paddingLeft: `${depth * 12}px` }}
           >
             {renamingId === file.id ? (
               <input
@@ -136,18 +133,15 @@ export default function EditorFilePanel({
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleRename(file.id)}
                 onBlur={() => handleRename(file.id)}
-                className="bg-[#333] px-2 py-1 text-sm rounded w-full focus:outline-none"
+                className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full"
                 autoFocus
               />
             ) : (
               <div
-                className="flex items-center gap-2 w-full truncate"
+                className="flex items-center gap-2 w-full truncate px-2"
                 onClick={() => {
-                  if (file.type === "folder") {
-                    toggleExpand(file.id);
-                  } else {
-                    onFileClick(file);
-                  }
+                  if (file.type === "folder") toggleExpand(file.id);
+                  else onFileClick(file);
                 }}
               >
                 {file.type === "folder" ? (
@@ -157,9 +151,9 @@ export default function EditorFilePanel({
                     <ChevronRight className="w-4 h-4 text-gray-400" />
                   )
                 ) : (
-                  <span className="w-4 h-4" /> // spacer for alignment
+                  <span className="w-4 h-4" />
                 )}
-  
+
                 {file.type === "folder" ? (
                   expanded[file.id] ? (
                     <FolderOpen className="w-4 h-4 text-yellow-400" />
@@ -167,17 +161,15 @@ export default function EditorFilePanel({
                     <Folder className="w-4 h-4 text-yellow-400" />
                   )
                 ) : (
-                   getFileIcon(file.name)
+                  getFileIcon(file.name)
                 )}
-  
                 <span className="truncate">{file.name}</span>
               </div>
             )}
           </div>
-  
-          {/* Nested content */}
+
           {file.type === "folder" && expanded[file.id] && (
-            <div className="ml-4">
+            <div className="ml-1">
               {creatingInFolder === file.id && (
                 <input
                   type="text"
@@ -185,11 +177,11 @@ export default function EditorFilePanel({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && createItem(file.id)}
-                  className="bg-[#333] px-2 py-1 rounded text-sm mb-2 w-full focus:outline-none"
+                  className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-2"
                   autoFocus
                 />
               )}
-              {renderTree(file.id)}
+              {renderTree(file.id, depth + 1)}
             </div>
           )}
         </div>
@@ -198,18 +190,16 @@ export default function EditorFilePanel({
 
   return (
     <aside className="w-64 bg-[#1e1e1e] text-gray-200 p-4 overflow-y-auto border-r border-gray-700 relative">
-      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-sm uppercase tracking-wider text-gray-400">Explorer</h2>
         <button
-          className="hover:bg-gray-700 p-1 rounded"
+          className="hover:bg-[#2a2a2a] p-1 rounded"
           onClick={() => setCreatingInFolder("root")}
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
-  
-      {/* Input for New File/Folder */}
+
       {creatingInFolder === "root" && (
         <input
           type="text"
@@ -217,22 +207,20 @@ export default function EditorFilePanel({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && createItem(null)}
-          className="w-full px-2 py-1 mb-2 text-sm bg-[#2a2a2a] text-white rounded border border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-2"
           autoFocus
         />
       )}
-  
-      {/* File Tree (renderTree handles indentation + icons) */}
+
       <div className="space-y-1 text-sm">
         {renderTree(null)}
       </div>
-  
-      {/* Context Menu */}
+
       {contextMenu && (
         <div
           ref={menuRef}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed bg-[#1f1f1f] text-white rounded-lg shadow-xl w-48 z-50 border border-gray-700"
+          className="fixed bg-[#1f1f1f] text-white rounded-lg shadow-lg w-48 z-50 border border-gray-700"
         >
           <button
             onClick={() => {
@@ -268,7 +256,6 @@ export default function EditorFilePanel({
           </button>
         </div>
       )}
-
     </aside>
   );
 }
