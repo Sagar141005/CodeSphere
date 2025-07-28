@@ -90,9 +90,9 @@ export default function SocketHandler(req: NextApiRequest, res: NextApiResponse)
                 io.to(roomId).emit('file-renamed', { fileId, newName });
             });
 
-            socket.on('terminal-output', ({ roomId, output }) => {
-                io.to(roomId).emit('terminal-update', output);
-            });
+            socket.on('terminal-output', ({ roomId, output, error, ranBy, timeStamp }) => {
+                io.to(roomId).emit('terminal-update', { roomId, output, error, ranBy, timeStamp });
+            });          
         });
 
         (res.socket as any).server.io = io;

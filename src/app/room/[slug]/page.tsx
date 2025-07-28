@@ -23,6 +23,8 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   const [theme, setTheme] = useState("vs-dark");
   const [isSaving, setIsSaving] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(40); 
+  const [terminalExpanded, setTerminalExpanded] = useState(false);
   const terminalRef = useRef<TerminalRef>(null);
 
   useEffect(() => {
@@ -86,9 +88,44 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
 
   const runCode = async () => {
     if (!activeFile) return;
+
+    if (!terminalExpanded) {
+      setTerminalHeight(220); // default expanded height
+      setTerminalExpanded(true);
+    }
+
+    // Expand terminal only on first run
     const res = await fetch(`/api/file/${activeFile.id}`);
     const file = await res.json();
+
+    const execRes = await fetch('/api/exec', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        language: getLanguage(activeFile.name),
+        code: file.content,
+      }),
+    });
+  
+    const data = await execRes.json();
+    const { output, error } = data;
+    
+    // Show it locally
     terminalRef.current?.runCode(getLanguage(activeFile.name), file.content);
+
+    // Get current user info
+    const username = session?.user.name || "Unknown user";
+    const timeStamp = new Date().toLocaleTimeString();
+
+    // Emit output to the room
+    const socket = getSocket();
+    socket.emit('terminal-output', {
+      roomId: slug, // slug is your room ID
+      output,
+      error,
+      ranBy: username,
+      timeStamp
+    });
   };
 
   return (
@@ -152,7 +189,8 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       {/* Editor + Terminal */}
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* Editor View */}
-        <div className="flex-1 overflow-auto bg-[#1e1e1e]">
+        <div className="flex-1 overflow-auto bg-[#1e1e1e]"
+        style={{ height: 'calc(100% - 40px)', pointerEvents: 'auto' }}>
         {session && activeFile ? (
           <CodeEditor
             slug={slug}
@@ -175,8 +213,14 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
         </div>
 
         {/* Terminal */}
-        <div className="h-52 border-t border-gray-700 bg-black">
-          <Terminal ref={terminalRef} roomId={slug} />
+        <div style={{ height: terminalHeight }} className="relative border-t border-gray-700">
+          <Terminal
+            ref={terminalRef}
+            roomId={slug}
+            height={terminalHeight}
+            setHeight={setTerminalHeight}
+             isExpanded={terminalExpanded}
+          />
         </div>
       </div>
     </div>

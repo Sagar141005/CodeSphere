@@ -115,7 +115,7 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
     
 
     return (
-        <div className="h-screen w-full flex flex-col bg-[#1e1e1e] text-white">
+        <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-white">
       
           {/* Editor */}
           <div className="flex-1">
