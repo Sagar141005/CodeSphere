@@ -10,7 +10,7 @@ import { getSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import type { FileData } from "@/types/FileData";
-import { Play } from 'lucide-react';
+import ThemeSelector from '@/components/ThemeSelector';
 
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -20,6 +20,9 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   const [ roomName, setRoomName ] = useState<string>("");
   const [ openTabs, setOpenTabs ] = useState<FileData[]>([]);
   const [ activeFile, setActiveFile ] = useState<FileData | null>(null);
+  const [theme, setTheme] = useState("vs-dark");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const terminalRef = useRef<TerminalRef>(null);
 
   useEffect(() => {
@@ -125,13 +128,24 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       />
 
       {/* Run Button */}
-      <div className="flex justify-end bg-[#1e1e1e] px-4 py-2 border-b border-[#333] shadow-inner">
-        <button
-          onClick={runCode}
-          className="flex items-center gap-2 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
-        >
-          ▶ Run
-        </button>
+      <div className="flex items-center justify-between bg-[#1e1e1e] px-4 py-2 border-b border-[#333] shadow-inner">
+        <div className='text-xs'>
+          {isTyping || isSaving ? (
+            <span className='text-green-400 animate-pulse'>Saving...</span>
+          ) : (
+            <span className='text-gray-500'>Saved</span>
+          )}
+        </div>
+
+        <div className='flex items-center gap-3'>
+            <ThemeSelector theme={theme} setTheme={setTheme} />
+            <button
+              onClick={runCode}
+              className="flex items-center gap-2 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
+            >
+              ▶ Run
+            </button>
+        </div>
       </div>
 
 
@@ -148,6 +162,9 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
               name: session.user.name || "Anonymous",
               image: session.user.image,
             }}
+            theme={theme}
+            setIsSaving={setIsSaving}
+            setIsTyping={setIsTyping}
           />
         
         ) : (

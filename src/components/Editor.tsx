@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Editor from '@monaco-editor/react';
 import { io, Socket } from "socket.io-client";
 import { loader } from "@monaco-editor/react";
-import { initMonaco } from "@/lib/monaco-snippets";
 import { Settings } from "lucide-react";
 
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
@@ -17,15 +16,15 @@ interface CodeEditorProps {
       name: string;
       image?: string | null;
   };
+  theme: string,
+  setIsSaving: (val: boolean) => void;
+  setIsTyping: (val: boolean) => void;
 }
 
 
-export default function CodeEditor({ slug, fileId, user }: CodeEditorProps) {
+export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTyping, theme }: CodeEditorProps) {
     const [ code, setCode ] = useState("// Loading...");
     const [ language, setLanguage ] = useState("javascript");
-    const [ theme, setTheme ] = useState("vs-dark");
-    const [ isTyping, setIsTyping ] = useState(false);
-    const [ isSaving, setIsSaving ] = useState(false);
     const [ loadingError, setLoadingError ] = useState(false);
 
     const socketRef = useRef<Socket | null>(null);
@@ -45,10 +44,12 @@ export default function CodeEditor({ slug, fileId, user }: CodeEditorProps) {
 
     
       useEffect(() => {
-        loader.init().then((monaco) => {
-          initMonaco(); // Register languages & snippets
+        loader.init().then(() => {
+          import("@/lib/monaco-snippets").then(({ initMonaco }) => {
+            initMonaco(); 
+          });
         });
-      }, []);
+      }, []);      
       
     useEffect(() => {
         if (!socketRef.current) {
@@ -86,7 +87,7 @@ export default function CodeEditor({ slug, fileId, user }: CodeEditorProps) {
     const handleChange = (value: string | undefined) => {
         const updatedCode = value || "";
         setCode(updatedCode);
-        setIsTyping(true); // User is typing
+        setIsTyping(true) // User is typing
         socketRef.current?.emit('code-change', { roomId: slug, code: updatedCode });
     };
 
@@ -115,31 +116,6 @@ export default function CodeEditor({ slug, fileId, user }: CodeEditorProps) {
 
     return (
         <div className="h-screen w-full flex flex-col bg-[#1e1e1e] text-white">
-          {/* Topbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 bg-[#2a2a2a]">
-            <div className="flex items-center gap-3">
-              <Settings className="w-5 h-5 text-gray-400" />
-              <span className="text-sm font-semibold text-gray-300">Editor Settings</span>
-            </div>
-            <div className="flex items-center gap-3">
-              {isTyping || isSaving ? (
-                <span className="text-xs text-green-400 animate-pulse">Saving...</span>
-              ) : (
-                <span className="text-xs text-gray-500">Saved</span>
-              )}
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                className="bg-[#333] text-sm px-3 py-1 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {themes.map((theme) => (
-                  <option key={theme} value={theme}>
-                    {theme}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
       
           {/* Editor */}
           <div className="flex-1">

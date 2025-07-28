@@ -22,7 +22,7 @@ export default function Tabs({ tabs, activeFileId, onTabClick, onClose }: TabsPr
                 ${
                   activeFileId === file.id
                     ? "bg-[#2d2d2d] border-blue-500 text-white shadow-inner"
-                    : "bg-[#242424] border-transparent text-gray-400 hover:text-white hover:bg-[#262626]"
+                    : "bg-[#242424] text-gray-400 hover:text-white hover:bg-[#262626] border-[1px] border-b border-b-transparent border-[#232020]"
                 }`}
             >
               <span className="truncate max-w-[150px]">{file.name}</span>
