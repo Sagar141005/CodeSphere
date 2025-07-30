@@ -102,7 +102,7 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomN
           ))}
           {overflowCount > 0 && (
             <div
-              className="w-9 h-9 rounded-full bg-gray-700 text-gray-300 flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-sm"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
               title={`${overflowCount} more users`}
               aria-hidden="true"
             >

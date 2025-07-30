@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from "react";
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from "@monaco-editor/react";
 import { io, Socket } from "socket.io-client";
-import { loader } from "@monaco-editor/react";
-import { Settings } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
 
@@ -26,8 +25,9 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
     const [ code, setCode ] = useState("// Loading...");
     const [ language, setLanguage ] = useState("javascript");
     const [ loadingError, setLoadingError ] = useState(false);
-
+    
     const socketRef = useRef<Socket | null>(null);
+    const editorRef = useRef<any>(null);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Determine language based on file extension
@@ -51,68 +51,78 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
         });
       }, []);      
       
-    useEffect(() => {
+      useEffect(() => {
         if (!socketRef.current) {
-            socketRef.current = io({ path: "/api/socket" });
+          socketRef.current = io({ path: "/api/socket" });
         }
-
+    
         const sock = socketRef.current;
         sock.emit('join-room', { roomId: slug, user });
-
-
-        sock.on('code-update', (newCode) => {
-            setCode(newCode);
-        });
-
-        return () => {
-            sock.off('code-update');
+    
+        const handleCodeUpdate = ({ fileId: incomingFileId, code: incomingCode }: any) => {
+          if (incomingFileId === fileId && incomingCode !== code) {
+            setCode(incomingCode);
+            // Update the Monaco editor manually
+            if (editorRef.current) {
+              editorRef.current.setValue(incomingCode);
+            }
+          }
         };
-    }, [slug]);
+    
+        sock.on('code-update', handleCodeUpdate);
+    
+        return () => {
+          sock.off('code-update', handleCodeUpdate);
+        };
+      }, [slug, fileId, code]);
 
-    useEffect(() => {
-        fetch(`/api/file/${fileId}`)
-            .then((res) => res.json())
-            .then((data) => {
-                setCode(data.content || "// Start coding here");
-                if (data.name) {
-                    setLanguage(getLanguageFromExtension(data.name));
-                }
-            })
-            .catch(() => {
-              setLoadingError(true);
-              setCode("// Error loading file.");
+      useEffect(() => {
+          fetch(`/api/file/${fileId}`)
+              .then((res) => res.json())
+              .then((data) => {
+                  setCode(data.content || "// Start coding here");
+                  if (data.name) {
+                      setLanguage(getLanguageFromExtension(data.name));
+                  }
+              })
+              .catch(() => {
+                setLoadingError(true);
+                setCode("// Error loading file.");
+              });
+      }, [fileId]);
+
+      const handleChange = (value: string | undefined) => {
+          const updatedCode = value || "";
+          setCode(updatedCode);
+          setIsTyping(true) // User is typing
+          socketRef.current?.emit('code-change', {
+            roomId: slug,
+            fileId,
+            code: updatedCode
+          });          
+      };
+
+      // Auto-save after 2 seconds of inactivity
+      useEffect(() => {
+        if (!fileId || !code) return;
+      
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      
+        saveTimeoutRef.current = setTimeout(() => {
+          setIsSaving(true);
+          fetch(`/api/file/${fileId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: code, language }),
+          })
+            .finally(() => {
+              setIsSaving(false);
+              setIsTyping(false); // Only stop typing after save is complete
             });
-    }, [fileId]);
-
-    const handleChange = (value: string | undefined) => {
-        const updatedCode = value || "";
-        setCode(updatedCode);
-        setIsTyping(true) // User is typing
-        socketRef.current?.emit('code-change', { roomId: slug, code: updatedCode });
-    };
-
-    // Auto-save after 2 seconds of inactivity
-    useEffect(() => {
-      if (!fileId || !code) return;
-    
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-    
-      saveTimeoutRef.current = setTimeout(() => {
-        setIsSaving(true);
-        fetch(`/api/file/${fileId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: code, language }),
-        })
-          .finally(() => {
-            setIsSaving(false);
-            setIsTyping(false); // Only stop typing after save is complete
-          });
-      }, 2000);
-    
-      return () => clearTimeout(saveTimeoutRef.current!);
-    }, [code, fileId, language]);
-    
+        }, 2000);
+      
+        return () => clearTimeout(saveTimeoutRef.current!);
+      }, [code, fileId, language]);    
 
     return (
         <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-white">
@@ -121,15 +131,29 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
           <div className="flex-1">
             {loadingError ? (
               <div className="flex items-center justify-center h-full text-red-400 text-sm">
-                ⚠️ Failed to load file. Please try again.
+                <AlertTriangle className="w-4 h-4" /> Failed to load file. Please try again.
               </div>
             ) : (
               <Editor
+                key={fileId}
                 height="100%"
                 theme={theme}
                 language={language}
                 value={code}
                 onChange={handleChange}
+                onMount={(editor) => {
+                  editorRef.current = editor;
+
+                  editor.onDidChangeCursorPosition((e) => {
+                    const position = editor.getPosition();
+                    socketRef.current?.emit('cursor-update', {
+                      roomId: slug,
+                      fileId,
+                      userId: user.id,
+                      cursorPosition: position
+                    });
+                  });
+                }}    
                 options={{
                   fontSize: 14,
                   minimap: { enabled: false },
