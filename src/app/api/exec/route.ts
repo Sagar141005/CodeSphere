@@ -30,8 +30,8 @@ export async function POST(req: Request) {
         console.log = originalLog;
         output = consoleOutput || "Program ran successfully!";
       } catch (err: any) {
-        output = "JS Error: " + err.message;
-      }
+        return NextResponse.json({ error: "JS Error: " + err.message });
+      }      
     }
 
     // ---------- Python ----------
@@ -43,8 +43,8 @@ export async function POST(req: Request) {
         const { stdout, stderr } = await execAsync(`python3 ${tempFile}`);
         output = stdout || stderr || "Program ran successfully!";
       } catch (err: any) {
-        output = "Python Error: " + err.message;
-      }
+        return NextResponse.json({ error: "Python Error: " + err.message });
+      }      
     }
 
     // ---------- C ----------
@@ -57,8 +57,8 @@ export async function POST(req: Request) {
         const { stdout, stderr } = await execAsync(`gcc ${tempFile} -o ${outFile} && ${outFile}`);
         output = stdout || stderr || "Program ran successfully!";
       } catch (err: any) {
-        output = "C Error: " + err.message;
-      }
+        return NextResponse.json({ error: "C Error: " + err.message });
+      }      
     }
 
     // ---------- C++ ----------
@@ -71,8 +71,8 @@ export async function POST(req: Request) {
         const { stdout, stderr } = await execAsync(`g++ ${tempFile} -o ${outFile} && ${outFile}`);
         output = stdout || stderr || "Program ran successfully!";
       } catch (err: any) {
-        output = "C++ Error: " + err.message;
-      }
+        return NextResponse.json({ error: "C++ Error: " + err.message });
+      }      
     }
 
     // ---------- Java ----------
@@ -85,14 +85,17 @@ export async function POST(req: Request) {
         const { stdout, stderr } = await execAsync(`javac ${javaFile} && java -cp /tmp ${className}`);
         output = stdout || stderr || "Program ran successfully!";
       } catch (err: any) {
-        output = "Java Error: " + err.message;
-      }
+        return NextResponse.json({ error: "Java Error: " + err.message });
+      }      
     }
 
     else {
-      output = `Language "${language}" not supported yet.`;
+      return NextResponse.json(
+        { error: `Language "${language}" not supported yet.` },
+        { status: 400 }
+      );
     }
-
+        
     return NextResponse.json({ output });
   } catch (err: any) {
     console.error("Execution error:", err);

@@ -115,7 +115,13 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
 
     // Get current user info
     const username = session?.user.name || "Unknown user";
-    const timeStamp = new Date().toLocaleTimeString();
+    const timeStamp = new Date().toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    })
+    
 
     // Emit output to the room
     const socket = getSocket();

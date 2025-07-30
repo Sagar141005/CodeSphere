@@ -29,6 +29,22 @@
   transition: transform 0.15s ease;
 }
 
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.25s ease-out;
+}
+
+
 
 @theme inline {
   --color-background: var(--background);

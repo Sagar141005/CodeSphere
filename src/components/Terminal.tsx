@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useImperativeHandle, useRef, useState, useEffect } from 'react';
-import { AlertTriangle, CheckCircle, Clock, Copy, Terminal as TerminalIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Copy, Eraser, Terminal as TerminalIcon } from 'lucide-react';
 import { getSocket } from '@/lib/socket';
 
 export interface TerminalRef {
@@ -27,6 +27,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
   const [ error, setError ] = useState('');
   const [ isCopied, setIsCopied ] = useState(false);
   const [ isRunning, setIsRunning ] = useState(false);
+  const [isExpandedOutput, setIsExpandedOutput] = useState(false);
   const [ log, setLog ] = useState<TerminalEntry[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +65,12 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  const clearLog = () => {
+    setLog([]);
+    setOutput('');
+    setError('');
+  };  
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -78,8 +85,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
       
     
       const payload = typeof data === 'string'
-        ? { output: data, error: '', ranBy: 'Unknown', timeStamp: new Date().toLocaleTimeString(), roomId }
-        : data;
+        ? { output: data, error: '', ranBy: 'Unknown', timeStamp:  new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true }) , roomId } : data;
     
       if (payload.roomId !== roomId) return;
     
@@ -89,8 +95,13 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
           output: payload.output || '',
           error: payload.error || '',
           ranBy: payload.ranBy || 'Unknown',
-          timeStamp: payload.timeStamp || new Date().toLocaleTimeString(),
-        },
+          timeStamp: payload.timeStamp ||  new Date().toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+          })
+        }
       ]);
       setIsRunning(false);
     
@@ -149,22 +160,37 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
           <span className="text-sm font-medium text-gray-300">Terminal</span>
         </div>
 
-        {(output || error) && (
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
-          >
-            {isCopied ? (
-              <>
-                <CheckCircle className="w-4 h-4" /> Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" /> Copy
-              </>
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Clear Button */}
+          {log.length > 0 && (
+            <button
+              onClick={clearLog}
+              className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+              title="Clear terminal output"
+            >
+              <Eraser className='w-3 h-3' />
+              Clear
+            </button>
+          )}
+
+          {/* Copy Button */}
+          {(output || error) && (
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+            >
+              {isCopied ? (
+                <>
+                  <CheckCircle className="w-3 h-3" /> Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" /> Copy
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Output Area */}
@@ -178,19 +204,74 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(({ roomId, height, setHe
           {isRunning ? (
             <div className="text-gray-400">Running...</div>
           ) : log.length > 0 ? (
-            log.map(({ output, error, ranBy, timeStamp }, i) => (
-              <div key={i} className="mb-4 last:mb-0">
-                <div className="mb-1 text-xs text-gray-400 italic select-none">
-                  Last run by <span className="font-semibold">{ranBy}</span> at {timeStamp}
+            log.map(({ output, error, ranBy, timeStamp }, i) => {
+              const isError = Boolean(error);            
+              const displayText = isError ? error : output;
+              const isLongOutput = displayText!.length > 500;
+            
+              return (
+                <div
+                  key={i}
+                  className={`mb-4 last:mb-0 p-4 rounded-lg border text-sm font-mono transition-all duration-200 animate-fade-in
+                    ${isError
+                      ? 'border-red-500/20 bg-[#2b1a1a]'
+                      : 'border-emerald-500/20 bg-[#1a2b1a]'
+                    }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-2 text-xs text-gray-400 italic">
+                    <div className="flex items-center gap-2">
+                      <span>
+                        Ran by <span className="font-semibold text-white">{ranBy}</span>
+                      </span>
+                      {/* Pill Badge */}
+                      <span
+                        className={`px-2 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wide ${
+                          isError
+                            ? 'bg-red-600/20 text-red-400 border border-red-400/40'
+                            : 'bg-emerald-600/20 text-emerald-400 border border-emerald-400/40'
+                        }`}
+                      >
+                        {isError ? 'Error' : 'Success'}
+                      </span>
+                    </div>
+                    <span>{timeStamp}</span>
+                  </div>
+            
+                  {/* Output/Error Content */}
+                  <div className="flex items-start gap-2 whitespace-pre-wrap break-words">
+                    {isError ? (
+                      <AlertTriangle className="text-red-400 w-4 h-4 mt-1" />
+                    ) : (
+                      <CheckCircle className="text-emerald-400 w-4 h-4 mt-1" />
+                    )}
+                    <pre
+                      className={`flex-1 ${
+                        isError ? 'text-red-300' : 'text-emerald-300'
+                      }`}
+                      style={{
+                        maxHeight: !isExpandedOutput && isLongOutput ? '180px' : 'none',
+                        overflow: !isExpandedOutput && isLongOutput ? 'hidden' : 'visible',
+                      }}
+                    >
+                      {displayText}
+                    </pre>
+                  </div>
+            
+                  {/* Show More Toggle */}
+                  {isLongOutput && (
+                    <div className="mt-2 text-right">
+                      <button
+                        onClick={() => setIsExpandedOutput(!isExpandedOutput)}
+                        className="text-xs text-blue-400 hover:underline"
+                      >
+                        {isExpandedOutput ? 'Show less' : 'Show more'}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {error ? (
-                  <pre className="whitespace-pre-wrap text-red-400">{error}</pre>
-                ) : (
-                  <pre className="whitespace-pre-wrap text-gray-300">{output}</pre>
-                )}
-                <hr className="my-2 border-gray-700" />
-              </div>
-            ))
+              );
+            })                                  
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-gray-500">
               <div className="w-12 h-12 bg-[#2c2c2c] rounded-lg flex items-center justify-center mb-2">
