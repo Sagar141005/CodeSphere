@@ -2,6 +2,9 @@ import { useEffect } from "react";
 
 export default function CursorBlob() {
   useEffect(() => {
+
+    if(document.body.classList.contains('disable-cursor-blob')) return;
+
     const blob = document.createElement("div");
     blob.className = "cursor-blob";
     document.body.appendChild(blob);

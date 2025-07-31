@@ -3,6 +3,7 @@ import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
 import util from "util";
+import * as esprima from 'esprima';
 
 const execAsync = util.promisify(exec);
 
@@ -29,9 +30,23 @@ export async function POST(req: Request) {
 
         console.log = originalLog;
         output = consoleOutput || "Program ran successfully!";
-      } catch (err: any) {
-        return NextResponse.json({ error: "JS Error: " + err.message });
-      }      
+      } catch (runtimeErr: any) {
+        const msg = runtimeErr.message;
+    
+        // If it's a "document is not defined"-like browser error, fallback to syntax check
+        const isBrowserAPIError = /document|window|HTMLElement|navigator/.test(msg);
+    
+        if (isBrowserAPIError) {
+          try {
+            esprima.parseScript(code);
+            return NextResponse.json({ ok: true });
+          } catch (syntaxErr: any) {
+            return NextResponse.json({ error: "JS Syntax Error: " + syntaxErr.message });
+          }
+        }
+    
+        return NextResponse.json({ error: "JS Runtime Error: " + msg });
+      }
     }
 
     // ---------- Python ----------

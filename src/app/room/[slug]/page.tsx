@@ -11,6 +11,8 @@ import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
 import type { FileData } from "@/types/FileData";
 import ThemeSelector from '@/components/ThemeSelector';
+import LivePreviewModal from '@/components/LivePreviewModal';
+import { MonitorDot } from 'lucide-react';
 
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -20,11 +22,17 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   const [ roomName, setRoomName ] = useState<string>("");
   const [ openTabs, setOpenTabs ] = useState<FileData[]>([]);
   const [ activeFile, setActiveFile ] = useState<FileData | null>(null);
-  const [theme, setTheme] = useState("vs-dark");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [terminalHeight, setTerminalHeight] = useState(40); 
-  const [terminalExpanded, setTerminalExpanded] = useState(false);
+  const [ theme, setTheme ] = useState("vs-dark");
+  const [ isSaving, setIsSaving ] = useState(false);
+  const [ isTyping, setIsTyping ] = useState(false);
+  const [ terminalHeight, setTerminalHeight ] = useState(40); 
+  const [ terminalExpanded, setTerminalExpanded ] = useState(false);
+  const [ previewOpen, setPreviewOpen ] = useState(false);
+  const [ htmlCode, setHtmlCode ] = useState('');
+  const [ cssCode, setCssCode ] = useState('');
+  const [ jsCode, setJsCode ] = useState('');
+  const [cssFileName, setCssFileName] = useState('');
+const [jsFileName, setJsFileName] = useState('');
   const terminalRef = useRef<TerminalRef>(null);
 
   useEffect(() => {
@@ -61,12 +69,17 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   }, [slug, session, status]);
   
 
-  const openFile = (file: FileData) => {
+  const openFile = async (file: FileData) => {
     if (!openTabs.find((f) => f.id === file.id)) {
       setOpenTabs((prev) => [...prev, file]);
     }
     setActiveFile(file);
   };
+
+  const hasHtml = openTabs.some(f => f.name.endsWith('.html'));
+  const hasCss = openTabs.some(f => f.name.endsWith('.css'));
+  const hasJs = openTabs.some(f => f.name.endsWith('.js'));
+
 
   const closeFile = (fileId: string) => {
     setOpenTabs((prev) => prev.filter((f) => f.id !== fileId));
@@ -84,6 +97,48 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
     if (filename.endsWith('.java')) return 'java';
     return 'javascript'; // default fallback
   };
+
+  function extractReferencedFiles(html: string) {
+    const jsMatches = Array.from(html.matchAll(/<script\s+[^>]*src=["']([^"']+)["']/gi));
+    const cssMatches = Array.from(html.matchAll(/<link\s+[^>]*href=["']([^"']+)["']/gi));
+  
+    return {
+      jsFiles: jsMatches.map(m => m[1].trim()),
+      cssFiles: cssMatches.map(m => m[1].trim()),
+    };
+  }  
+  
+
+  const handlePreview = async () => {
+    const htmlFile = openTabs.find(f => f.name.endsWith('.html'));
+    if (!htmlFile) return;
+  
+    const htmlRes = await fetch(`/api/file/${htmlFile.id}`);
+    const htmlData = await htmlRes.json();
+    const htmlContent = htmlData.content;
+  
+    // 🧠 Extract linked file names
+    const { cssFiles, jsFiles } = extractReferencedFiles(htmlContent);
+  const cssHref = cssFiles[0] ?? '';
+  const jsSrc = jsFiles[0] ?? '';
+
+  const cssFile = openTabs.find(f => cssHref.endsWith(f.name));
+  const jsFile = openTabs.find(f => jsSrc.endsWith(f.name));
+
+  const cssContent = cssFile
+    ? await fetch(`/api/file/${cssFile.id}`).then(r => r.json()).then(d => d.content)
+    : '';
+  const jsContent = jsFile
+    ? await fetch(`/api/file/${jsFile.id}`).then(r => r.json()).then(d => d.content)
+    : '';
+  
+    setHtmlCode(htmlContent);
+    setCssCode(cssContent);
+    setJsCode(jsContent);
+    setPreviewOpen(true);
+  };
+  
+  
   
 
   const runCode = async () => {
@@ -182,12 +237,20 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
 
         <div className='flex items-center gap-3'>
             <ThemeSelector theme={theme} setTheme={setTheme} />
-            <button
+            {hasHtml && hasCss && hasJs ? (
+              <button
+              onClick={handlePreview}
+              className='flex items-center gap-2 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer'>
+                <MonitorDot className='w-4 h-4' /> Preview
+              </button>
+            ) : (
+              <button
               onClick={runCode}
               className="flex items-center gap-2 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
             >
               ▶ Run
             </button>
+            )}
         </div>
       </div>
 
@@ -231,6 +294,16 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       </div>
     </div>
   </div>
+  {previewOpen && (
+    <LivePreviewModal
+      html={htmlCode}
+      css={cssCode}
+      js={jsCode}
+      cssFileName={cssFileName}
+      jsFileName={jsFileName}
+      onClose={() => setPreviewOpen(false)}
+    />
+  )}
 </div>
 
   );

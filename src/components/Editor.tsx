@@ -104,7 +104,7 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
 
       // Auto-save after 2 seconds of inactivity
       useEffect(() => {
-        if (!fileId || !code) return;
+        if (!fileId || code === null) return;
       
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       
