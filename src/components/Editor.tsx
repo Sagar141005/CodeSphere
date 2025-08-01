@@ -18,16 +18,18 @@ interface CodeEditorProps {
   theme: string,
   setIsSaving: (val: boolean) => void;
   setIsTyping: (val: boolean) => void;
+  editorRef: React.MutableRefObject<any>;
 }
 
 
-export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTyping, theme }: CodeEditorProps) {
+export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTyping, theme, editorRef }: CodeEditorProps) {
     const [ code, setCode ] = useState("// Loading...");
     const [ language, setLanguage ] = useState("javascript");
     const [ loadingError, setLoadingError ] = useState(false);
+    const [fileLoading, setFileLoading] = useState(true);
     
     const socketRef = useRef<Socket | null>(null);
-    const editorRef = useRef<any>(null);
+    const currentFileIdRef = useRef(fileId);
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Determine language based on file extension
@@ -50,6 +52,10 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
           });
         });
       }, []);      
+
+      useEffect(() => {
+        currentFileIdRef.current = fileId;
+      }, [fileId]);
       
       useEffect(() => {
         if (!socketRef.current) {
@@ -60,12 +66,9 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
         sock.emit('join-room', { roomId: slug, user });
     
         const handleCodeUpdate = ({ fileId: incomingFileId, code: incomingCode }: any) => {
-          if (incomingFileId === fileId && incomingCode !== code) {
+          if (currentFileIdRef.current === incomingFileId && incomingCode !== editorRef.current?.getValue()) {
             setCode(incomingCode);
-            // Update the Monaco editor manually
-            if (editorRef.current) {
-              editorRef.current.setValue(incomingCode);
-            }
+            editorRef.current?.setValue(incomingCode);
           }
         };
     
@@ -77,21 +80,39 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
       }, [slug, fileId, code]);
 
       useEffect(() => {
-          fetch(`/api/file/${fileId}`)
-              .then((res) => res.json())
-              .then((data) => {
-                  setCode(data.content || "// Start coding here");
-                  if (data.name) {
-                      setLanguage(getLanguageFromExtension(data.name));
-                  }
-              })
-              .catch(() => {
-                setLoadingError(true);
-                setCode("// Error loading file.");
-              });
+        let isCurrent = true;
+        setFileLoading(true);
+      
+        const loadFile = async () => {
+          try {
+            const res = await fetch(`/api/file/${fileId}`);
+            const data = await res.json();
+      
+            if (!isCurrent) return;
+      
+            setCode(data.content || "// Start coding here");
+            if (data.name) {
+              setLanguage(getLanguageFromExtension(data.name));
+            }
+          } catch {
+            if (isCurrent) {
+              setLoadingError(true);
+              setCode("// Error loading file.");
+            }
+          } finally {
+            if (isCurrent) setFileLoading(false); // loading finished
+          }
+        };
+      
+        loadFile();
+        return () => {
+          isCurrent = false; // Cancel this load if fileId changes
+        };
       }, [fileId]);
-
+      
       const handleChange = (value: string | undefined) => {
+          if (loadingError || fileLoading) return;
+
           const updatedCode = value || "";
           setCode(updatedCode);
           setIsTyping(true) // User is typing
@@ -104,25 +125,28 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
 
       // Auto-save after 2 seconds of inactivity
       useEffect(() => {
-        if (!fileId || code === null) return;
+        if (!fileId || code === null || loadingError || fileLoading) return;
       
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       
-        saveTimeoutRef.current = setTimeout(() => {
+        saveTimeoutRef.current = setTimeout(async () => {
           setIsSaving(true);
-          fetch(`/api/file/${fileId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: code, language }),
-          })
-            .finally(() => {
-              setIsSaving(false);
-              setIsTyping(false); // Only stop typing after save is complete
+          try {
+            await fetch(`/api/file/${fileId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content: code, language }),
             });
+          } catch (err) {
+            console.error("Failed to save:", err);
+          } finally {
+            setIsSaving(false);
+            setIsTyping(false);
+          }
         }, 2000);
       
         return () => clearTimeout(saveTimeoutRef.current!);
-      }, [code, fileId, language]);    
+      }, [code, fileId, language, loadingError, fileLoading]);    
 
     return (
         <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-white">
@@ -156,6 +180,7 @@ export default function CodeEditor({ slug, fileId, user, setIsSaving, setIsTypin
                 }}    
                 options={{
                   fontSize: 14,
+                  readOnly: fileLoading || loadingError,
                   minimap: { enabled: false },
                   scrollBeyondLastLine: false,
                   quickSuggestions: true,

@@ -1,6 +1,6 @@
 'use client';
 
-import { AppWindow, ExternalLink, X } from "lucide-react";
+import { AppWindow, X } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
 
 type Props = {
@@ -36,29 +36,21 @@ export default function LivePreviewModal({ html, css, js, onClose, cssFileName, 
 
 
    // Inject CSS if <link href="{cssFileName}"> is present in HTML
-   if (
-    cssFileName &&
-    css &&
-    new RegExp(
-      `<link\\s+rel=["']stylesheet["']\\s+href=["']${cssFileName}["']\\s*/?>`,
-      "i"
-    ).test(cleanedHTML)
-  ) {
-    cleanedHTML = cleanedHTML.replace(
-      new RegExp(`<link[^>]*href=["'][^"']*${cssFileName}["'][^>]*>`, "i"),
-      `<style>${css}</style>`
-    );
-    
-      }
+  if (cssFileName && css && new RegExp(
+        `<link\\s+rel=["']stylesheet["']\\s+href=["']${cssFileName}["']\\s*/?>`, "i"
+      ).test(cleanedHTML)) 
+    {
+      cleanedHTML = cleanedHTML.replace(
+        new RegExp(`<link[^>]*href=["'][^"']*${cssFileName}["'][^>]*>`, "i"),
+        `<style>${css}</style>`
+      );
+    }
     
 
-    if (
-      jsFileName &&
-      js &&
-      new RegExp(`<script\\s+src=["']${jsFileName}["']><\\/script>`, "i").test(
-        cleanedHTML
-      )
-    ) {
+  if (jsFileName && js && new RegExp(
+        `<script\\s+src=["']${jsFileName}["']><\\/script>`, "i"
+      ).test(cleanedHTML)) 
+    {
       cleanedHTML = cleanedHTML.replace(
         new RegExp(`<script\\s+src=["']${jsFileName}["']><\\/script>`, "i"),
         `<script>${js}</script>`
