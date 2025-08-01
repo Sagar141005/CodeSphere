@@ -168,57 +168,67 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       setTerminalExpanded(true);
     }
 
+    let output = "", error = "";
+
     // Expand terminal only on first run
     let fileContent = '';
     try {
-      const res = await fetch(`/api/file/${activeFile.id}`);
-      const file = await res.json();
-      fileContent = file.content;
-    } catch (error) {
-      console.error("Error fetching active file content:", error);
-      return;
-    }
+      // Step 1: Gather all file contents from open tabs
+      const filesToFetch = [...openTabs];
+      const fileMap: Record<string, string> = {};
+      let entry = activeFile.name;
 
-    let output = "", error = "";
-    try {
+      await Promise.all(
+        filesToFetch.map(async(file) => {
+          try {
+            const res = await fetch(`/api/file/${file.id}`);
+            const fileData = await res.json();
+            fileMap[file.name] = fileData.content || "";
+          } catch(error) {
+            console.warn(`Failed to fetch ${file.name}:`, error);
+          }
+        })
+      )
+
+      // Step 2: Call the execution API
       const execRes = await fetch('/api/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           language: getLanguage(activeFile.name),
-          code: fileContent,
+          files: fileMap,
+          entry
         }),
       });
+
       const data = await execRes.json();
       output = data.output;
       error = data.error;
+
+       // Step 3: Show it locally in the Terminal component
+       terminalRef.current?.runCode(getLanguage(activeFile.name), fileMap[entry]);
+
+      // Step 4: Emit to other users
+      const username = session?.user.name || "Unknown user";
+      const timeStamp = new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      });
+
+      const socket = getSocket();
+      socket.emit('terminal-output', {
+        roomId: slug,
+        output,
+        error,
+        ranBy: username,
+        timeStamp
+      });
+
     } catch (error) {
       console.error("Execution failed:", error);
     }
-
-    
-    // Show it locally
-    terminalRef.current?.runCode(getLanguage(activeFile.name), fileContent);
-
-    // Get current user info
-    const username = session?.user.name || "Unknown user";
-    const timeStamp = new Date().toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    })
-    
-
-    // Emit output to the room
-    const socket = getSocket();
-    socket.emit('terminal-output', {
-      roomId: slug, // slug is your room ID
-      output,
-      error,
-      ranBy: username,
-      timeStamp
-    });
   };
 
   return (

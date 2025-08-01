@@ -9,10 +9,11 @@ const execAsync = util.promisify(exec);
 
 export async function POST(req: Request) {
   try {
-    const { language, code } = await req.json();
+    const body = await req.json();
+    const { language, code, entry, files } = body;
 
-    if (!language || !code) {
-      return NextResponse.json({ error: "Missing language or code" }, { status: 400 });
+    if (!language || (!code && (!entry || !files))) {
+      return NextResponse.json({ error: "Missing required fields: language, and either code or entry + files" }, { status: 400 });
     }
 
     console.log(`Executing ${language} code`);
@@ -22,14 +23,40 @@ export async function POST(req: Request) {
     // ---------- JavaScript ----------
     if (language === "javascript" || language === "node") {
       try {
+        let bundle = "";
+        if(files && entry) {
+          // naive dependency resolver
+          const visited = new Set<string>();
+
+          function resolve(fileName: string) {
+            if(!files[fileName] || visited.has(fileName)) return;
+            visited.add(fileName);
+
+            const content = files[fileName];
+            const importRegex = /import\s+(?:.+?\s+from\s+)?['"](.+?)['"]/g;
+
+            let match;
+            while((match = importRegex.exec(content))) {
+              let imported = match[1];
+              if(!imported.endsWith('.js')) imported += '.js';
+              resolve(imported);
+            }
+
+            bundle += `\n// FILE: ${fileName}\n${content}\n`;
+          }
+          resolve(entry);
+        } else {
+          bundle = code;
+        }
+        
         let consoleOutput = "";
         const originalLog = console.log;
-        console.log = (msg) => { consoleOutput += msg + "\n"; };
+        console.log = (...args) => { consoleOutput += args.join(" ") + "\n"; }
 
-        eval(code);
+        eval(bundle);
 
         console.log = originalLog;
-        output = consoleOutput || "Program ran successfully!";
+        output = consoleOutput || "Program ran successfully";
       } catch (runtimeErr: any) {
         const msg = runtimeErr.message;
     
@@ -52,11 +79,24 @@ export async function POST(req: Request) {
     // ---------- Python ----------
     else if (language === "python") {
       try {
-        const tempFile = path.join("/tmp", `program_${Date.now()}.py`);
-        fs.writeFileSync(tempFile, code);
+        const tempDir = `/tmp/project_${Date.now()}`;
+        fs.mkdirSync(tempDir);
 
-        const { stdout, stderr } = await execAsync(`python3 ${tempFile}`);
-        output = stdout || stderr || "Program ran successfully!";
+        if(files && entry) {
+          for(const [ filename, content ] of Object.entries(files as Record<string, string>)) {
+            fs.writeFileSync(path.join(tempDir, filename), content);
+          }
+          const entryPath = path.join(tempDir, entry);
+          const { stdout, stderr } = await execAsync(`python3 ${entry}`, { cwd: tempDir });
+
+          output = stdout || stderr || "Program ran successfully!";
+        } else {
+          const tempFile = path.join(tempDir, `main.py`);
+          fs.writeFileSync(tempFile, code);
+
+          const { stdout, stderr } = await execAsync(`python3 ${tempFile}`);
+          output = stdout || stderr || "Program ran successfully!";
+        }
       } catch (err: any) {
         return NextResponse.json({ error: "Python Error: " + err.message });
       }      
@@ -65,43 +105,80 @@ export async function POST(req: Request) {
     // ---------- C ----------
     else if (language === "c") {
       try {
-        const tempFile = path.join("/tmp", `program_${Date.now()}.c`);
-        const outFile = path.join("/tmp", `program_${Date.now()}`);
-        fs.writeFileSync(tempFile, code);
+        const tempDir = `/tmp/project_c_${Date.now()}`;
+        fs.mkdirSync(tempDir);
 
-        const { stdout, stderr } = await execAsync(`gcc ${tempFile} -o ${outFile} && ${outFile}`);
-        output = stdout || stderr || "Program ran successfully!";
+        if (files && entry) {
+          for (const [filename, content] of Object.entries(files)) {
+            fs.writeFileSync(path.join(tempDir, filename), content as string);
+          }
+          const outputFile = path.join(tempDir, 'main.out');
+          const sourceFiles = Object.keys(files).filter(f => f.endsWith('.c')).join(' ');
+          const { stdout, stderr } = await execAsync(`gcc ${sourceFiles} -o main.out && ./main.out`, { cwd: tempDir });
+          output = stdout || stderr || "Program ran successfully!";
+        } else {
+          const tempFile = path.join(tempDir, `program.c`);
+          fs.writeFileSync(tempFile, code);
+          const outFile = path.join(tempDir, `program.out`);
+          const { stdout, stderr } = await execAsync(`gcc ${tempFile} -o ${outFile} && ${outFile}`);
+          output = stdout || stderr || "Program ran successfully!";
+        }
       } catch (err: any) {
         return NextResponse.json({ error: "C Error: " + err.message });
-      }      
+      }
     }
 
     // ---------- C++ ----------
     else if (language === "cpp") {
       try {
-        const tempFile = path.join("/tmp", `program_${Date.now()}.cpp`);
-        const outFile = path.join("/tmp", `program_${Date.now()}`);
-        fs.writeFileSync(tempFile, code);
+        const tempDir = `/tmp/project_cpp_${Date.now()}`;
+        fs.mkdirSync(tempDir);
 
-        const { stdout, stderr } = await execAsync(`g++ ${tempFile} -o ${outFile} && ${outFile}`);
-        output = stdout || stderr || "Program ran successfully!";
+        if (files && entry) {
+          for (const [filename, content] of Object.entries(files)) {
+            fs.writeFileSync(path.join(tempDir, filename), content as string);
+          }
+          const outputFile = path.join(tempDir, 'main.out');
+          const sourceFiles = Object.keys(files).filter(f => f.endsWith('.cpp')).join(' ');
+          const { stdout, stderr } = await execAsync(`g++ ${sourceFiles} -o main.out && ./main.out`, { cwd: tempDir });
+          output = stdout || stderr || "Program ran successfully!";
+        } else {
+          const tempFile = path.join(tempDir, `program.cpp`);
+          fs.writeFileSync(tempFile, code);
+          const outFile = path.join(tempDir, `program.out`);
+          const { stdout, stderr } = await execAsync(`g++ ${tempFile} -o ${outFile} && ${outFile}`);
+          output = stdout || stderr || "Program ran successfully!";
+        }
       } catch (err: any) {
         return NextResponse.json({ error: "C++ Error: " + err.message });
-      }      
+      }
     }
 
     // ---------- Java ----------
     else if (language === "java") {
       try {
-        const className = "Main"; // Enforce a fixed class name for simplicity
-        const javaFile = path.join("/tmp", `${className}.java`);
-        fs.writeFileSync(javaFile, code);
+        const tempDir = `/tmp/project_java_${Date.now()}`;
+        fs.mkdirSync(tempDir);
 
-        const { stdout, stderr } = await execAsync(`javac ${javaFile} && java -cp /tmp ${className}`);
-        output = stdout || stderr || "Program ran successfully!";
+        if (files && entry) {
+          for (const [filename, content] of Object.entries(files)) {
+            fs.writeFileSync(path.join(tempDir, filename), content as string);
+          }
+
+          const { stdout: compileOut, stderr: compileErr } = await execAsync(`javac *.java`, { cwd: tempDir });
+          const mainClass = entry.replace(".java", "");
+          const { stdout, stderr } = await execAsync(`java -cp . ${mainClass}`, { cwd: tempDir });
+          output = stdout || stderr || compileErr || compileOut || "Program ran successfully!";
+        } else {
+          const className = "Main";
+          const javaFile = path.join(tempDir, `${className}.java`);
+          fs.writeFileSync(javaFile, code);
+          const { stdout, stderr } = await execAsync(`javac ${className}.java && java -cp . ${className}`, { cwd: tempDir });
+          output = stdout || stderr || "Program ran successfully!";
+        }
       } catch (err: any) {
         return NextResponse.json({ error: "Java Error: " + err.message });
-      }      
+      }
     }
 
     else {
