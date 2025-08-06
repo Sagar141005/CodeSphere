@@ -20,7 +20,7 @@ export async function GET(_: Request, context: { params: Promise<{ slug: string 
 export async function POST(req: Request, context: { params: Promise<{ slug: string }> }) {
     const { slug } = await context.params; 
     try {
-        const { name, parentId } = await req.json();
+        const { name, parentId, content = "" } = await req.json();
         const room = await prisma.room.findUnique({ where: { slug } });
 
         if(!room) return NextResponse.json({ error: "Room not found" }, { status: 404 });
@@ -31,7 +31,8 @@ export async function POST(req: Request, context: { params: Promise<{ slug: stri
                 name,
                 type: isFile ? "file" : "folder",
                 parentId,
-                roomId: room.id
+                roomId: room.id,
+                content
             }
         });
 

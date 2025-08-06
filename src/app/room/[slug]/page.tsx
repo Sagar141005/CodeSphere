@@ -132,6 +132,9 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
     const cssHref = cssFiles[0] ?? '';
     const jsSrc = jsFiles[0] ?? '';
 
+    setCssFileName(cssHref);
+    setJsFileName(jsSrc);  
+
     const cssFile = openTabs.find(f => cssHref.endsWith(f.name));
     const jsFile = openTabs.find(f => jsSrc.endsWith(f.name));
 
@@ -149,6 +152,63 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
         const jsRes = await fetch(`/api/file/${jsFile.id}`);
         const jsData = await jsRes.json();
         jsContent = jsData.content || '';
+      }
+
+      const jsFilesMap: Record<string, string> = {};
+        await Promise.all(
+          openTabs
+            .filter(f => f.name.endsWith('.js'))
+            .map(async (f) => {
+              const res = await fetch(`/api/file/${f.id}`);
+              const data = await res.json();
+              jsFilesMap[f.name] = data.content || '';
+            })
+        );
+
+
+      if (jsFile && jsSrc) {
+        const jsExecRes = await fetch('/api/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language: 'javascript',
+            entry: jsSrc,
+            files: jsFilesMap,
+            mode: 'preview'
+          }),
+        });
+        
+  
+        const execData = await jsExecRes.json();
+        const existing = files.find(f => f.name === 'package.json');
+        const packageContent = JSON.stringify(execData.packageJson, null, 2);
+
+        if (existing) {
+          // Update case
+          const updateRes = await fetch(`/api/file/${existing.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: packageContent }),
+          });
+          const updated = await updateRes.json();
+          setFiles(prev => prev.map(f => f.id === existing.id ? updated : f));
+        } else {
+          // Create case
+          const createRes = await fetch(`/api/room/${slug}/files`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: 'package.json',
+              content: packageContent,
+              type: 'file',
+              parentId: null,
+              roomSlug: slug,
+            }),
+          });
+          const newFile = await createRes.json();
+          setFiles(prev => [...prev, newFile]);
+          setOpenTabs(prev => [...prev, newFile]);
+        }
       }
     } catch (error) {
       console.warn("Failed to load linked files:", error);

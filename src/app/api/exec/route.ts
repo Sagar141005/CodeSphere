@@ -10,7 +10,7 @@ const execAsync = util.promisify(exec);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { language, code, entry, files } = body;
+    const { language, code, entry, files, mode } = body;
 
     if (!language || (!code && (!entry || !files))) {
       return NextResponse.json({ error: "Missing required fields: language, and either code or entry + files" }, { status: 400 });
@@ -23,46 +23,78 @@ export async function POST(req: Request) {
     // ---------- JavaScript ----------
     if (language === "javascript" || language === "node") {
       try {
-        let bundle = "";
-        if(files && entry) {
-          // naive dependency resolver
+        if (mode === 'preview') {
+          const dependencies: Record<string, string> = {};
           const visited = new Set<string>();
-
+          let bundle = "";
+        
+          function extractDependencies(jsCode: string) {
+            const deps = new Set<string>();
+            try {
+              const ast = esprima.parseModule(jsCode, { tolerant: true, jsx: true });
+              for (const node of ast.body) {
+                if (node.type === 'ImportDeclaration' && typeof node.source?.value === 'string') {
+                  const source = node.source.value;
+                  if (!source.startsWith('.') && !source.startsWith('/')) {
+                    deps.add(source);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("Dependency parsing error:", err);
+            }
+            return Array.from(deps);
+          }
+        
           function resolve(fileName: string) {
-            if(!files[fileName] || visited.has(fileName)) return;
+            if (!files[fileName] || visited.has(fileName)) return;
             visited.add(fileName);
-
+        
             const content = files[fileName];
+            const deps = extractDependencies(content);
+        
+            for (const dep of deps) {
+              dependencies[dep] = 'latest';
+            }
+        
+            // Follow relative imports
             const importRegex = /import\s+(?:.+?\s+from\s+)?['"](.+?)['"]/g;
-
             let match;
-            while((match = importRegex.exec(content))) {
+            while ((match = importRegex.exec(content))) {
               let imported = match[1];
-              if(!imported.endsWith('.js')) imported += '.js';
+              if (!imported.startsWith('.') && !imported.startsWith('/')) continue;
+              if (!imported.endsWith('.js')) imported += '.js';
               resolve(imported);
             }
-
+        
             bundle += `\n// FILE: ${fileName}\n${content}\n`;
           }
-          resolve(entry);
-        } else {
-          bundle = code;
+        
+          if (files && entry && files[entry]) {
+            resolve(entry);
+          }
+        
+          const packageJson = {
+            name: "live-preview-project",
+            version: "1.0.0",
+            dependencies,
+          };
+
+        
+          return NextResponse.json({
+            output: "Dependency analysis completed in preview mode.",
+            packageJson,
+          });
         }
         
-        let consoleOutput = "";
-        const originalLog = console.log;
-        console.log = (...args) => { consoleOutput += args.join(" ") + "\n"; }
 
-        eval(bundle);
+        // Actual runtime eval or sandbox code goes here if needed
 
-        console.log = originalLog;
-        output = consoleOutput || "Program ran successfully";
       } catch (runtimeErr: any) {
         const msg = runtimeErr.message;
-    
-        // If it's a "document is not defined"-like browser error, fallback to syntax check
+
         const isBrowserAPIError = /document|window|HTMLElement|navigator/.test(msg);
-    
+
         if (isBrowserAPIError) {
           try {
             esprima.parseScript(code);
@@ -71,7 +103,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "JS Syntax Error: " + syntaxErr.message });
           }
         }
-    
+
         return NextResponse.json({ error: "JS Runtime Error: " + msg });
       }
     }
