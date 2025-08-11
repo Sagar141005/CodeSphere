@@ -3,7 +3,7 @@
 import { use } from 'react';
 import CodeEditor from "@/components/Editor";
 import Navbar from "@/components/Navbar";
-import EditorFIlePanel from "@/components/EditorFilePanel";
+import TabbedSidebar from "@/components/TabbedSidebar";
 import Tabs from "@/components/Tabs";
 import Terminal, { TerminalRef } from "@/components/Terminal";
 import { getSocket } from "@/lib/socket";
@@ -13,6 +13,7 @@ import type { FileData } from "@/types/FileData";
 import ThemeSelector from '@/components/ThemeSelector';
 import LivePreviewModal from '@/components/LivePreviewModal';
 import { MonitorDot, Redo, Undo } from 'lucide-react';
+import DiffView from '@/components/DiffView';
 
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -33,6 +34,10 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   const [ jsCode, setJsCode ] = useState('');
   const [cssFileName, setCssFileName] = useState('');
   const [jsFileName, setJsFileName] = useState('');
+  const [diffs, setDiffs] = useState<
+    { id: string; name: string; language: string; oldContent: string; newContent: string }[]
+  >([]);
+  const [showDiffModal, setShowDiffModal] = useState(false);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
 
@@ -300,7 +305,7 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
       <div className="flex flex-1 overflow-hidden">
 
         {/* File Panel */}
-        <EditorFIlePanel
+        <TabbedSidebar
           files={files}
           onFileClick={openFile}
           slug={slug}
@@ -314,6 +319,10 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
               prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
             )
           }
+          onPreview={(diffs) => {
+            setDiffs(diffs);
+            setShowDiffModal(true);
+          }}
         />
 
         {/* Code Editor Section */}
@@ -433,6 +442,41 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
           onClose={() => setPreviewOpen(false)}
         />
       )}
+
+    {showDiffModal && (
+      <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4 sm:px-6">
+        <div className="bg-[#1e1e1e] max-w-4xl w-full p-6 rounded-md shadow-lg max-h-[90vh] flex flex-col">
+          {/* Fixed header section */}
+          <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 px-0 border-b border-gray-700">
+            <h2 className="text-white text-lg font-semibold">Preview Changes</h2>
+            <button
+              onClick={() => setShowDiffModal(false)}
+              className="text-gray-400 hover:text-white text-sm cursor-pointer"
+              aria-label="Close preview modal"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Scrollable diffs container */}
+          <div className="overflow-y-auto flex-grow max-h-[calc(90vh-56px)]">
+            {diffs.length === 0 ? (
+              <p className="text-gray-400 text-sm italic">No changes</p>
+            ) : (
+              diffs.map((file) => (
+                <DiffView
+                  key={file.id}
+                  fileName={file.name}
+                  original={file.oldContent}
+                  modified={file.newContent}
+                  language={file.language || 'plaintext'}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

@@ -15,16 +15,16 @@ datasource db {
 }
 
 model User {
-  id String @id @default(cuid())
-  email String @unique
-  name String
-  profilePic String?
-  password String?
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  profilePic    String?
+  password      String?
   emailVerified DateTime?
-  image String?
+  image         String?
 
-  teams Team[] @relation("UserTeams")
-  rooms Room[] @relation("UserRooms")
+  teams        Team[] @relation("UserTeams")
+  rooms        Room[] @relation("UserRooms")
   createdTeams Team[] @relation("TeamCreators")
 
   accounts Account[]
@@ -34,62 +34,63 @@ model User {
 }
 
 model Account {
-  id String @id @default(cuid())
-  userId String
-  type String
-  provider String
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
   providerAccountId String
-  refresh_token String?
-  access_token String?
-  expires_at Int?
-  token_type String?
-  scope String?
-  id_token String?
-  session_state String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
 model Session {
-  id String @id @default(cuid())
-  sessionToken String @unique
-  userId String
-  expires DateTime
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
   identifier String
-  token String @unique
-  expires DateTime
+  token      String   @unique
+  expires    DateTime
 
   @@unique([identifier, token])
 }
 
 model Team {
-  id String @id @default(cuid())
-  name String
-  members User[] @relation("UserTeams")
-  createdBy User @relation("TeamCreators", fields: [createdById], references: [id])
+  id          String   @id @default(cuid())
+  name        String
+  members     User[]   @relation("UserTeams")
+  createdBy   User     @relation("TeamCreators", fields: [createdById], references: [id])
   createdById String
-  rooms Room[]
-  createdAt DateTime @default(now())
+  rooms       Room[]
+  createdAt   DateTime @default(now())
 }
 
 model Room {
-  id String @id @default(cuid())
-  slug String @unique
-  name String
-  owner User @relation("UserRooms" ,fields: [ownerId], references: [id])
-  ownerId String
-  content String @default("")
-  team Team? @relation(fields: [teamId], references: [id])
-  teamId String?
-  files File[]
-  githubRepo String?
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  owner       User     @relation("UserRooms", fields: [ownerId], references: [id])
+  ownerId     String
+  content     String   @default("")
+  team        Team?    @relation(fields: [teamId], references: [id])
+  teamId      String?
+  files       File[]
+  githubRepo  String?
   githubToken String?
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  commits     Commit[]
 }
 
 enum FileType {
@@ -98,16 +99,35 @@ enum FileType {
 }
 
 model File {
-  id String @id @default(cuid())
-  name String
-  content String @default("")
-  type FileType
+  id        String   @id @default(cuid())
+  name      String
+  content   String   @default("")
+  type      FileType
   language  String?
-  parentId String?
-  parent File? @relation("FileChildren", fields: [parentId], references: [id])
-  children File[] @relation("FileChildren")
-  room Room @relation(fields: [roomId], references: [id])
-  roomId String
+  parentId  String?
+  parent    File?    @relation("FileChildren", fields: [parentId], references: [id])
+  children  File[]   @relation("FileChildren")
+  room      Room     @relation(fields: [roomId], references: [id])
+  roomId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Commit {
+  id        String       @id @default(cuid())
+  message   String
+  createdAt DateTime     @default(now())
+  roomId    String
+  room      Room         @relation(fields: [roomId], references: [id])
+  files     CommitFile[]
+}
+
+model CommitFile {
+  id       String  @id @default(cuid())
+  commitId String
+  fileId   String
+  name     String
+  language String?
+  content  String
+  commit   Commit  @relation(fields: [commitId], references: [id])
 }

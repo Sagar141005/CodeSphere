@@ -189,73 +189,88 @@ export default function EditorFilePanel({
   };
 
   return (
-    <aside className="w-64 bg-[#1e1e1e] text-gray-200 p-4 overflow-y-auto border-r border-gray-700 relative">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-sm uppercase tracking-wider text-gray-400">Explorer</h2>
+    <aside className="bg-[#1e1e1e] text-gray-200 p-3 overflow-y-auto border-r border-gray-700 relative">
+    <div className="flex justify-between items-center mb-3 px-1">
+      <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 select-none">
+        Explorer
+      </h2>
+      <button
+        className="hover:bg-[#2a2a2a] p-1.5 rounded transition"
+        onClick={() => setCreatingInFolder("root")}
+        aria-label="Add new file or folder"
+        type="button"
+      >
+        <Plus className="w-4 h-4" />
+      </button>
+    </div>
+  
+    {creatingInFolder === "root" && (
+      <input
+        type="text"
+        placeholder="New file or folder"
+        value={newName}
+        onChange={(e) => setNewName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && createItem(null)}
+        className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-3"
+        autoFocus
+        aria-label="New file or folder name"
+      />
+    )}
+  
+    <div className="space-y-1 text-sm px-1">
+      {renderTree(null)}
+    </div>
+  
+    {contextMenu && (
+      <div
+        ref={menuRef}
+        style={{ top: contextMenu.y, left: contextMenu.x }}
+        className="fixed bg-[#1f1f1f] text-white rounded-md shadow-lg w-48 z-50 border border-gray-700"
+        role="menu"
+        aria-orientation="vertical"
+        tabIndex={-1}
+      >
         <button
-          className="hover:bg-[#2a2a2a] p-1 rounded"
-          onClick={() => setCreatingInFolder("root")}
+          onClick={() => {
+            setCreatingInFolder(contextMenu.fileId || "root");
+            setContextMenu(null);
+          }}
+          className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
+          role="menuitem"
+          type="button"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-green-400" />
+          New File / Folder
+        </button>
+        <button
+          onClick={() => {
+            setRenamingId(contextMenu.fileId!);
+            const current = files.find((f) => f.id === contextMenu.fileId);
+            setNewName(current?.name || "");
+            setContextMenu(null);
+          }}
+          className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
+          role="menuitem"
+          type="button"
+        >
+          <Edit3 className="w-4 h-4 text-yellow-400" />
+          Rename
+        </button>
+        <button
+          onClick={() => {
+            handleDelete(contextMenu.fileId!);
+            setContextMenu(null);
+          }}
+          className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-600 transition text-sm text-red-400"
+          role="menuitem"
+          type="button"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete
         </button>
       </div>
-
-      {creatingInFolder === "root" && (
-        <input
-          type="text"
-          placeholder="New file or folder"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && createItem(null)}
-          className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-2"
-          autoFocus
-        />
-      )}
-
-      <div className="space-y-1 text-sm">
-        {renderTree(null)}
-      </div>
-
-      {contextMenu && (
-        <div
-          ref={menuRef}
-          style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed bg-[#1f1f1f] text-white rounded-lg shadow-lg w-48 z-50 border border-gray-700"
-        >
-          <button
-            onClick={() => {
-              setCreatingInFolder(contextMenu.fileId || "root");
-              setContextMenu(null);
-            }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
-          >
-            <Plus className="w-4 h-4 text-green-400" />
-            New File / Folder
-          </button>
-          <button
-            onClick={() => {
-              setRenamingId(contextMenu.fileId!);
-              const current = files.find((f) => f.id === contextMenu.fileId);
-              setNewName(current?.name || "");
-              setContextMenu(null);
-            }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
-          >
-            <Edit3 className="w-4 h-4 text-yellow-400" />
-            Rename
-          </button>
-          <button
-            onClick={() => {
-              handleDelete(contextMenu.fileId!);
-              setContextMenu(null);
-            }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-600 transition text-sm text-red-400"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </button>
-        </div>
-      )}
-    </aside>
+    )}
+  </aside>
+  
   );
 }
