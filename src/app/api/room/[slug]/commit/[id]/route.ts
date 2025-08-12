@@ -6,7 +6,21 @@ export async function GET(_: Request, context: { params: { slug: string, id: str
     try {
         const commit = await prisma.commit.findUnique({
             where: { id },
-            include: { files: true }
+            include: {
+                files: {
+                    select: {
+                      id: true,
+                      name: true,
+                      language: true,
+                      content: true,
+                      oldContent: true,
+                      fileId: true
+                    }
+                },
+                user: {
+                  select: { id: true, name: true, email: true }
+                }
+            }
         });
 
         if(!commit) {

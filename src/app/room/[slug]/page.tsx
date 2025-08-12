@@ -15,6 +15,22 @@ import LivePreviewModal from '@/components/LivePreviewModal';
 import { MonitorDot, Redo, Undo } from 'lucide-react';
 import DiffView from '@/components/DiffView';
 
+type Diff = {
+  id: string;
+  name: string;
+  language: string;
+  oldContent: string;
+  content: string;
+};
+
+type Commit = {
+  id: string;
+  message: string;
+  createdAt: string;
+  user: { name: string; [key: string]: any };
+  files: Diff[];
+};
+
 export default function RoomPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const { data: session, status } = useSession();
@@ -34,9 +50,8 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
   const [ jsCode, setJsCode ] = useState('');
   const [cssFileName, setCssFileName] = useState('');
   const [jsFileName, setJsFileName] = useState('');
-  const [diffs, setDiffs] = useState<
-    { id: string; name: string; language: string; oldContent: string; newContent: string }[]
-  >([]);
+  const [diffs, setDiffs] = useState<Diff[]>([]);
+  const [currentCommit, setCurrentCommit] = useState<Commit | null>(null);
   const [showDiffModal, setShowDiffModal] = useState(false);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
@@ -296,6 +311,13 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
     }
   };
 
+  const fetchCommitDetails = async (commitId: string) => {
+    const res = await fetch(`/api/room/${slug}/commit/${commitId}`);
+    if (!res.ok) throw new Error("Cannot fetch commit");
+    return res.json(); // includes { id, message, createdAt, user }
+  }
+  
+
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white font-sans">
       {/* Header/Navbar */}
@@ -319,10 +341,18 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
               prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
             )
           }
-          onPreview={(diffs) => {
-            setDiffs(diffs);
-            setShowDiffModal(true);
+          onPreview={async (commitId: string) => {  // explicitly type commitId as string
+            try {
+              const commitData = await fetchCommitDetails(commitId);
+              setCurrentCommit(commitData);
+              setDiffs(commitData.files);
+              setShowDiffModal(true);
+            } catch (err) {
+              console.error("Failed to fetch commit:", err);
+            }
           }}
+          
+          
         />
 
         {/* Code Editor Section */}
@@ -443,40 +473,55 @@ export default function RoomPage({ params }: { params: Promise<{ slug: string }>
         />
       )}
 
-    {showDiffModal && (
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4 sm:px-6">
-        <div className="bg-[#1e1e1e] max-w-4xl w-full p-6 rounded-md shadow-lg max-h-[90vh] flex flex-col">
-          {/* Fixed header section */}
-          <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 px-0 border-b border-gray-700">
-            <h2 className="text-white text-lg font-semibold">Preview Changes</h2>
-            <button
-              onClick={() => setShowDiffModal(false)}
-              className="text-gray-400 hover:text-white text-sm cursor-pointer"
-              aria-label="Close preview modal"
-            >
-              ✕
-            </button>
-          </div>
+      {showDiffModal && currentCommit && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4 sm:px-6">
+          <div className="bg-[#1e1e1e] max-w-4xl w-full p-6 rounded-md shadow-lg max-h-[90vh] flex flex-col">
+            {/* Sticky Header */}
+            <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 border-b border-gray-700">
+              <div>
+                <h2 className="text-white text-lg font-semibold leading-none">
+                  Preview Changes
+                </h2>
+                <p className="text-sm text-gray-400 mt-2">
+                  Committed by{" "}
+                  <span className="text-white font-medium">
+                  {currentCommit?.user?.name ?? "Unknown user"}
+                  </span>{" "}
+                  on{" "}
+                  <span className="text-white font-medium">
+                    {new Date(currentCommit.createdAt).toLocaleString()}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDiffModal(false)}
+                className="text-gray-400 hover:text-white text-xl font-semibold leading-none cursor-pointer px-2"
+                aria-label="Close preview modal"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
 
-          {/* Scrollable diffs container */}
-          <div className="overflow-y-auto flex-grow max-h-[calc(90vh-56px)]">
-            {diffs.length === 0 ? (
-              <p className="text-gray-400 text-sm italic">No changes</p>
-            ) : (
-              diffs.map((file) => (
-                <DiffView
-                  key={file.id}
-                  fileName={file.name}
-                  original={file.oldContent}
-                  modified={file.newContent}
-                  language={file.language || 'plaintext'}
-                />
-              ))
-            )}
+            {/* Scrollable Diffs */}
+            <div className="overflow-y-auto flex-grow max-h-[calc(90vh-76px)]">
+              {diffs.length === 0 ? (
+                <p className="text-gray-400 text-sm italic">No changes</p>
+              ) : (
+                diffs.map((file) => (
+                  <DiffView
+                    key={file.id}
+                    fileName={file.name}
+                    original={file.oldContent || ""} 
+                    modified={file.content || ""}
+                    language={file.language || "plaintext"}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }

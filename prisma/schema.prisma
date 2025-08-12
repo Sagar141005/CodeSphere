@@ -22,6 +22,7 @@ model User {
   password      String?
   emailVerified DateTime?
   image         String?
+  commits       Commit[]
 
   teams        Team[] @relation("UserTeams")
   rooms        Room[] @relation("UserRooms")
@@ -119,15 +120,18 @@ model Commit {
   createdAt DateTime     @default(now())
   roomId    String
   room      Room         @relation(fields: [roomId], references: [id])
+  user      User?        @relation(fields: [userId], references: [id])
+  userId    String?
   files     CommitFile[]
 }
 
 model CommitFile {
-  id       String  @id @default(cuid())
-  commitId String
-  fileId   String
-  name     String
-  language String?
-  content  String
-  commit   Commit  @relation(fields: [commitId], references: [id])
+  id         String  @id @default(cuid())
+  commitId   String
+  fileId     String
+  name       String
+  language   String?
+  content    String
+  oldContent String?
+  commit     Commit  @relation(fields: [commitId], references: [id])
 }

@@ -15,15 +15,7 @@ interface TabbedSidebarProps {
   onFileAdded: (file: FileData) => void;
   onFileDeleted: (id: string) => void;
   onFileRenamed: (id: string, newName: string) => void;
-  onPreview?: (
-    diffs: {
-      id: string;
-      name: string;
-      language: string;
-      oldContent: string;
-      newContent: string;
-    }[]
-  ) => void;
+  onPreview?: (commitId: string) => void;
 }
 
 export default function TabbedSidebar({

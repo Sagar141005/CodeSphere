@@ -1,21 +1,14 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { ArrowLeftToLine, Circle, GitCommit, History } from "lucide-react";
+import { ArrowLeftToLine, GitCommit, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import clsx from "clsx";
+import { useSession } from "next-auth/react";
 
 interface GitSidebarProps {
   roomId: string;
-  onPreview?: (
-    diffs: {
-      id: string;
-      name: string;
-      language: string;
-      oldContent: string;
-      newContent: string;
-    }[]
-  ) => void;
+  onPreview?: (commitId: string) => void;
 }
 
 interface Commit {
@@ -34,6 +27,7 @@ interface RoomFile {
 interface CommitFile {
     fileId: string;
     content: string;
+    oldContent?: string;
 }
 
 export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
@@ -43,6 +37,9 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
   const [lastCommitFiles, setLastCommitFiles] = useState<CommitFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const { data: session } = useSession();
+  const userId = session?.user.id;
 
   useEffect(() => {
     fetchCommits();
@@ -64,7 +61,8 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
           // Ensure fileId is present & matches roomFiles IDs
           setLastCommitFiles(commitData.files.map((f: any) => ({
             fileId: f.fileId,
-            content: f.content
+            content: f.content,
+            oldContent: f.oldContent || ''
           })));
         }
       }
@@ -111,7 +109,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
             id: file.fileId,
             name: file.name,
             language: file.language,
-            oldContent: prev?.content || '',
+            oldContent: prev?.content || file.oldContent || '',
             newContent: file.content || '',
           };
         }
@@ -120,7 +118,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       .filter(Boolean);
   
     if (onPreview) {
-      onPreview(changes);
+      onPreview(commitId);
     }
   }
 
@@ -139,7 +137,11 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       const res = await fetch(`/api/room/${roomId}/commit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, fileIds: selectedFiles }),
+        body: JSON.stringify({ 
+          message, 
+          fileIds: selectedFiles,
+          userId
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to create commit");

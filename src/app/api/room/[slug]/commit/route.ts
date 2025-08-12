@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request, context: { params: { slug: string } }) {
     const { slug } = await context.params;
     try {
-        const { message, fileIds } = await req.json();
+        const { message, fileIds, userId } = await req.json();
         const room = await prisma.room.findUnique({
             where: { slug },
             include: { files: true }
@@ -34,13 +34,17 @@ export async function POST(req: Request, context: { params: { slug: string } }) 
             data: {
               message,
               roomId: room.id,
+              userId,
               files: {
-                create: changedFiles.map(file => ({
-                  name: file.name,
-                  language: file.language ?? '',
-                  content: file.content ?? '',
-                  fileId: file.id
-                }))
+                create: changedFiles.map(file => {
+                  const previous = latestCommit?.files.find(f => f.fileId === file.id);
+                  return {
+                    name: file.name,
+                    language: file.language ?? '',
+                    content: file.content ?? '',
+                    oldContent: previous?.content ?? '',
+                    fileId: file.id
+                }})
               }
             },
             include: { files: true }
@@ -63,7 +67,8 @@ export async function GET(req: Request, context: { params: { slug: string } }) {
                 select: {
                   id: true,
                   message: true,
-                  createdAt: true
+                  createdAt: true,
+                  user: { select: { id: true, name: true, email: true } }
                 }
               }
             }
