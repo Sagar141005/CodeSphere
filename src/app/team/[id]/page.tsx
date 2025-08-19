@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
-import Sidebar from "@/components/Sidebar";
+import HomeNavbar from "@/components/HomeNavbar";
 import {
   User,
   Users,
@@ -19,16 +18,16 @@ import {
 interface Room {
   id: string;
   slug: string;
-  name: string,
+  name: string;
   createdAt: string;
 }
 
 interface TeamMember {
   id: string;
   name: string | null;
-  email: string; 
+  email: string;
   profilePic?: string;
-  image?: string
+  image?: string;
 }
 
 interface Team {
@@ -41,22 +40,24 @@ interface Team {
 
 export default function TeamDetailsPage() {
   const params = useParams();
-  const id = params?.id as string;    
+  const id = params?.id as string;
   const { data: session, status } = useSession();
   const [team, setTeam] = useState<Team | null>(null);
-  const [ newRoomName, setNewRoomName ] = useState("");
+  const [newRoomName, setNewRoomName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [ showDeleteConfirm, setShowDeleteConfirm ] = useState(false);
-  const [ showDeleteTeamConfirm, setShowDeleteTeamConfirm ] = useState(false);
-  const [ selectedRoomToDelete, setSelectedRoomToDelete ] = useState<Room | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
+  const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
+    null
+  );
   const router = useRouter();
 
   // Fetch team details
   useEffect(() => {
     if (!id || !session) return;
     fetch(`/api/team/${id}`)
-      .then(res => res.json())
-      .then(data => setTeam(data))
+      .then((res) => res.json())
+      .then((data) => setTeam(data))
       .catch(() => setTeam(null));
   }, [id, session]);
 
@@ -87,9 +88,9 @@ export default function TeamDetailsPage() {
       body: JSON.stringify({ userId: memberId }),
     });
     if (res.ok) {
-      setTeam(prev =>
+      setTeam((prev) =>
         prev
-          ? { ...prev, members: prev.members.filter(m => m.id !== memberId) }
+          ? { ...prev, members: prev.members.filter((m) => m.id !== memberId) }
           : prev
       );
     }
@@ -105,7 +106,7 @@ export default function TeamDetailsPage() {
     });
     if (res.ok) {
       const newRoom = await res.json();
-      setTeam(prev =>
+      setTeam((prev) =>
         prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
       );
       setNewRoomName("");
@@ -123,32 +124,34 @@ export default function TeamDetailsPage() {
 
   const handleDeleteRoom = async (slug: string) => {
     const res = await fetch(`/api/room/${slug}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
 
-    if(res.ok) {
-      setTeam(prev =>
-        prev ? { ...prev, rooms: prev.rooms.filter((room) => room.slug !== slug) } : prev
+    if (res.ok) {
+      setTeam((prev) =>
+        prev
+          ? { ...prev, rooms: prev.rooms.filter((room) => room.slug !== slug) }
+          : prev
       );
     } else {
       const error = await res.json();
       alert(error.error || "Failed to delete room");
     }
-  }
+  };
 
   const handleDeleteTeam = async (id: string) => {
     const res = await fetch(`/api/team/${id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
 
-    if(res.ok) {
+    if (res.ok) {
       alert("Team deleted successfully");
       router.push("/teams");
     } else {
       const error = await res.json();
       alert(error.error || "Failed to delete team");
     }
-  }
+  };
 
   if (status === "loading") {
     return <p className="text-center mt-10">Loading session...</p>;
@@ -159,160 +162,166 @@ export default function TeamDetailsPage() {
   }
   const isOwner = session?.user?.id === team.createdById;
 
-
   return (
-    <div className="min-h-screen flex bg-gradient-to-b from-gray-900 to-gray-950 text-white font-sans overflow-hidden">
-      <Sidebar />
+    <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white font-sans">
+      <HomeNavbar />
 
-      <main className="flex-1 max-w-7xl mx-auto px-10 py-12 flex flex-col gap-14 overflow-y-auto h-screen">
+      <main className="max-w-7xl mx-auto px-6 md:px-12 py-20 space-y-20 overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <header className="max-w-5xl">
-            <h1 className="text-4xl font-extrabold tracking-wide mb-1 font-mono">
-              {team.name}
-            </h1>
-            <p className="text-gray-500 text-sm flex items-center gap-2">
-              <User className="w-4 h-4 text-gray-400" />
-              Created by:{" "}
-              <code className="ml-1 px-1 rounded bg-gray-900 font-mono">
-                {team.createdById}
-              </code>
-            </p>
-          </header>
-          {isOwner && (
-            <button
-              onClick={() => {
-                setShowDeleteTeamConfirm(true);
-              }}
-              aria-label="Delete Team"
-              className="flex items-center gap-1 px-3 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-600 hover:text-white transition"
-            >
-              <Trash2 className="w-6 h-6" />
-              Delete Team
-            </button>
-          )}
-        </div>
-       
+        <section className="max-w-5xl mx-auto bg-black/60 border border-white/10 rounded-3xl p-8 shadow-xl space-y-8">
+          {/* Top Row: Team Info + Delete Button */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Team Name & Creator */}
+            <div className="space-y-2">
+              <h1 className="text-3xl sm:text-4xl font-bold font-mono text-white tracking-tight">
+                {team.name}
+              </h1>
+              <p className="text-sm text-gray-400 flex items-center gap-2">
+                <User className="w-4 h-4 text-gray-500" />
+                Created by:
+                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded font-mono text-xs">
+                  {team.createdById}
+                </code>
+              </p>
+            </div>
 
-        {/* Members Section */}
-        <section className="max-w-5xl bg-[#16161a] rounded-3xl p-8 shadow-lg border border-[#2a2a2e]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold flex items-center gap-2 text-white">
-              <Users className="w-6 h-6 text-blue-400" />
-              Members
-            </h2>
+            {/* Delete Button (if owner) */}
+            {isOwner && (
+              <button
+                onClick={() => setShowDeleteTeamConfirm(true)}
+                className="flex items-center gap-1 text-sm text-red-500 hover:text-white hover:bg-red-600 border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                aria-label="Delete team"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            )}
           </div>
 
-          <ul className="space-y-4 mb-6">
-            {team.members.map((member) => {
-              const isTeamOwner = member.id === team.createdById;
-              return (
-                <li
-                  key={member.id}
-                  className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#1e1e22] hover:bg-[#2a2a2e] transition cursor-default"
-                >
-                  <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center font-mono font-bold text-lg select-none shadow-sm">
-                    {member.profilePic || member.image ? (
-                      <img
-                        src={member.profilePic || member.image}
-                        alt={member.name || member.email}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span>
-                        {(member.name || member.email)?.[0]?.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+          {/* Members Section */}
+          <div>
+            <h2 className="text-3xl font-semibold flex items-center gap-3 text-white font-mono mb-6">
+              <Users className="w-7 h-7 text-neutral-400" />
+              Members
+            </h2>
 
-                    <div className="flex flex-col max-w-xs">
-                      <span className="font-semibold truncate">
-                        {member.name || member.email}
-                      </span>
-                      <span className="text-xs text-gray-400 font-mono truncate">
-                        {member.email}
-                      </span>
+            <ul className="space-y-4 mb-6 max-h-[400px] overflow-y-auto">
+              {team.members.map((member) => {
+                const isTeamOwner = member.id === team.createdById;
+                return (
+                  <li
+                    key={member.id}
+                    className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
+                  >
+                    <div className="flex items-center gap-5">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-mono font-bold text-lg select-none shadow-md">
+                        {member.profilePic || member.image ? (
+                          <img
+                            src={member.profilePic || member.image}
+                            alt={member.name || member.email}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>
+                            {(member.name || member.email)?.[0]?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col max-w-xs">
+                        <span className="font-semibold truncate">
+                          {member.name || member.email}
+                        </span>
+                        <span className="text-xs text-gray-400 font-mono truncate">
+                          {member.email}
+                        </span>
+                      </div>
+
+                      {isTeamOwner && (
+                        <span
+                          className="flex items-center gap-1 bg-yellow-400 text-gray-900 text-xs font-semibold px-3 py-1 rounded-full select-none"
+                          title="Team Owner"
+                        >
+                          <Crown className="w-4 h-4" />
+                          Owner
+                        </span>
+                      )}
                     </div>
-                    {isTeamOwner && (
-                      <span
-                        className="flex items-center gap-1 bg-yellow-400 text-gray-900 text-xs font-semibold px-2 py-1 rounded-full select-none"
-                        title="Team Owner"
-                      >
-                        <Crown className="w-4 h-4" />
-                        Owner
-                      </span>
-                    )}
-                  </div>
 
-                  {isOwner && member.email !== session?.user?.email && !isTeamOwner && (
-                    <button
-                      onClick={() => removeMember(member.id)}
-                      className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
-                      aria-label={`Remove ${member.name || member.email}`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Remove
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    {isOwner &&
+                      member.email !== session?.user?.email &&
+                      !isTeamOwner && (
+                        <button
+                          onClick={() => removeMember(member.id)}
+                          className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
+                          aria-label={`Remove ${member.name || member.email}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Remove
+                        </button>
+                      )}
+                  </li>
+                );
+              })}
+            </ul>
 
-          {isOwner && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                inviteMember();
-              }}
-              className="flex gap-4"
-            >
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Invite member by email"
-                className="flex-1 rounded-lg bg-[#1a1a1a] border border-[#2a2a2e] px-5 py-3 text-white placeholder-gray-500 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Email to invite"
-                required
-                spellCheck={false}
-                autoComplete="off"
-              />
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 px-5 py-2.5 border border-blue-500 bg-[#1a1a1a] 
-                          text-blue-400 hover:bg-[#25272d] 
-                          font-mono text-sm rounded-lg transition-all duration-200 
-                          focus:outline-none focus:ring-2 focus:ring-blue-500/30 shadow-sm"
+            {/* Invite Member Form */}
+            {isOwner && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  inviteMember();
+                }}
+                className="flex gap-4"
               >
-                <UserPlus className="w-4 h-4" />
-                Invite Member
-              </button>
-            </form>
-          )}
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="Invite member by email"
+                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-5 py-3 text-white placeholder-gray-500 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  aria-label="Email to invite"
+                  required
+                  spellCheck={false}
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-3
+                  bg-black border border-cyan-700
+                  text-cyan-400 font-mono rounded-lg shadow-md
+                  hover:bg-cyan-400 hover:text-black
+                  hover:shadow-[0_0_10px_#22d3ee]
+                  transition duration-300
+                  flex items-center justify-center gap-2
+                  cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Invite Member
+                </button>
+              </form>
+            )}
+          </div>
         </section>
 
         {/* Rooms Section */}
-        <section className="max-w-5xl">
-          {/* Create Room Card */}
+        <section className="max-w-5xl mx-auto">
           {isOwner && (
             <section className="relative max-w-5xl mx-auto mb-6">
               <div
-                className="group relative cursor-pointer rounded-2xl border border-[#2a2a2e] bg-gradient-to-br from-[#1d1d22] to-[#1a1a1f] 
-                          hover:border-blue-500 hover:shadow-xl transition-all duration-300 shadow-md backdrop-blur-sm p-6"
+                className="group relative cursor-pointer rounded-2xl border border-white/20 bg-gradient-to-br from-black/70 to-black/90
+                           hover:border-cyan-500 hover:shadow-xl transition-all duration-300 shadow-lg backdrop-blur-md p-6"
               >
-                {/* Glowing background on hover */}
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none 
-                                bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-md" />
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 blur-md" />
 
-                {/* Content */}
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors mb-1">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors mb-1 font-mono">
                       Create a New Room
                     </h3>
-                    <p className="text-sm text-gray-400 font-mono">Give your room a name and start collaborating instantly.</p>
+                    <p className="text-sm text-gray-400 font-mono">
+                      Give your room a name and start collaborating instantly.
+                    </p>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
@@ -321,27 +330,32 @@ export default function TeamDetailsPage() {
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
                       placeholder="Enter room name"
-                      className="px-4 py-2.5 rounded-lg bg-[#121212] text-white border border-gray-700 placeholder-gray-500 
-                                focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm w-full sm:w-64 font-mono"
+                      className="px-4 py-2.5 rounded-lg bg-black/70 text-white border border-white/20 placeholder-gray-500 
+                                 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-sm w-full sm:w-64 font-mono"
                       aria-label="Room name input"
                       spellCheck={false}
                       autoComplete="off"
                     />
                     <button
-                    onClick={createRoom}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1f1f22] border border-[#2e2e32] 
-                              hover:border-blue-500 hover:text-blue-400 text-gray-300 font-mono text-sm rounded-lg 
-                              transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
-                  >
-                    <DoorOpen className="w-4 h-4" />
-                    Create Room
-                  </button>
+                      onClick={createRoom}
+                      className="px-6 py-3
+                      bg-black/90 border border-neutral-400
+                      text-neutral-400 font-mono rounded-lg shadow-sm
+                      hover:border-white hover:text-white
+                      hover:shadow-[0_0_8px_#22d3ee]
+                      transition duration-300
+                      flex items-center justify-center gap-2
+                      cursor-pointer"
+                    >
+                      <DoorOpen className="w-4 h-4" />
+                      Create Room
+                    </button>
                   </div>
                 </div>
               </div>
             </section>
           )}
-        
+
           {team.rooms.length === 0 ? (
             <p className="text-gray-400 text-sm italic">No rooms yet.</p>
           ) : (
@@ -350,46 +364,54 @@ export default function TeamDetailsPage() {
                 <li
                   key={room.id}
                   tabIndex={0}
-                  className="group relative rounded-2xl border border-[#2a2a2e] bg-[#15151a]/80 hover:border-blue-500
-                  transition-all duration-300 shadow-md hover:shadow-xl backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="group relative rounded-2xl border border-white/10 bg-[#141414] hover:bg-white/5 hover:border-white/20 transition-all shadow hover:shadow-2xl backdrop-blur-md focus:outline-none"
                 >
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-md" />
-
                   <div className="relative z-10 p-5 space-y-3">
                     {/* Top Row */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-baseline justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-mono font-bold text-lg">
                           {room.name[0].toUpperCase()}
                         </div>
-                        <h3 className="text-lg font-semibold text-white truncate w-28 group-hover:text-blue-400 transition">
+                        <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
                           {room.name}
                         </h3>
                       </div>
                       {isOwner && (
-                        <div 
+                        <div
                           onClick={() => {
-                            setSelectedRoomToDelete(room)
-                            setShowDeleteConfirm(true)
+                            setSelectedRoomToDelete(room);
+                            setShowDeleteConfirm(true);
                           }}
-                          className="p-2 border border-gray-800 rounded-md hover:text-red-400 transition-colors cursor-pointer">
-                            <Trash2 className="w-4 h-4"  />
+                          className="p-2 border border-white/10 rounded-md hover:text-red-400 transition-colors cursor-pointer"
+                        >
+                          <Trash2 width={15} height={15} />
                         </div>
                       )}
-                      
                     </div>
-                    
+
                     {/* Metadata Row */}
-                    <div className="text-sm text-gray-400 flex items-center justify-between font-mono">
-                      <span>Created</span>
-                      <span>{new Date(room.createdAt).toLocaleDateString()}</span>
+                    <div className="text-xs text-gray-400 font-mono flex justify-between items-center pt-1">
+                      <span className="uppercase tracking-wide">Created</span>
+                      <span className="text-white/80">
+                        {new Date(room.createdAt).toLocaleDateString(
+                          undefined,
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }
+                        )}
+                      </span>
                     </div>
 
                     {/* CTA */}
-                    <div 
-                    onClick={() => window.location.assign(`/room/${room.slug}`)}
-                    className="flex items-center justify-between pt-2 border-t border-gray-800 text-blue-500 group-hover:underline text-sm font-semibold cursor-pointer">
+                    <div
+                      onClick={() =>
+                        window.location.assign(`/room/${room.slug}`)
+                      }
+                      className="flex items-center justify-between pt-2 border-t border-white/10 text-sm font-semibold cursor-pointer text-gray-400 hover:text-white transition"
+                    >
                       <span>Enter Room</span>
                       <ArrowRightCircle className="w-4 h-4" />
                     </div>
@@ -402,10 +424,10 @@ export default function TeamDetailsPage() {
 
         {/* Leave Team Button */}
         {!isOwner && (
-          <div className="max-w-5xl text-right">
+          <div className="max-w-5xl mx-auto text-right">
             <button
               onClick={leaveTeam}
-              className="flex items-center gap-2 text-gray-500 hover:text-red-400 underline font-mono text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
+              className="flex items-center gap-2 text-gray-400 hover:text-red-500 underline font-mono text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
               aria-label="Leave team"
             >
               <LogOut className="w-5 h-5" />
@@ -414,37 +436,41 @@ export default function TeamDetailsPage() {
           </div>
         )}
 
+        {/* Modals */}
         {showDeleteConfirm && selectedRoomToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 sm:px-0">
-            <div className="relative max-w-md w-full bg-[#16161a] border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 sm:px-0">
+            <div className="relative max-w-md w-full bg-black/80 border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-800/20 blur-lg opacity-80 pointer-events-none" />
               <div className="relative z-10 space-y-4 text-center">
                 <h2 className="text-xl font-semibold text-white">
                   Are you sure you want to delete this room?
                 </h2>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  <strong className="text-white">{selectedRoomToDelete.name}</strong> will be permanently removed. 
-                  This action cannot be undone.
+                  <strong className="text-white">
+                    {selectedRoomToDelete.name}
+                  </strong>{" "}
+                  will be permanently removed. This action cannot be undone.
                 </p>
               </div>
               <div className="flex justify-end gap-4">
                 <button
-                onClick={() => {
-                  setShowDeleteConfirm(false)
-                  setSelectedRoomToDelete(null)
-                }}
-                className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setSelectedRoomToDelete(null);
+                  }}
+                  className="px-5 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 transition"
                 >
-                Cancel
+                  Cancel
                 </button>
                 <button
-                onClick={() => {
-                  handleDeleteRoom(selectedRoomToDelete.slug)
-                  setShowDeleteConfirm(false)
-                  setSelectedRoomToDelete(null)
-                }}
-                className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
-                Confirm Delete
+                  onClick={() => {
+                    handleDeleteRoom(selectedRoomToDelete.slug);
+                    setShowDeleteConfirm(false);
+                    setSelectedRoomToDelete(null);
+                  }}
+                  className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
+                >
+                  Confirm Delete
                 </button>
               </div>
             </div>
@@ -460,8 +486,9 @@ export default function TeamDetailsPage() {
                   Are you sure you want to delete this team?
                 </h2>
                 <p className="text-gray-400 text-sm leading-relaxed">
-                  <strong className="text-white">{team?.name}</strong> and all its rooms and members will be permanently removed.
-                  This action cannot be undone.
+                  <strong className="text-white">{team?.name}</strong> and all
+                  its rooms and members will be permanently removed. This action
+                  cannot be undone.
                 </p>
               </div>
               <div className="flex justify-end gap-4">

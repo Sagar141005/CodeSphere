@@ -24,8 +24,13 @@ model User {
   image         String?
   commits       Commit[]
 
+  ownedRooms Room[] @relation("OwnedRooms")
+  rooms      Room[] @relation("RoomMembers")
+
+  invitesReceived RoomInvite[] @relation("InvitedUser")
+  invitesSent     RoomInvite[] @relation("InvitedByUser")
+
   teams        Team[] @relation("UserTeams")
-  rooms        Room[] @relation("UserRooms")
   createdTeams Team[] @relation("TeamCreators")
 
   accounts Account[]
@@ -79,19 +84,42 @@ model Team {
 }
 
 model Room {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String       @id @default(cuid())
+  slug        String       @unique
   name        String
-  owner       User     @relation("UserRooms", fields: [ownerId], references: [id])
+  owner       User         @relation("OwnedRooms", fields: [ownerId], references: [id])
   ownerId     String
-  content     String   @default("")
-  team        Team?    @relation(fields: [teamId], references: [id])
+  members     User[]       @relation("RoomMembers")
+  invites     RoomInvite[]
+  content     String       @default("")
+  team        Team?        @relation(fields: [teamId], references: [id])
   teamId      String?
   files       File[]
   githubRepo  String?
   githubToken String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime     @default(now())
   commits     Commit[]
+}
+
+model RoomInvite {
+  id     String @id @default(cuid())
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String
+
+  invited   User   @relation("InvitedUser", fields: [invitedId], references: [id])
+  invitedId String
+
+  invitedBy   User   @relation("InvitedByUser", fields: [invitedById], references: [id])
+  invitedById String
+
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 enum FileType {

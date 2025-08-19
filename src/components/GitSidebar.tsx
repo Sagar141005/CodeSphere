@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import { ArrowLeftToLine, GitCommit, History } from "lucide-react";
@@ -18,21 +18,21 @@ interface Commit {
 }
 
 interface RoomFile {
-    id: string;
-    name: string;
-    language: string;
-    content: string;
+  id: string;
+  name: string;
+  language: string;
+  content: string;
 }
-  
+
 interface CommitFile {
-    fileId: string;
-    content: string;
-    oldContent?: string;
+  fileId: string;
+  content: string;
+  oldContent?: string;
 }
 
 export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
   const [commits, setCommits] = useState<Commit[]>([]);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [roomFiles, setRoomFiles] = useState<RoomFile[]>([]);
   const [lastCommitFiles, setLastCommitFiles] = useState<CommitFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
@@ -43,7 +43,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
 
   useEffect(() => {
     fetchCommits();
-    fetchRoomFiles(); 
+    fetchRoomFiles();
   }, [roomId]);
 
   async function fetchCommits() {
@@ -55,15 +55,19 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
 
       if (data.length > 0) {
         const latestCommitId = data[0].id;
-        const commitRes = await fetch(`/api/room/${roomId}/commit/${latestCommitId}`);
+        const commitRes = await fetch(
+          `/api/room/${roomId}/commit/${latestCommitId}`
+        );
         if (commitRes.ok) {
           const commitData = await commitRes.json();
           // Ensure fileId is present & matches roomFiles IDs
-          setLastCommitFiles(commitData.files.map((f: any) => ({
-            fileId: f.fileId,
-            content: f.content,
-            oldContent: f.oldContent || ''
-          })));
+          setLastCommitFiles(
+            commitData.files.map((f: any) => ({
+              fileId: f.fileId,
+              content: f.content,
+              oldContent: f.oldContent || "",
+            }))
+          );
         }
       }
     } catch (err) {
@@ -87,9 +91,9 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
     const commitRes = await fetch(`/api/room/${roomId}/commit/${commitId}`);
     if (!commitRes.ok) return console.error("Failed to fetch commit");
     const commitData = await commitRes.json();
-  
+
     // Find parent commit id from commits[] list
-    const idx = commits.findIndex(c => c.id === commitId);
+    const idx = commits.findIndex((c) => c.id === commitId);
     let parentFiles: any[] = [];
     if (idx >= 0 && idx + 1 < commits.length) {
       const parentId = commits[idx + 1].id;
@@ -99,34 +103,34 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
         parentFiles = parentData.files || [];
       }
     }
-  
+
     // Build diffs (just like your old code but commit vs parent)
     const changes = (commitData.files || [])
       .map((file: any) => {
-        const prev = parentFiles.find(f => f.fileId === file.fileId);
+        const prev = parentFiles.find((f) => f.fileId === file.fileId);
         if (!prev || prev.content !== file.content) {
           return {
             id: file.fileId,
             name: file.name,
             language: file.language,
-            oldContent: prev?.content || file.oldContent || '',
-            newContent: file.content || '',
+            oldContent: prev?.content || file.oldContent || "",
+            newContent: file.content || "",
           };
         }
         return null;
       })
       .filter(Boolean);
-  
+
     if (onPreview) {
       onPreview(commitId);
     }
   }
 
-  function getFileStatus(file: RoomFile): 'modified' | 'new' | 'unchanged' {
-    const prev = lastCommitFiles.find(f => f.fileId === file.id);
-    if (!prev) return 'new';
-    if (prev.content.trim() !== file.content.trim()) return 'modified';
-    return 'unchanged';
+  function getFileStatus(file: RoomFile): "modified" | "new" | "unchanged" {
+    const prev = lastCommitFiles.find((f) => f.fileId === file.id);
+    if (!prev) return "new";
+    if (prev.content.trim() !== file.content.trim()) return "modified";
+    return "unchanged";
   }
 
   async function createCommit() {
@@ -137,16 +141,16 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       const res = await fetch(`/api/room/${roomId}/commit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message, 
+        body: JSON.stringify({
+          message,
           fileIds: selectedFiles,
-          userId
+          userId,
         }),
       });
 
       if (!res.ok) throw new Error("Failed to create commit");
 
-      setMessage('');
+      setMessage("");
       await fetchCommits();
     } catch (err) {
       console.error("Failed to create commit:", err);
@@ -170,8 +174,10 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
   }
 
   function toggleFileSelection(fileId: string) {
-    setSelectedFiles(prev =>
-      prev.includes(fileId) ? prev.filter(id => id !== fileId) : [...prev, fileId]
+    setSelectedFiles((prev) =>
+      prev.includes(fileId)
+        ? prev.filter((id) => id !== fileId)
+        : [...prev, fileId]
     );
   }
 
@@ -184,13 +190,15 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
 
       {/* Commit Form */}
       <div>
-        <label className="block text-xs text-gray-400 mb-1">Commit Message</label>
+        <label className="block text-xs text-gray-400 mb-1">
+          Commit Message
+        </label>
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Describe your changes"
-          className="w-full px-2 py-1.5 bg-[#252526] border border-[#3a3a3a] text-white rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full px-2 py-1.5 bg-[#252526] border border-[#3a3a3a] text-white rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <button
           onClick={createCommit}
@@ -203,71 +211,68 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
 
       <ul className="space-y-1 max-h-48 overflow-auto">
         {roomFiles.length === 0 ? (
-            <li className="text-gray-500 italic">No files found</li>
+          <li className="text-gray-500 italic">No files found</li>
         ) : (
-            roomFiles.map((file) => {
+          roomFiles.map((file) => {
             const status = getFileStatus(file);
             const statusStyles = {
-                new: "bg-green-600 text-green-100",
-                modified: "bg-yellow-500 text-yellow-900",
-                unchanged: "bg-gray-700 text-gray-300",
+              new: "bg-green-600 text-green-100",
+              modified: "bg-yellow-500 text-yellow-900",
+              unchanged: "bg-gray-700 text-gray-300",
             };
             return (
-                <li
+              <li
                 key={file.id}
                 className="flex items-center justify-between gap-2 px-2 py-1 rounded cursor-pointer select-none hover:bg-[#2e2e2e]"
                 onClick={() => toggleFileSelection(file.id)}
-                >
+              >
                 <div className="flex items-center gap-2">
-                    {/* Custom checkbox */}
-                    <div
+                  {/* Custom checkbox */}
+                  <div
                     className={clsx(
-                        "w-4 h-4 flex items-center justify-center border rounded-sm",
-                        selectedFiles.includes(file.id)
+                      "w-4 h-4 flex items-center justify-center border rounded-sm",
+                      selectedFiles.includes(file.id)
                         ? "bg-blue-600 border-blue-600"
                         : "border-gray-600"
                     )}
-                    >
+                  >
                     {selectedFiles.includes(file.id) && (
-                        <svg
+                      <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="w-3 h-3 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        >
+                      >
                         <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
                         />
-                        </svg>
+                      </svg>
                     )}
-                    </div>
+                  </div>
 
-                    <span className="truncate font-mono text-sm text-white">{file.name}</span>
+                  <span className="truncate font-mono text-sm text-white">
+                    {file.name}
+                  </span>
                 </div>
 
                 {/* Status badge */}
                 <span
-                    className={clsx(
+                  className={clsx(
                     "text-[10px] font-semibold px-2 py-[2px] rounded-full select-none",
                     statusStyles[status]
-                    )}
+                  )}
                 >
-                    {status === "new"
-                    ? "N"
-                    : status === "modified"
-                    ? "M"
-                    : "U"}
+                  {status === "new" ? "N" : status === "modified" ? "M" : "U"}
                 </span>
-                </li>
+              </li>
             );
-            })
+          })
         )}
-        </ul>
-
+      </ul>
 
       {/* Commit History */}
       <div>
@@ -285,9 +290,13 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
                   className="cursor-pointer flex-1"
                   onClick={() => previewCommit(commit.id)}
                 >
-                  <div className="text-white text-sm truncate">{commit.message}</div>
+                  <div className="text-white text-sm truncate">
+                    {commit.message}
+                  </div>
                   <div className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(commit.createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(commit.createdAt), {
+                      addSuffix: true,
+                    })}
                   </div>
                 </div>
                 <button

@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
 import { useEffect, useState, useRef } from "react";
-import { io, Socket } from 'socket.io-client';
+import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
-import { Users, Sparkles } from "lucide-react";
+import { Users, Sparkles, WandSparkles } from "lucide-react";
 
 interface UserPresence {
   id: string;
@@ -13,7 +13,13 @@ interface UserPresence {
 
 const MAX_VISIBLE_AVATARS = 5;
 
-export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomName: string }) {
+export default function RoomNavbar({
+  roomSlug,
+  roomName,
+}: {
+  roomSlug: string;
+  roomName: string;
+}) {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserPresence[]>([]);
   const socketRef = useRef<Socket | null>(null);
@@ -51,7 +57,10 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomN
 
     return () => {
       if (sock && userIdRef.current) {
-        sock.emit("leave-room", { roomId: roomSlug, userId: userIdRef.current });
+        sock.emit("leave-room", {
+          roomId: roomSlug,
+          userId: userIdRef.current,
+        });
       }
       sock.disconnect();
       socketRef.current = null;
@@ -66,11 +75,14 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomN
     <nav
       role="navigation"
       aria-label="Room navigation bar"
-      className="h-14 bg-[#1f1f1f] border-b border-gray-700 px-6 flex items-center justify-between shadow-md"
+      className="sticky top-0 left-0 right-0 z-50 h-14 px-6 flex items-center justify-between bg-white/5 backdrop-blur-md border-b border-white/10"
     >
       {/* Left: Room name */}
       <div className="flex items-center gap-3 text-white min-w-0">
-        <Users className="w-6 h-6 text-blue-400 flex-shrink-0" aria-hidden="true" />
+        <Users
+          className="w-6 h-6 text-neutral-400 flex-shrink-0"
+          aria-hidden="true"
+        />
         <h1
           className="text-lg font-semibold truncate select-text"
           title={`Room: ${roomName}`}
@@ -95,7 +107,8 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomN
               title={user.name}
               className="w-9 h-9 rounded-full border-2 border-gray-900 object-cover shadow-sm"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/default-avatar.jpg";
+                (e.currentTarget as HTMLImageElement).src =
+                  "/default-avatar.jpg";
               }}
               loading="lazy"
             />
@@ -116,9 +129,9 @@ export default function Navbar({ roomSlug, roomName }: { roomSlug: string; roomN
           type="button"
           aria-label="Activate AI Assist"
           title="AI Assist helps you code faster with AI suggestions"
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 transition px-4 py-2 rounded-md text-sm font-semibold shadow-lg select-none"
+          className="flex items-center gap-2 text-white border border-white bg-[#1A1A1A] hover:bg-white hover:text-[#1A1A1A] hover:border-[#1A1A1A] transition px-4 py-2 rounded-md text-sm font-semibold shadow-lg select-none cursor-pointer"
         >
-          <Sparkles className="w-5 h-5" aria-hidden="true" />
+          <WandSparkles className="w-5 h-5" aria-hidden="true" />
           AI Assist
         </button>
       </div>

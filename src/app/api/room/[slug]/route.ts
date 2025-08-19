@@ -27,26 +27,53 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: Request,
+export async function POST(
+  _: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await context.params; // ✅ Await params
-  try {
-    const { content } = await req.json();
+  const { slug } = await context.params;
+  const session = await getServerSession(authOptions);
 
-    const updatedRoom = await prisma.room.update({
-      where: { slug },
-      data: { content },
-    });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    return NextResponse.json(updatedRoom);
-  } catch (error) {
+  const room = await prisma.room.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      ownerId: true,
+      members: { select: { id: true } },
+    },
+  });
+
+  if (!room) {
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  }
+
+  if (room.ownerId === session.user.id) {
+    // Owner should delete instead of leave
     return NextResponse.json(
-      { error: "Failed to update room" },
-      { status: 500 }
+      { error: "Owner cannot leave the room. Delete it instead." },
+      { status: 400 }
     );
   }
+
+  const isMember = room.members.some((m) => m.id === session.user.id);
+  if (!isMember) {
+    return NextResponse.json(
+      { error: "You are not a member of this room." },
+      { status: 400 }
+    );
+  }
+
+  // Disconnect user from members
+  await prisma.room.update({
+    where: { id: room.id },
+    data: { members: { disconnect: { id: session.user.id } } },
+  });
+
+  return NextResponse.json({ success: true });
 }
 
 export async function DELETE(
@@ -90,6 +117,27 @@ export async function DELETE(
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to delete room" },
+      { status: 500 }
+    );
+  }
+}
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ slug: string }> }
+) {
+  const { slug } = await context.params; // ✅ Await params
+  try {
+    const { content } = await req.json();
+
+    const updatedRoom = await prisma.room.update({
+      where: { slug },
+      data: { content },
+    });
+
+    return NextResponse.json(updatedRoom);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to update room" },
       { status: 500 }
     );
   }

@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import CodeEditor from "@/components/Editor";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/RoomNavbar";
 import TabbedSidebar from "@/components/TabbedSidebar";
 import Tabs from "@/components/Tabs";
 import Terminal, { TerminalRef } from "@/components/Terminal";
@@ -329,7 +329,7 @@ export default function RoomPage({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white font-sans">
+    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
       {/* Header/Navbar */}
       <Navbar roomSlug={slug} roomName={roomName} />
 

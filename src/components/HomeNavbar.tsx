@@ -3,10 +3,17 @@
 import { SquareDashedBottomCode } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+const navItems = [
+  { href: "/rooms", label: "Rooms" },
+  { href: "/teams", label: "Teams" },
+];
 
 const HomeNavbar = () => {
   const { data: session, status } = useSession();
   const user = session?.user;
+  const pathname = usePathname();
 
   return (
     <div className="w-full flex items-center justify-between px-8 py-5 bg-black z-50">
@@ -27,25 +34,32 @@ const HomeNavbar = () => {
               CodeSphere
             </span>
             <span className="block text-xs text-blue-400/60 font-medium tracking-wide">
-              Interactive Code Editor
+              Collaborative Code Editor
             </span>
           </div>
         </Link>
 
         {/* Navigation links */}
         <div className="flex items-center gap-6">
-          <Link
-            href="/rooms"
-            className="text-sm font-medium text-blue-300 hover:text-blue-200 transition-colors"
-          >
-            Rooms
-          </Link>
-          <Link
-            href="/teams"
-            className="text-sm font-medium text-blue-300 hover:text-blue-200 transition-colors"
-          >
-            Teams
-          </Link>
+          {navItems.map(({ href, label }) => {
+            const isActive =
+              href === "/teams"
+                ? pathname?.startsWith("/team")
+                : pathname?.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`text-sm font-medium text-blue-200 hover:text-blue-300 transition-colors ${
+                  isActive ? "text-blue-300 shadow-inner" : ""
+                }`}
+                aria-current={isActive ? "page" : undefined}
+                tabIndex={0}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </div>
       </div>
 

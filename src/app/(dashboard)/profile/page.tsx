@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import Sidebar from "@/components/Sidebar";
+import HomeNavbar from "@/components/HomeNavbar";
 import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -11,8 +11,7 @@ export default function ProfilePage() {
   const [profilePic, setProfilePic] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [newProfileImage, setNewProfileImage] = useState<File | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,12 +21,13 @@ export default function ProfilePage() {
       setName(session.user.name || "");
       setProfilePic(session.user.image || "");
     }
-
   }, [session]);
 
-  if (status === 'loading')
+  if (status === "loading")
     return (
-      <p className="p-8 text-center text-gray-400 italic animate-pulse">Loading profile...</p>
+      <p className="p-8 text-center text-gray-400 italic animate-pulse">
+        Loading profile...
+      </p>
     );
 
   if (!session)
@@ -37,46 +37,46 @@ export default function ProfilePage() {
       </p>
     );
 
-    const user = session?.user;
+  const user = session?.user;
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if(!file) return;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
+    setNewProfileImage(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append(
+      "upload_preset",
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
+    );
 
-
-      setUploading(true);
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
-
-      const data = await res.json();
-      if(data.secure_url) {
-        setProfilePic(data.secure_url);
-      } else {
-        alert("Failed to upload image");
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
       }
-      setUploading(false);
+    );
+
+    const data = await res.json();
+    if (data.secure_url) {
+      setProfilePic(data.secure_url);
+    } else {
+      alert("Failed to upload image");
     }
+  };
 
   const updateProfile = async () => {
     setLoading(true);
-    const res = await fetch('/api/user/profile', {
-      method: 'PATCH',
+    const res = await fetch("/api/user/profile", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, image: profilePic }),
     });
     setLoading(false);
     if (res.ok) {
       alert("Profile updated!");
-      setIsEditModalOpen(false);
       await updateSession();
     } else {
       alert("Failed to update profile");
@@ -85,10 +85,10 @@ export default function ProfilePage() {
 
   const changePassword = async () => {
     if (!oldPassword || !newPassword)
-      return alert('Please fill out all password fields.');
+      return alert("Please fill out all password fields.");
     setLoading(true);
-    const res = await fetch('/api/user/change-password', {
-      method: 'PATCH',
+    const res = await fetch("/api/user/change-password", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ oldPassword, newPassword }),
     });
@@ -104,9 +104,13 @@ export default function ProfilePage() {
   };
 
   const deleteAccount = async () => {
-    if (!confirm("Are you sure you want to delete your account? This action cannot be undone."))
+    if (
+      !confirm(
+        "Are you sure you want to delete your account? This action cannot be undone."
+      )
+    )
       return;
-    const res = await fetch('/api/user/delete', { method: 'DELETE' });
+    const res = await fetch("/api/user/delete", { method: "DELETE" });
     if (res.ok) {
       alert("Account deleted.");
       signOut();
@@ -116,270 +120,203 @@ export default function ProfilePage() {
   };
   console.log("createdAt:", user.createdAt, typeof user.createdAt);
 
-
   return (
-    <div className="min-h-screen flex bg-gradient-to-b from-gray-900 to-gray-950 text-white font-sans overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 max-w-7xl mx-auto px-10 py-12 flex flex-col gap-14 overflow-y-auto h-screen">
-          <header className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 text-sm text-gray-400">
-              {/* Use an appropriate icon here */}
-              <User />
-              Profile Settings
+    <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white">
+      <HomeNavbar />
+
+      <main className="max-w-5xl mx-auto px-6 md:px-12 py-20 space-y-20">
+        {/* --- Refined Header --- */}
+        <header className="text-center max-w-3xl mx-auto">
+          {" "}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-4 bg-white/5 text-sm text-gray-400 border border-white/10 rounded-full">
+            {" "}
+            <User className="w-4 h-4" /> Profile Settings{" "}
+          </div>{" "}
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
+            {" "}
+            Manage Your Profile{" "}
+          </h1>{" "}
+          <p className="text-gray-400 text-lg max-w-xl mx-auto">
+            {" "}
+            Update your personal information and account settings.{" "}
+          </p>{" "}
+        </header>
+
+        {/* --- Profile Section --- */}
+        <section className="flex flex-col md:flex-row items-start gap-10">
+          {/* Avatar */}
+          <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center border-4 border-neutral-700 text-white text-4xl font-bold select-none">
+            {profilePic ? (
+              <img
+                src={profilePic}
+                alt={user.name ?? user.email ?? "User"}
+                className="w-full h-full object-cover"
+                onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
+              />
+            ) : (
+              <span>{(user.name || user.email)?.[0]?.toUpperCase()}</span>
+            )}
+          </div>
+
+          {/* Details and Form */}
+          <div className="flex-1 space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold capitalize">
+                {name || "Unnamed User"}
+              </h2>
+              <p className="text-gray-400">{user.email}</p>
+              <p className="text-gray-600 text-sm">
+                Joined:{" "}
+                {user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </p>
             </div>
-            <h1 className="text-5xl font-extrabold bg-gradient-to-r from-gray-100 to-gray-300 text-transparent bg-clip-text pb-2 mb-2">
-              Manage Your Profile
-            </h1>
-            <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              Update your personal information and account settings.
-            </p>
-          </header>
 
-            {/* Normal Profile View */}
-            <section className="bg-[#1a1a1f] border border-gray-700 rounded-3xl p-8 mb-10 shadow-lg hover:shadow-blue-600/40 transition-shadow duration-300">
-                <div className="flex items-center gap-10 mb-4">
-                    {/* Profile Image */}
-                    <div className="w-28 h-28 rounded-full border-4 border-blue-600 shadow-lg overflow-hidden flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 select-none">
-                    {profilePic ? (
-                        <img
-                        src={profilePic}
-                        alt={user.name ?? user.email ?? "User"}
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
-                        />
-                    ) : (
-                        <span className="text-white font-extrabold text-6xl">
-                        {(user.name || user.email)?.[0]?.toUpperCase()}
-                        </span>
-                    )}
-                    </div>
-
-                    {/* Profile Info */}
-                    <div className="flex-1">
-                    <h1 className="text-4xl font-bold text-white leading-tight mb-1 capitalize">
-                        {name || "Unnamed User"}
-                    </h1>
-
-                    {/* Info grid */}
-                    <div className="flex flex-wrap gap-x-12 gap-y-6 max-w-xl mt-4">
-                        <div className="flex flex-col min-w-[140px]">
-                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                            Email
-                            </h3>
-                            <p className="text-white truncate">{user.email}</p>
-                        </div>
-
-                        <div className="flex flex-col min-w-[140px]">
-                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                            Account Created
-                            </h3>
-                            <p className="text-white">
-                            {user.createdAt
-                                ? new Date(user.createdAt).toLocaleDateString(undefined, {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                })
-                                : "N/A"}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col min-w-full">
-                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-                            User ID
-                            </h3>
-                            <p className="text-gray-400 truncate text-sm select-text">{user.id}</p>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Edit Button */}
-                <div className="flex justify-end">
-                    <button
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="inline-block bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-xl px-8 py-3 shadow-lg transition-transform active:scale-95 focus:outline-none focus:ring-4 focus:ring-blue-500"
-                    aria-label="Edit Profile"
-                    >
-                    Edit Profile
-                    </button>
-                </div>
-            </section>
-
-
-
-            {/* Edit Modal */}
-            {isEditModalOpen && (
-                <div
-                className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-                onClick={() => setIsEditModalOpen(false)}
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Name Input */}
+              <div className="flex-1">
+                <label
+                  htmlFor="name"
+                  className="text-sm text-gray-400 block mb-1"
                 >
-                {/* Prevent modal content from closing when clicking inside */}
-                <div
-                    className="bg-[#1a1a1f] rounded-3xl p-8 w-full max-w-md shadow-lg"
-                    onClick={(e) => e.stopPropagation()}
+                  Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-1 transition"
+                />
+              </div>
+
+              {/* Profile Pic Input */}
+              <div className="flex-1">
+                <label
+                  htmlFor="profilePic"
+                  className="text-sm text-gray-400 block mb-1"
                 >
-                    <h2 className="text-xl font-semibold mb-6 border-b border-gray-700 pb-3">
-                    Edit Profile
-                    </h2>
+                  Profile Picture
+                </label>
+                <input
+                  id="profilePic"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  ref={fileInputRef}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-white file:cursor-pointer"
+                />
+              </div>
+            </div>
 
-                    <div className="flex flex-col items-center gap-6 mb-6">
-                    <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-blue-600 shadow-md">
-                        {profilePic ? (
-                        <img
-                            src={profilePic}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                            onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
-                        />
-                        ) : (
-                        <div className="w-full h-full bg-blue-800 flex items-center justify-center text-3xl font-bold text-blue-300">
-                            {name ? name[0].toUpperCase() : "?"}
-                        </div>
-                        )}
-                    </div>
+            <div className="pt-2">
+              <button
+                onClick={updateProfile}
+                disabled={
+                  loading ||
+                  (name.trim() === (user.name ?? "") && !newProfileImage) // Assuming you're using a newProfileImage/file
+                }
+                className="bg-neutral-700 hover:bg-neutral-600 text-white font-medium rounded-md px-6 py-3 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Updating..." : "Update Profile"}
+              </button>
+            </div>
+          </div>
+        </section>
 
-                    <div className="w-full space-y-4">
-                        <div>
-                        <label
-                            htmlFor="name"
-                            className="block mb-1 font-medium text-gray-300"
-                        >
-                            Name
-                        </label>
-                        <input
-                            id="name"
-                            type="text"
-                            className="w-full rounded-lg bg-gray-900 border border-gray-700 px-4 py-3 text-white capitalize placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Your Name"
-                            spellCheck={false}
-                        />
-                        </div>
+        {/* --- Password Section --- */}
+        <section className="space-y-6">
+          <h2 className="text-xl font-semibold">Change Password</h2>
 
-                        <div>
-                        <label
-                            htmlFor="profilePic"
-                            className="block mb-1 font-medium text-gray-300"
-                        >
-                            Profile Picture URL
-                        </label>
-                        <input
-                            id="profilePic"
-                            type="file"
-                            accept="image/*"
-                            className="w-full rounded-lg bg-gray-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                            onChange={handleImageUpload}
-                            ref={fileInputRef}
-                        />
-                        </div>
-                    </div>
-                    </div>
-                    <div className="flex gap-4 mt-6">
-                    <button
-                        onClick={updateProfile}
-                        disabled={loading}
-                        className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-xl px-6 py-3 shadow-lg transition transform active:scale-95 disabled:opacity-50"
-                    >
-                        {loading ? "Updating..." : "Update Profile"}
-                    </button>
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Current Password */}
+            <div className="flex-1">
+              <label
+                htmlFor="oldPassword"
+                className="text-sm text-gray-400 block mb-1"
+              >
+                Current Password
+              </label>
+              <input
+                id="oldPassword"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-white focus:ring-2 focus:ring-green-400 focus:ring-offset-1 transition"
+              />
+            </div>
 
-                    <button
-                        onClick={() => setIsEditModalOpen(false)}
-                        disabled={loading}
-                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl px-6 py-3 shadow-lg transition transform active:scale-95"
-                    >
-                        Cancel
-                    </button>
-                    </div>
-                </div>
-                </div>
-            )}
+            {/* New Password */}
+            <div className="flex-1">
+              <label
+                htmlFor="newPassword"
+                className="text-sm text-gray-400 block mb-1"
+              >
+                New Password
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-4 py-3 text-white focus:ring-2 focus:ring-green-400 focus:ring-offset-1 transition"
+              />
+            </div>
+          </div>
 
+          <div>
+            <button
+              onClick={changePassword}
+              disabled={loading}
+              className="bg-green-600 hover:bg-green-700 text-white font-medium rounded-md px-6 py-3 transition disabled:opacity-50"
+            >
+              {loading ? "Changing..." : "Change Password"}
+            </button>
+          </div>
+        </section>
 
-            {/* Change Password */}
-            <section className="bg-[#1a1a1f] border border-gray-700 rounded-3xl p-8 mb-10 shadow-lg hover:shadow-green-600/40 transition-shadow duration-300">
-                <h2 className="text-xl font-semibold mb-6 border-b border-gray-700 pb-3">
-                Change Password
-                </h2>
+        {/* --- Danger Zone --- */}
+        <section className="pt-10 border-t border-white/10 space-y-4">
+          <h2 className="text-xl font-semibold text-red-500">Danger Zone</h2>
+          <p className="text-sm text-red-400">
+            Deleting your account is <strong>permanent</strong> and will remove
+            all your data. Proceed only if you're sure.
+          </p>
 
-                <div className="space-y-5">
-                <div>
-                    <label htmlFor="oldPassword" className="block mb-1 font-medium text-gray-300">
-                    Current Password
-                    </label>
-                    <input
-                    id="oldPassword"
-                    type="password"
-                    className="w-full rounded-lg bg-gray-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                    />
-                </div>
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium rounded-md px-6 py-3 transition"
+          >
+            Delete Account
+          </button>
+        </section>
 
-                <div>
-                    <label htmlFor="newPassword" className="block mb-1 font-medium text-gray-300">
-                    New Password
-                    </label>
-                    <input
-                    id="newPassword"
-                    type="password"
-                    className="w-full rounded-lg bg-gray-900 border border-gray-700 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                    />
-                </div>
-                </div>
-
+        {/* --- Confirm Delete Modal --- */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 sm:px-0">
+            <div className="bg-neutral-900 p-6 rounded-xl border border-red-600 w-full max-w-md shadow-xl">
+              <p className="text-sm text-red-400 mb-6">
+                Are you absolutely sure? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-4">
                 <button
-                onClick={changePassword}
-                disabled={loading}
-                className="mt-6 w-full md:w-auto bg-gradient-to-r from-green-600 to-teal-600 hover:from-teal-700 hover:to-green-700 text-white font-semibold rounded-xl px-6 py-3 shadow-lg transition transform active:scale-95 disabled:opacity-50"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-5 py-2 text-sm font-medium text-gray-300 hover:bg-neutral-700 rounded-md transition"
                 >
-                {loading ? "Changing..." : "Change Password"}
+                  Cancel
                 </button>
-            </section>
-
-            {/* Danger Zone */}
-            <section className="bg-[#1a1a1f] border border-red-500 rounded-3xl p-8 shadow-lg hover:shadow-red-700/50 transition-shadow duration-300">
-                <h2 className="text-xl font-semibold mb-6 border-b border-red-500 pb-3 text-red-500">
-                Account Deletion
-                </h2>
                 <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full md:w-auto bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-xl px-6 py-3 shadow-lg transition transform active:scale-95"
+                  onClick={deleteAccount}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition"
                 >
-                Delete Account
+                  Confirm Delete
                 </button>
-            </section>
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 sm:px-0">
-                    <div className="bg-red-50 dark:bg-neutral-900 p-6 rounded-2xl border border-red-400 dark:border-red-600 w-xl shadow-2xl transition-colors">
-                    <p className="text-sm font-semibold text-red-700 dark:text-red-400 mb-6 leading-relaxed">
-                        Deleting your account is <strong>irreversible</strong>. All your data will be permanently lost. Please proceed with caution.
-                    </p>
-                    <div className="flex justify-end gap-4">
-                        <button
-                        onClick={() => setShowDeleteConfirm(false)}
-                        className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
-                        >
-                        Cancel
-                        </button>
-                        <button
-                        onClick={deleteAccount}
-                        className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                        >
-                        Confirm Delete
-                        </button>
-                    </div>
-                    </div>
-                </div>
-            )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

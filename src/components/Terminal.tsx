@@ -181,7 +181,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     return (
       <div
         style={{ height }}
-        className="relative w-full flex flex-col bg-[#1e1e1e]"
+        className="relative w-full flex flex-col bg-[#1e1e1e] group"
       >
         {/* Drag Handle */}
         <div
@@ -194,7 +194,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
         <div className="flex items-center justify-between px-4 py-2 border-b border-[#2c2c2c] bg-[#1f1f1f]">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 flex items-center justify-center bg-[#242424] rounded-md">
-              <TerminalIcon className="w-4 h-4 text-blue-400" />
+              <TerminalIcon className="w-4 h-4 text-neutral-400 group-hover:text-blue-400" />
             </div>
             <span className="text-sm font-medium text-gray-300">Terminal</span>
           </div>
