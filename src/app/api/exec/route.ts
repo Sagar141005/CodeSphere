@@ -109,15 +109,13 @@ async function runCodeInDocker(
       stderr = result.stderr;
     } catch (err: any) {
       if (err.killed) {
-        return "Execution timed out after 5 seconds.";
+        return { stdout: "", stderr: "Execution timed out after 5 seconds." };
       } else {
         stderr = err.stderr || "Unknown execution error.";
       }
     }
 
-    return (
-      stdout + (stderr ? `\n${stderr}` : "") || "Program ran successfully!"
-    );
+    return { stdout, stderr };
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -239,9 +237,12 @@ export async function POST(req: Request) {
       });
     }
 
-    const output = await runCodeInDocker(language, files, entry, code);
+    const result = await runCodeInDocker(language, files, entry, code);
 
-    return NextResponse.json({ output });
+    return NextResponse.json({
+      stdout: result.stdout || "",
+      stderr: result.stderr || "",
+    });
   } catch (err: any) {
     console.error("Execution error:", err);
     return NextResponse.json(

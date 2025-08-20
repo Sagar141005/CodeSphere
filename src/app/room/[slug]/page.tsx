@@ -57,6 +57,9 @@ export default function RoomPage({
   const [diffs, setDiffs] = useState<Diff[]>([]);
   const [currentCommit, setCurrentCommit] = useState<Commit | null>(null);
   const [showDiffModal, setShowDiffModal] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [pendingApplyRange, setPendingApplyRange] = useState<any>(null);
+  const [diffSource, setDiffSource] = useState<"commit" | "ai" | null>(null);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
 
@@ -292,10 +295,24 @@ export default function RoomPage({
       });
 
       const data = await execRes.json();
-      output = data.output;
-      error = data.error;
+      const output = data.stdout?.trim();
+      const error = data.stderr?.trim();
 
-      terminalRef.current?.displayOutput(output || "", error || "");
+      setLastError(error || null);
+
+      if (output && !error) {
+        terminalRef.current?.displayOutput(output, "output");
+      } else if (error && !output) {
+        terminalRef.current?.displayOutput(error, "error");
+      } else if (output && error) {
+        terminalRef.current?.displayOutput(output, "output");
+        terminalRef.current?.displayOutput(error, "error");
+      } else {
+        terminalRef.current?.displayOutput(
+          "Program ran with no output.",
+          "info"
+        );
+      }
 
       // Step 4: Emit to other users
       const username = session?.user.name || "Unknown user";
@@ -328,10 +345,188 @@ export default function RoomPage({
     return res.json(); // includes { id, message, createdAt, user }
   };
 
+  const explainSelection = async () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selection = editor.getModel()?.getValueInRange(editor.getSelection());
+    if (!selection || selection.trim().length === 0) {
+      alert("Please select some code first.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/ai/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: selection,
+          language: getLanguage(activeFile?.name || "javascript"),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to get explanation");
+      }
+
+      const data = await res.json();
+      alert(data.explanation);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to explain the selected code.");
+    }
+  };
+
+  const refactorSelection = async () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selectionRange = editor.getSelection();
+    const selection = editor.getModel()?.getValueInRange(selectionRange);
+    if (!selection || selection.trim().length === 0) {
+      alert("Please select some code first.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/ai/refactor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: selection,
+          language: getLanguage(activeFile?.name || "javascript"),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to get explanation");
+      }
+
+      const data = await res.json();
+      // Build diff
+      setDiffs([
+        {
+          id: "ai-change",
+          name: activeFile?.name || "current-file",
+          oldContent: selection,
+          content: data.result,
+          language: getLanguage(activeFile?.name || "javascript"),
+        },
+      ]);
+
+      // Store range and mark diff source
+      setPendingApplyRange(selectionRange);
+      setDiffSource("ai");
+      setShowDiffModal(true);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to explain the selected code.");
+    }
+  };
+
+  const addCommentsToSelection = async () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selection = editor.getModel()?.getValueInRange(editor.getSelection());
+    const codeToComment =
+      selection && selection.trim().length > 0 ? selection : editor.getValue();
+
+    try {
+      const res = await fetch("/api/ai/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: codeToComment,
+          language: getLanguage(activeFile?.name || "javascript"),
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to get explanation");
+      }
+
+      const data = await res.json();
+      if (selection && selection.trim().length > 0) {
+        // replace only the selected code
+        editor.executeEdits("", [
+          { range: editor.getSelection(), text: data.result },
+        ]);
+      } else {
+        // replace entire file
+        editor.setValue(data.result);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Failed to explain the selected code.");
+    }
+  };
+
+  const fixErrorsInFile = async () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const currentCode = editor.getValue();
+    if (!lastError) {
+      alert("No error to fix. Run the code first.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/ai/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: currentCode,
+          language: getLanguage(activeFile?.name || "javascript"),
+          error: lastError,
+        }),
+      });
+
+      if (!res.ok) {
+        const e = await res.json();
+        throw new Error(e.error || "Could not fix this error");
+      }
+
+      const data = await res.json();
+      // Build diff (oldContent=currentCode, content=AI fix)
+      setDiffs([
+        {
+          id: "ai-error-fix",
+          name: activeFile?.name || "current-file",
+          oldContent: currentCode,
+          content: data.result,
+          language: getLanguage(activeFile?.name || "javascript"),
+        },
+      ]);
+
+      // Store range (entire document) for apply
+      const fullRange = editor.getModel()?.getFullModelRange();
+      setPendingApplyRange(fullRange);
+      setDiffSource("ai");
+      setShowDiffModal(true);
+
+      setLastError(null);
+    } catch (error) {
+      console.log(error);
+      alert("Failed to apply AI fix.");
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
       {/* Header/Navbar */}
-      <Navbar roomSlug={slug} roomName={roomName} />
+      <Navbar
+        roomSlug={slug}
+        roomName={roomName}
+        handleExplain={explainSelection}
+        handleRefactor={refactorSelection}
+        handleComments={addCommentsToSelection}
+        handleFix={fixErrorsInFile}
+      />
 
       {/* Main Body */}
       <div className="flex flex-1 overflow-hidden">
@@ -360,6 +555,7 @@ export default function RoomPage({
               const commitData = await fetchCommitDetails(commitId);
               setCurrentCommit(commitData);
               setDiffs(commitData.files);
+              setDiffSource("commit");
               setShowDiffModal(true);
             } catch (err) {
               console.error("Failed to fetch commit:", err);
@@ -395,13 +591,13 @@ export default function RoomPage({
               {/* Undo / Redo */}
               <div className="flex items-center gap-1">
                 <button
-                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition"
+                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition cursor-pointer"
                   onClick={() => editorRef.current?.trigger("", "undo", null)}
                 >
                   <Undo className="w-4 h-4" />
                 </button>
                 <button
-                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition"
+                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition cursor-pointer"
                   onClick={() => editorRef.current?.trigger("", "redo", null)}
                 >
                   <Redo className="w-4 h-4" />
@@ -424,7 +620,7 @@ export default function RoomPage({
                 <button
                   onClick={runCode}
                   className="flex items-center gap-2 text-white bg-green-600 hover:bg-green-700 active:bg-green-800
-             px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
+                  px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
                 >
                   ▶ Run
                 </button>
@@ -487,52 +683,76 @@ export default function RoomPage({
         />
       )}
 
-      {showDiffModal && currentCommit && (
+      {showDiffModal && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4 sm:px-6">
           <div className="bg-[#1e1e1e] max-w-4xl w-full p-6 rounded-md shadow-lg max-h-[90vh] flex flex-col">
-            {/* Sticky Header */}
-            <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 border-b border-gray-700">
-              <div>
-                <h2 className="text-white text-lg font-semibold leading-none">
-                  Preview Changes
-                </h2>
-                <p className="text-sm text-gray-400 mt-2">
-                  Committed by{" "}
-                  <span className="text-white font-medium">
-                    {currentCommit?.user?.name ?? "Unknown user"}
-                  </span>{" "}
-                  on{" "}
-                  <span className="text-white font-medium">
+            {/* Header */}
+            {diffSource === "commit" && currentCommit && (
+              <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 border-b border-gray-700">
+                <div>
+                  <h2 className="text-white text-lg font-semibold">
+                    Preview Changes
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Committed by {currentCommit.user?.name} on{" "}
                     {new Date(currentCommit.createdAt).toLocaleString()}
-                  </span>
-                </p>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowDiffModal(false)}
+                  className="text-gray-400 hover:text-white text-xl cursor-pointer"
+                >
+                  ×
+                </button>
               </div>
-              <button
-                onClick={() => setShowDiffModal(false)}
-                className="text-gray-400 hover:text-white text-xl font-semibold leading-none cursor-pointer px-2"
-                aria-label="Close preview modal"
-                type="button"
-              >
-                ×
-              </button>
+            )}
+
+            {/* Diffs list */}
+            <div className="overflow-y-auto flex-grow">
+              {diffs.map((file) => (
+                <DiffView
+                  key={file.id}
+                  fileName={file.name}
+                  original={file.oldContent}
+                  modified={file.content}
+                  language={file.language || "plaintext"}
+                />
+              ))}
             </div>
 
-            {/* Scrollable Diffs */}
-            <div className="overflow-y-auto flex-grow max-h-[calc(90vh-76px)]">
-              {diffs.length === 0 ? (
-                <p className="text-gray-400 text-sm italic">No changes</p>
-              ) : (
-                diffs.map((file) => (
-                  <DiffView
-                    key={file.id}
-                    fileName={file.name}
-                    original={file.oldContent || ""}
-                    modified={file.content || ""}
-                    language={file.language || "plaintext"}
-                  />
-                ))
-              )}
-            </div>
+            {/* Apply / Cancel **only for AI diffs** */}
+            {diffSource === "ai" && (
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    // Cancel
+                    setShowDiffModal(false);
+                    setPendingApplyRange(null);
+                    setDiffs([]);
+                    setDiffSource(null);
+                  }}
+                  className="px-4 py-2 rounded bg-neutral-700 text-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (editorRef.current && pendingApplyRange && diffs[0]) {
+                      editorRef.current.executeEdits("", [
+                        { range: pendingApplyRange, text: diffs[0].content },
+                      ]);
+                    }
+                    setShowDiffModal(false);
+                    setPendingApplyRange(null);
+                    setDiffSource(null);
+                    setDiffs([]);
+                  }}
+                  className="px-4 py-2 rounded bg-green-600 text-white cursor-pointer"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

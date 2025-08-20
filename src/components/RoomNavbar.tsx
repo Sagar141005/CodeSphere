@@ -3,7 +3,15 @@
 import { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
-import { Users, Sparkles, WandSparkles } from "lucide-react";
+import {
+  Bug,
+  ChevronDown,
+  MessageSquareQuote,
+  StickyNote,
+  Users,
+  WandSparkles,
+  Wrench,
+} from "lucide-react";
 
 interface UserPresence {
   id: string;
@@ -16,12 +24,21 @@ const MAX_VISIBLE_AVATARS = 5;
 export default function RoomNavbar({
   roomSlug,
   roomName,
+  handleExplain,
+  handleRefactor,
+  handleComments,
+  handleFix,
 }: {
   roomSlug: string;
   roomName: string;
+  handleExplain: () => void;
+  handleRefactor: () => void;
+  handleComments: () => void;
+  handleFix: () => void;
 }) {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserPresence[]>([]);
+  const [open, setOpen] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const userIdRef = useRef<string | null>(null);
 
@@ -124,18 +141,72 @@ export default function RoomNavbar({
           )}
         </div>
 
-        {/* AI Assist Button */}
-        <button
-          type="button"
-          aria-label="Activate AI Assist"
-          title="AI Assist helps you code faster with AI suggestions"
-          className="flex items-center gap-2 text-gray-200 bg-[#1f1f1f] border border-white/10
-          hover:bg-[#2a2a2a] hover:text-white hover:border-white/20
-          transition-colors duration-200 px-4 py-2 rounded-md text-sm font-medium select-none cursor-pointer"
-        >
-          <WandSparkles className="w-5 h-5" aria-hidden="true" />
-          AI Assist
-        </button>
+        {/* AI Assist Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            aria-haspopup="true"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
+               text-white bg-[#1a1a1a] border border-white/10
+               hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer"
+          >
+            <WandSparkles className="w-5 h-5" />
+            AI Assist
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${
+                open ? "rotate-180" : "rotate-0"
+              }`}
+            />
+          </button>
+
+          {open && (
+            <div
+              className="absolute right-0 mt-2 w-56 rounded-md border border-white/10 bg-[#1a1a1a] shadow-xl z-50 animate-fadeIn"
+              role="menu"
+            >
+              <button
+                onClick={() => handleExplain()}
+                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                role="menuitem"
+              >
+                <MessageSquareQuote className="w-4 h-4 text-blue-300" />
+                Explain Selection
+              </button>
+              <button
+                onClick={() => {
+                  handleRefactor();
+                }}
+                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                role="menuitem"
+              >
+                <Wrench className="w-4 h-4 text-indigo-300" />
+                Refactor Selection
+              </button>
+              <button
+                onClick={() => {
+                  handleComments();
+                }}
+                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                role="menuitem"
+              >
+                <StickyNote className="w-4 h-4 text-yellow-300" />
+                Add Comments
+              </button>
+              <button
+                onClick={() => {
+                  handleFix();
+                }}
+                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                role="menuitem"
+              >
+                <Bug className="w-4 h-4 text-red-400" />
+                Fix Errors in File
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
