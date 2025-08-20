@@ -12,7 +12,14 @@ import { useEffect, useState, useRef } from "react";
 import type { FileData } from "@/types/FileData";
 import ThemeSelector from "@/components/ThemeSelector";
 import LivePreviewModal from "@/components/LivePreviewModal";
-import { MonitorDot, Redo, Undo } from "lucide-react";
+import {
+  MessageSquareQuote,
+  MonitorDot,
+  Redo,
+  Undo,
+  WandSparkles,
+  X,
+} from "lucide-react";
 import DiffView from "@/components/DiffView";
 
 type Diff = {
@@ -60,6 +67,9 @@ export default function RoomPage({
   const [lastError, setLastError] = useState<string | null>(null);
   const [pendingApplyRange, setPendingApplyRange] = useState<any>(null);
   const [diffSource, setDiffSource] = useState<"commit" | "ai" | null>(null);
+  const [aiOutput, setAiOutput] = useState<string | null>(null);
+  const [aiExpanded, setAiExpanded] = useState(false);
+  const [aiHeight, setAiHeight] = useState(200);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
 
@@ -258,11 +268,7 @@ export default function RoomPage({
       setTerminalExpanded(true);
     }
 
-    // ✅ Move this to the very top before any fetching begins
-    terminalRef.current?.setRunning(true); // ⬅️ Now it shows "Running..." immediately
-
-    let output = "",
-      error = "";
+    terminalRef.current?.setRunning(true); //
 
     try {
       // Step 1: Gather all file contents from open tabs
@@ -371,7 +377,9 @@ export default function RoomPage({
       }
 
       const data = await res.json();
-      alert(data.explanation);
+
+      setAiOutput(data.explanation);
+      setAiExpanded(true);
     } catch (error) {
       console.error(error);
       alert("Failed to explain the selected code.");
@@ -516,6 +524,30 @@ export default function RoomPage({
     }
   };
 
+  const handleResize = (
+    e: React.MouseEvent,
+    startHeight: number,
+    setHeight: (h: number) => void,
+    min = 40,
+    max = 500
+  ) => {
+    const startY = e.clientY;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientY - startY;
+      const newHeight = Math.max(min, Math.min(max, startHeight - delta));
+      setHeight(newHeight);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
       {/* Header/Navbar */}
@@ -657,17 +689,69 @@ export default function RoomPage({
             </div>
 
             {/* Terminal */}
-            <div
-              style={{ height: terminalHeight }}
-              className="relative border-t border-gray-700"
-            >
-              <Terminal
-                ref={terminalRef}
-                roomId={slug}
-                height={terminalHeight}
-                setHeight={setTerminalHeight}
-                isExpanded={terminalExpanded}
-              />
+            <div className="relative border-t border-gray-700">
+              {aiOutput ? (
+                <div
+                  style={{ height: aiExpanded ? aiHeight : 40 }}
+                  className="relative w-full flex flex-col bg-[#1e1e1e] group border-t border-[#2c2c2c]"
+                >
+                  {/* Drag Handle */}
+                  {aiExpanded && (
+                    <div
+                      onMouseDown={(e) =>
+                        handleResize(e, aiHeight, setAiHeight, 40, 500)
+                      }
+                      className="absolute top-0 left-0 w-full h-2 cursor-row-resize bg-transparent z-10"
+                      title="Drag to resize AI explanation"
+                    />
+                  )}
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-[#2c2c2c] bg-[#1f1f1f]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 flex items-center justify-center bg-[#242424] rounded-md">
+                        <MessageSquareQuote className="w-4 h-4 text-blue-300" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-300">
+                        AI Explanation
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setAiExpanded(!aiExpanded)}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                      >
+                        {aiExpanded ? "Collapse" : "Expand"}
+                      </button>
+                      <button
+                        onClick={() => setAiOutput(null)}
+                        className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  {aiExpanded && (
+                    <div className="p-4 overflow-auto flex-1 font-mono text-sm text-gray-200 bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244]">
+                      <pre className="whitespace-pre-wrap break-words">
+                        {aiOutput}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Terminal
+                  ref={terminalRef}
+                  roomId={slug}
+                  height={terminalHeight}
+                  setHeight={setTerminalHeight}
+                  isExpanded={terminalExpanded}
+                  handleResize={handleResize}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -684,54 +768,63 @@ export default function RoomPage({
       )}
 
       {showDiffModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center px-4 sm:px-6">
-          <div className="bg-[#1e1e1e] max-w-4xl w-full p-6 rounded-md shadow-lg max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 sm:px-6">
+          <div className="relative bg-[#1e1e1e] w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl border border-white/10 flex flex-col">
             {/* Header */}
-            {diffSource === "commit" && currentCommit && (
-              <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#1e1e1e] z-20 py-2 border-b border-gray-700">
-                <div>
-                  <h2 className="text-white text-lg font-semibold">
-                    Preview Changes
-                  </h2>
+            <div className="sticky top-0 z-20 bg-[#1e1e1e] border-b border-white/10 flex justify-between items-start sm:items-center px-6 py-4">
+              <div>
+                <h2 className="text-white text-lg font-semibold">
+                  Preview Changes
+                </h2>
+                {diffSource === "commit" && currentCommit && (
                   <p className="text-sm text-gray-400 mt-1">
-                    Committed by {currentCommit.user?.name} on{" "}
-                    {new Date(currentCommit.createdAt).toLocaleString()}
+                    Committed by{" "}
+                    <span className="text-white font-medium">
+                      {currentCommit.user?.name || "Unknown"}
+                    </span>{" "}
+                    on {new Date(currentCommit.createdAt).toLocaleString()}
                   </p>
-                </div>
-                <button
-                  onClick={() => setShowDiffModal(false)}
-                  className="text-gray-400 hover:text-white text-xl cursor-pointer"
-                >
-                  ×
-                </button>
+                )}
               </div>
-            )}
-
-            {/* Diffs list */}
-            <div className="overflow-y-auto flex-grow">
-              {diffs.map((file) => (
-                <DiffView
-                  key={file.id}
-                  fileName={file.name}
-                  original={file.oldContent}
-                  modified={file.content}
-                  language={file.language || "plaintext"}
-                />
-              ))}
+              <button
+                onClick={() => setShowDiffModal(false)}
+                className="text-gray-400 hover:text-white text-xl transition-colors rounded cursor-pointer"
+                aria-label="Close"
+              >
+                <X />
+              </button>
             </div>
 
-            {/* Apply / Cancel **only for AI diffs** */}
+            {/* Diffs */}
+            <div className="overflow-y-auto flex-grow px-6 py-4 space-y-6">
+              {diffs.length === 0 ? (
+                <p className="text-gray-400 text-sm italic">
+                  No changes to display.
+                </p>
+              ) : (
+                diffs.map((file) => (
+                  <DiffView
+                    key={file.id}
+                    fileName={file.name}
+                    original={file.oldContent}
+                    modified={file.content}
+                    language={file.language || "plaintext"}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Footer Actions for AI Diffs */}
             {diffSource === "ai" && (
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="border-t border-white/10 px-6 py-4 flex justify-end gap-3 bg-[#1e1e1e] sticky bottom-0 z-10">
                 <button
                   onClick={() => {
-                    // Cancel
                     setShowDiffModal(false);
                     setPendingApplyRange(null);
                     setDiffs([]);
                     setDiffSource(null);
                   }}
-                  className="px-4 py-2 rounded bg-neutral-700 text-gray-200 cursor-pointer"
+                  className="px-5 py-2 rounded-md bg-neutral-700 text-white hover:bg-neutral-600 transition font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -747,9 +840,9 @@ export default function RoomPage({
                     setDiffSource(null);
                     setDiffs([]);
                   }}
-                  className="px-4 py-2 rounded bg-green-600 text-white cursor-pointer"
+                  className="px-5 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white transition font-medium shadow cursor-pointer"
                 >
-                  Apply
+                  Apply Changes
                 </button>
               </div>
             )}

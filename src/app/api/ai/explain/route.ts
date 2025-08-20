@@ -17,23 +17,22 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-    You are a senior developer and excellent technical writer.
+    You are a senior developer and a clear communicator.
+
     Your task is to explain the following ${
       language || ""
-    } code in clear, beginner-friendly language.
-    
+    } code in plain, beginner-friendly language.
+
     Instructions:
-    - Break down the code step by step.
-    - Explain what each major part does.
-    - Highlight any functions, loops, or logic with plain-language explanations.
-    - Mention the overall purpose of the code.
-    - If possible, add a real-world analogy or practical use case.
-    
-    Here is the code to explain:
-    
-    \`\`\`${language || ""}
+    - Break down what the code does in simple steps
+    - Describe key parts (like functions, loops, conditions) clearly and simply
+    - Avoid technical jargon unless necessary
+    - Keep the tone friendly and conversational
+    - Don't use markdown formatting or headings — just write a plain explanation
+
+    Here is the code:
+
     ${code}
-    \`\`\`
     `;
 
     const response = await openai.chat.completions.create({

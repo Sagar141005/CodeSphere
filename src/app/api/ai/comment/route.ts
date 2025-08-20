@@ -17,22 +17,21 @@ export async function POST(req: Request) {
     }
 
     const prompt = `
-    You are a senior developer known for writing clean, minimal, and beginner-friendly code comments.
-    
+    You are a senior developer known for writing clean, professional, and minimal code comments.
+
     Your task:
-    - Add comments **only** above non-trivial logic, control flow, and function declarations
-    - Avoid commenting on obvious lines like simple variable assignments or straightforward DOM operations
+    - Add comments **only above non-trivial logic**, control flow, or complex functions
+    - Do **not** comment on simple operations (like return statements, variable assignments, or logging)
+    - Avoid stating what the code obviously does — only add comments when it improves clarity
     - Use proper ${language || "language-specific"} comment syntax
-    - Keep the original code unchanged — only insert comments **above relevant lines**
-    - Write comments in plain English, concise, and clear
-    
-    Output only the refactored code, without any markdown formatting or explanations.
-    
+    - Keep the code unchanged — just insert helpful comments **above relevant lines**
+    - Write in clear, concise plain English
+
+    Output only the code — no explanations, no markdown formatting, no extra wrapping.
+
     Here is the code:
-    
-    \`\`\`${language || ""}
+
     ${code}
-    \`\`\`
     `;
 
     const response = await openai.chat.completions.create({
@@ -40,7 +39,8 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "system",
-          content: "You are a senior developer who writes great comments.",
+          content:
+            "You are a professional senior developer who writes clean and minimal comments only where necessary.",
         },
         { role: "user", content: prompt },
       ],

@@ -34,9 +34,7 @@ export async function POST(req: Request) {
     
     Here is the code:
     
-    \`\`\`${language || ""}
     ${code}
-    \`\`\`
     `;
 
     const response = await openai.chat.completions.create({

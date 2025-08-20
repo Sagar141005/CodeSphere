@@ -28,6 +28,13 @@ interface TerminalProps {
   height: number;
   setHeight: (h: number) => void;
   isExpanded: boolean;
+  handleResize: (
+    e: React.MouseEvent,
+    startHeight: number,
+    setHeight: (h: number) => void,
+    min?: number,
+    max?: number
+  ) => void;
 }
 
 interface TerminalEntry {
@@ -38,7 +45,7 @@ interface TerminalEntry {
 }
 
 const Terminal = forwardRef<TerminalRef, TerminalProps>(
-  ({ roomId, height, setHeight, isExpanded }, ref) => {
+  ({ roomId, height, setHeight, isExpanded, handleResize }, ref) => {
     const [output, setOutput] = useState("");
     const [error, setError] = useState("");
     const [isCopied, setIsCopied] = useState(false);
@@ -46,31 +53,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     const [isExpandedOutput, setIsExpandedOutput] = useState(false);
     const [log, setLog] = useState<TerminalEntry[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
-
-    const MIN_HEIGHT = 40;
-    const MAX_HEIGHT = 500;
-
-    const displayOutput = async (language: string, code: string) => {
-      setIsRunning(true);
-      setOutput("");
-      setError("");
-
-      try {
-        const res = await fetch("/api/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ language, code }),
-        });
-
-        const data = await res.json();
-        setOutput(data.output || "");
-        setError(data.error || "");
-      } catch {
-        setError("An error occurred while executing code.");
-      } finally {
-        setIsRunning(false);
-      }
-    };
 
     useImperativeHandle(ref, () => ({
       displayOutput: (output: string, error: string) => {
@@ -155,29 +137,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       };
     }, [roomId]);
 
-    // Resize logic
-    const handleMouseDown = (e: React.MouseEvent) => {
-      const startY = e.clientY;
-      const startHeight = height;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        const delta = e.clientY - startY;
-        const newHeight = Math.max(
-          MIN_HEIGHT,
-          Math.min(MAX_HEIGHT, startHeight - delta)
-        );
-        setHeight(newHeight);
-      };
-
-      const handleMouseUp = () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-      };
-
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    };
-
     return (
       <div
         style={{ height }}
@@ -185,7 +144,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       >
         {/* Drag Handle */}
         <div
-          onMouseDown={handleMouseDown}
+          onMouseDown={(e) => handleResize(e, height, setHeight, 40, 500)}
           className="absolute top-0 left-0 w-full h-2 cursor-row-resize bg-transparent z-10"
           title="Drag to resize terminal"
         />
@@ -238,7 +197,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           <div
             ref={scrollRef}
             className="relative bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244] 
-            rounded-xl p-4 flex-1 overflow-auto font-mono text-sm mt-2"
+            p-4 flex-1 overflow-auto text-sm"
           >
             {isRunning ? (
               <div className="h-full flex flex-col items-center justify-center text-gray-500">
