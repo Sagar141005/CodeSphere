@@ -287,14 +287,7 @@ export default function TeamDetailsPage() {
                 />
                 <button
                   type="submit"
-                  className="px-6 py-3
-                  bg-black border border-cyan-700
-                  text-cyan-400 font-mono rounded-lg shadow-md
-                  hover:bg-cyan-400 hover:text-black
-                  hover:shadow-[0_0_10px_#22d3ee]
-                  transition duration-300
-                  flex items-center justify-center gap-2
-                  cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10 text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   Invite Member
@@ -310,13 +303,13 @@ export default function TeamDetailsPage() {
             <section className="relative max-w-5xl mx-auto mb-6">
               <div
                 className="group relative cursor-pointer rounded-2xl border border-white/20 bg-gradient-to-br from-black/70 to-black/90
-                           hover:border-cyan-500 hover:shadow-xl transition-all duration-300 shadow-lg backdrop-blur-md p-6"
+                           hover:border-blue-300 hover:shadow-xl transition-all duration-300 shadow-lg backdrop-blur-md p-6"
               >
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 blur-md" />
 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors mb-1 font-mono">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-200 transition-colors mb-1 font-mono">
                       Create a New Room
                     </h3>
                     <p className="text-sm text-gray-400 font-mono">
@@ -339,13 +332,7 @@ export default function TeamDetailsPage() {
                     <button
                       onClick={createRoom}
                       className="px-6 py-3
-                      bg-black/90 border border-neutral-400
-                      text-neutral-400 font-mono rounded-lg shadow-sm
-                      hover:border-white hover:text-white
-                      hover:shadow-[0_0_8px_#22d3ee]
-                      transition duration-300
-                      flex items-center justify-center gap-2
-                      cursor-pointer"
+                      bg-gradient-to-r from-indigo-300 to-cyan-300 text-black font-semibold rounded-lg hover:brightness-105 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <DoorOpen className="w-4 h-4" />
                       Create Room

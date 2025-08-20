@@ -423,7 +423,8 @@ export default function RoomPage({
               ) : (
                 <button
                   onClick={runCode}
-                  className="flex items-center gap-2 bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
+                  className="flex items-center gap-2 text-white bg-green-600 hover:bg-green-700 active:bg-green-800
+             px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
                 >
                   ▶ Run
                 </button>

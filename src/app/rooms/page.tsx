@@ -213,17 +213,19 @@ export default function RoomsPage() {
                 onClick={handleCreate}
                 className="px-6 py-3
                 bg-gradient-to-r from-indigo-300 to-cyan-300
-                text-black font-medium rounded-lg shadow-md
-                hover:brightness-110
-                transition duration-200
-                flex items-center justify-center gap-2
-                cursor-pointer"
+                text-black font-semibold rounded-lg
+                hover:brightness-105 active:scale-95
+                transition-all duration-150 cursor-pointer"
               >
                 Create Room
               </button>
               <button
                 onClick={() => setShowInviteModal(true)}
-                className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg shadow transition duration-200"
+                className="px-6 py-3
+                bg-white/5 text-white/80
+                hover:bg-white/10 hover:text-white
+                border border-white/10
+                text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
               >
                 Manage Invitations
               </button>

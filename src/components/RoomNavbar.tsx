@@ -129,7 +129,9 @@ export default function RoomNavbar({
           type="button"
           aria-label="Activate AI Assist"
           title="AI Assist helps you code faster with AI suggestions"
-          className="flex items-center gap-2 text-white border border-white bg-[#1A1A1A] hover:bg-white hover:text-[#1A1A1A] hover:border-[#1A1A1A] transition px-4 py-2 rounded-md text-sm font-semibold shadow-lg select-none cursor-pointer"
+          className="flex items-center gap-2 text-gray-200 bg-[#1f1f1f] border border-white/10
+          hover:bg-[#2a2a2a] hover:text-white hover:border-white/20
+          transition-colors duration-200 px-4 py-2 rounded-md text-sm font-medium select-none cursor-pointer"
         >
           <WandSparkles className="w-5 h-5" aria-hidden="true" />
           AI Assist

@@ -88,11 +88,9 @@ export default function TeamsPage() {
               onClick={createTeam}
               className="px-6 py-3
               bg-gradient-to-r from-indigo-300 to-cyan-300
-              text-black font-medium rounded-lg shadow-md
-              hover:brightness-110
-              transition duration-200
-              flex items-center justify-center gap-2
-              cursor-pointer"
+              text-black font-semibold rounded-lg
+              hover:brightness-105 active:scale-95
+              transition-all duration-150 cursor-pointer"
             >
               Create Team
             </button>
