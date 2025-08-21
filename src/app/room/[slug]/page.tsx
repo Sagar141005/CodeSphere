@@ -12,14 +12,7 @@ import { useEffect, useState, useRef } from "react";
 import type { FileData } from "@/types/FileData";
 import ThemeSelector from "@/components/ThemeSelector";
 import LivePreviewModal from "@/components/LivePreviewModal";
-import {
-  MessageSquareQuote,
-  MonitorDot,
-  Redo,
-  Undo,
-  WandSparkles,
-  X,
-} from "lucide-react";
+import { MessageSquareQuote, MonitorDot, Redo, Undo, X } from "lucide-react";
 import DiffView from "@/components/DiffView";
 
 type Diff = {
@@ -48,6 +41,7 @@ export default function RoomPage({
 
   const [files, setFiles] = useState<FileData[]>([]);
   const [roomName, setRoomName] = useState<string>("");
+  const [roomId, setRoomId] = useState<string>("");
   const [openTabs, setOpenTabs] = useState<FileData[]>([]);
   const [activeFile, setActiveFile] = useState<FileData | null>(null);
   const [theme, setTheme] = useState("vs-dark");
@@ -79,6 +73,7 @@ export default function RoomPage({
         const roomRes = await fetch(`/api/room/${slug}`);
         const roomData = await roomRes.json();
         setRoomName(roomData.name);
+        setRoomId(roomData.id);
       } catch {
         setRoomName(slug);
       }
@@ -552,6 +547,7 @@ export default function RoomPage({
         handleRefactor={refactorSelection}
         handleComments={addCommentsToSelection}
         handleFix={fixErrorsInFile}
+        roomId={roomId}
       />
 
       {/* Main Body */}

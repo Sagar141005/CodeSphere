@@ -8,11 +8,14 @@ import {
   ChevronDown,
   Loader2,
   MessageSquareQuote,
+  Mic,
+  MicOff,
   StickyNote,
   Users,
   WandSparkles,
   Wrench,
 } from "lucide-react";
+import VoiceChatButton from "./Mic";
 
 interface UserPresence {
   id: string;
@@ -29,9 +32,11 @@ export default function RoomNavbar({
   handleRefactor,
   handleComments,
   handleFix,
+  roomId,
 }: {
   roomSlug: string;
   roomName: string;
+  roomId: string;
   handleExplain: () => void;
   handleRefactor: () => void;
   handleComments: () => void;
@@ -42,6 +47,10 @@ export default function RoomNavbar({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [micStatuses, setMicStatuses] = useState<
+    Record<string, "muted" | "unmuted">
+  >({});
+  const [showUserList, setShowUserList] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   const userIdRef = useRef<string | null>(null);
 
@@ -73,6 +82,10 @@ export default function RoomNavbar({
         ).values()
       );
       setUsers(uniqueUsers);
+    });
+
+    sock.on("mic-status-update", ({ userId, status }) => {
+      setMicStatuses((prev) => ({ ...prev, [userId]: status }));
     });
 
     return () => {
@@ -131,11 +144,20 @@ export default function RoomNavbar({
 
       {/* Right: User avatars + AI Assist */}
       <div className="flex items-center gap-6">
+        {/* Mic */}
+        {session?.user && (
+          <VoiceChatButton
+            roomId={roomId}
+            userId={session.user.id || session.user.email!}
+          />
+        )}
+
         {/* Avatars */}
         <div
           className="flex items-center -space-x-3"
           aria-label={`${users.length} users online`}
           role="group"
+          onClick={() => setShowUserList(!showUserList)}
         >
           {visibleUsers.map((user) => (
             <img
@@ -236,6 +258,36 @@ export default function RoomNavbar({
           )}
         </div>
       </div>
+
+      {showUserList && (
+        <div className="absolute right-4 top-14 w-64 rounded-md border border-white/10 bg-[#1a1a1a] shadow-xl z-50">
+          <div className="p-3 text-white text-sm font-medium">
+            Users in Room
+          </div>
+          <ul className="max-h-60 overflow-y-auto divide-y divide-white/10">
+            {users.map((user) => (
+              <li
+                key={user.id}
+                className="flex items-center gap-2 px-3 py-2 text-white"
+              >
+                <img
+                  src={user.image || "/default-avatar.jpg"}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover border border-gray-800"
+                />
+                <span className="truncate flex-1">{user.name}</span>
+
+                {/* Mic status icon - e.g. muted/unmuted */}
+                {micStatuses[user.id] === "muted" ? (
+                  <MicOff className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <Mic className="w-4 h-4 text-green-400" />
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </nav>
   );
 }
