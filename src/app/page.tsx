@@ -26,32 +26,35 @@ export default function Home() {
           <h1 className="font-semibold text-gray-400">
             TRUSTED BY DEVELOPERS WORLDWIDE
           </h1>
-          <div className="overflow-hidden w-full mt-8">
-            <div className="scroll-horizontal">
-              {[1, 2].map((row) => (
-                <div key={row} className="flex items-center gap-12 pr-12">
-                  {[
-                    "Google",
-                    "Adobe",
-                    "Airbnb",
-                    "Spotify",
-                    "Meta",
-                    "Microsoft",
-                    "Airbnb",
-                    "Netflix",
-                    "Spotify",
-                    "Tesla",
-                  ].map((company, i) => (
-                    <img
-                      key={i}
-                      loading="lazy"
-                      src={`/${company}.svg`}
-                      alt={company}
-                      className="grayscale brightness-75 transition-transform duration-300 hover:grayscale-0 hover:scale-105"
-                    />
-                  ))}
-                </div>
-              ))}
+          <div className="w-full overflow-hidden mt-8">
+            <div className="scroll-wrapper">
+              <div className="scroll-horizontal">
+                {[...Array(2)].map((_, rowIndex) => (
+                  <div
+                    key={rowIndex}
+                    className="flex items-center gap-12 pr-12"
+                  >
+                    {[
+                      "Google",
+                      "Adobe",
+                      "Airbnb",
+                      "Spotify",
+                      "Meta",
+                      "Microsoft",
+                      "Netflix",
+                      "Tesla",
+                    ].map((company, i) => (
+                      <img
+                        key={`${rowIndex}-${i}`}
+                        loading="lazy"
+                        src={`/${company}.svg`}
+                        alt={company}
+                        className="logo-img grayscale brightness-75 transition-transform duration-300 hover:grayscale-0 hover:scale-105"
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

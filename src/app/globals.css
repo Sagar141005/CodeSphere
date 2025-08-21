@@ -123,10 +123,16 @@ body {
   font-family: "JetBrains Mono", monospace;
 }
 
+.scroll-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+}
+
 .scroll-horizontal {
   display: flex;
-  animation: scroll-horizontal 15s linear infinite;
   width: max-content;
+  animation: scroll-horizontal 20s linear infinite;
 }
 
 @keyframes scroll-horizontal {
@@ -135,5 +141,19 @@ body {
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+.logo-img {
+  will-change: transform;
+  transform: translateZ(0);
+  padding-left: 0.5rem;
+}
+
+@media not all and (min-resolution: 0.001dpcm) {
+  @supports (-webkit-appearance: none) {
+    .logo-img {
+      transform: translateZ(0);
+    }
   }
 }
