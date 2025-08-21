@@ -78,10 +78,17 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     };
 
     useEffect(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
-    }, [output, error]);
+      const timeout = setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: "smooth",
+          });
+        }
+      }, 0);
+
+      return () => clearTimeout(timeout);
+    }, [log]);
 
     useEffect(() => {
       const socket = getSocket();
@@ -276,7 +283,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                       <div className="mt-2 text-right">
                         <button
                           onClick={() => setIsExpandedOutput(!isExpandedOutput)}
-                          className="text-xs text-blue-400 hover:underline"
+                          className="text-xs text-blue-400 hover:underline cursor-pointer"
                         >
                           {isExpandedOutput ? "Show less" : "Show more"}
                         </button>

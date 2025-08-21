@@ -239,9 +239,15 @@ export async function POST(req: Request) {
 
     const result = await runCodeInDocker(language, files, entry, code);
 
+    const stdout = result.stdout.trim();
+    const stderr = result.stderr.trim();
+
+    const output =
+      !stdout && !stderr ? "Program ran successfully with no output." : stdout;
+
     return NextResponse.json({
-      stdout: result.stdout || "",
-      stderr: result.stderr || "",
+      stdout: output,
+      stderr,
     });
   } catch (err: any) {
     console.error("Execution error:", err);

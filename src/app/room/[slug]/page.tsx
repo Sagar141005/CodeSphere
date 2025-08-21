@@ -306,18 +306,12 @@ export default function RoomPage({
 
       setLastError(error || null);
 
-      if (output && !error) {
-        terminalRef.current?.displayOutput(output, "output");
-      } else if (error && !output) {
+      if (error) {
         terminalRef.current?.displayOutput(error, "error");
-      } else if (output && error) {
-        terminalRef.current?.displayOutput(output, "output");
-        terminalRef.current?.displayOutput(error, "error");
-      } else {
-        terminalRef.current?.displayOutput(
-          "Program ran with no output.",
-          "info"
-        );
+      }
+
+      if (output) {
+        terminalRef.current?.displayOutput(output, "success");
       }
 
       // Step 4: Emit to other users
@@ -339,7 +333,7 @@ export default function RoomPage({
       });
     } catch (error) {
       console.error("Execution failed:", error);
-      terminalRef.current?.displayOutput("", "Execution failed.");
+      terminalRef.current?.displayOutput("Execution failed.", "error");
     } finally {
       terminalRef.current?.setRunning(false); // ✅ Hide the running message
     }
