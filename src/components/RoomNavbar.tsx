@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import {
   Bug,
   ChevronDown,
+  Loader2,
   MessageSquareQuote,
   StickyNote,
   Users,
@@ -39,6 +40,8 @@ export default function RoomNavbar({
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserPresence[]>([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const userIdRef = useRef<string | null>(null);
 
@@ -87,6 +90,24 @@ export default function RoomNavbar({
   // Split avatars + overflow count
   const visibleUsers = users.slice(0, MAX_VISIBLE_AVATARS);
   const overflowCount = users.length - visibleUsers.length;
+
+  const handleAIAction = async (
+    action: string,
+    callback: () => Promise<void> | void
+  ) => {
+    setOpen(false);
+    setLoading(true);
+    setLoadingAction(action);
+
+    try {
+      await callback();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLoadingAction(null);
+    }
+  };
 
   return (
     <nav
@@ -152,13 +173,26 @@ export default function RoomNavbar({
                text-white bg-[#1a1a1a] border border-white/10
                hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer"
           >
-            <WandSparkles className="w-5 h-5" />
-            AI Assist
-            <ChevronDown
-              className={`w-4 h-4 transition-transform ${
-                open ? "rotate-180" : "rotate-0"
-              }`}
-            />
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {loadingAction === "explain" && "Explaining"}
+                {loadingAction === "refactor" && "Refactoring"}
+                {loadingAction === "comments" && "Adding"}
+                {loadingAction === "fix" && "Fixing"}
+                <span className="animate-pulse -ml-1 text-white">...</span>
+              </>
+            ) : (
+              <>
+                <WandSparkles className="w-5 h-5" />
+                AI Assist
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    open ? "rotate-180" : "rotate-0"
+                  }`}
+                />
+              </>
+            )}
           </button>
 
           {open && (
@@ -167,7 +201,7 @@ export default function RoomNavbar({
               role="menu"
             >
               <button
-                onClick={() => handleExplain()}
+                onClick={() => handleAIAction("explain", handleExplain)}
                 className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
                 role="menuitem"
               >
@@ -175,9 +209,7 @@ export default function RoomNavbar({
                 Explain Selection
               </button>
               <button
-                onClick={() => {
-                  handleRefactor();
-                }}
+                onClick={() => handleAIAction("refactor", handleRefactor)}
                 className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
                 role="menuitem"
               >
@@ -185,9 +217,7 @@ export default function RoomNavbar({
                 Refactor Selection
               </button>
               <button
-                onClick={() => {
-                  handleComments();
-                }}
+                onClick={() => handleAIAction("comments", handleComments)}
                 className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
                 role="menuitem"
               >
@@ -195,9 +225,7 @@ export default function RoomNavbar({
                 Add Comments
               </button>
               <button
-                onClick={() => {
-                  handleFix();
-                }}
+                onClick={() => handleAIAction("fix", handleFix)}
                 className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
                 role="menuitem"
               >
