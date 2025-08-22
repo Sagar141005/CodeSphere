@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Editor, { loader } from "@monaco-editor/react";
 import { io, Socket } from "socket.io-client";
 import { AlertTriangle } from "lucide-react";
+import { defineMonacoThemes } from "@/lib/monaco-themes";
 
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
 
@@ -177,6 +178,7 @@ export default function CodeEditor({
             language={language}
             value={code}
             onChange={handleChange}
+            beforeMount={defineMonacoThemes}
             onMount={(editor) => {
               editorRef.current = editor;
 
