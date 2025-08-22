@@ -44,36 +44,32 @@ export default function RoomsPage() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    fetch("/api/rooms", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setRooms(data);
-        else setRooms([]);
-      })
-      .catch(() => setRooms([]));
-  }, []);
+  const loadRoomsAndInvites = async () => {
+    try {
+      const [roomRes, inviteRes] = await Promise.all([
+        fetch("/api/rooms", { credentials: "include" }),
+        fetch("api/invite", { credentials: "include" }),
+      ]);
 
-  useEffect(() => {
-    async function load() {
-      const roomRes = await fetch("/api/rooms");
       const roomsData = await roomRes.json();
-      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      const invitesData = await inviteRes.json();
 
-      const inviteRes = await fetch("/api/invite");
-      const inviteData = await inviteRes.json();
-      setPendingInvites(Array.isArray(inviteData) ? inviteData : []);
+      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      setPendingInvites(Array.isArray(invitesData) ? invitesData : []);
+    } catch (error) {
+      setRooms([]);
+      setPendingInvites([]);
     }
-    load();
+  };
+
+  useEffect(() => {
+    loadRoomsAndInvites();
   }, []);
 
   useEffect(() => {
-    if (!showInviteModal) return;
-
-    fetch("/api/invite", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: Invite[]) => setPendingInvites(data))
-      .catch(() => setPendingInvites([]));
+    if (!showInviteModal) {
+      loadRoomsAndInvites();
+    }
   }, [showInviteModal]);
 
   const sendInvite = async () => {
@@ -105,11 +101,7 @@ export default function RoomsPage() {
       setInviteEmail("");
       setSelectedRoomSlug("");
 
-      const invitesRes = await fetch("/api/invite", {
-        credentials: "include",
-      });
-      const invitesData = await invitesRes.json();
-      setPendingInvites(invitesData);
+      loadRoomsAndInvites();
     } catch (error: any) {
       console.log(error);
     }
@@ -126,7 +118,7 @@ export default function RoomsPage() {
         body: JSON.stringify({ action }),
       });
 
-      setPendingInvites((prev) => prev.filter((i) => i.id !== inviteId));
+      loadRoomsAndInvites();
     } catch (err) {
       console.error(err);
     }
@@ -221,16 +213,23 @@ export default function RoomsPage() {
               >
                 Create Room
               </button>
-              <button
-                onClick={() => setShowInviteModal(true)}
-                className="px-6 py-3
+              <div className="relative inline-block">
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="px-6 py-3
                 bg-white/5 text-white/80
                 hover:bg-white/10 hover:text-white
                 border border-white/10
                 text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
-              >
-                Manage Invitations
-              </button>
+                >
+                  Manage Invitations
+                </button>
+                {pendingInvites.length > 0 && (
+                  <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-red-500 text-white rounded-full">
+                    {pendingInvites.length}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </section>

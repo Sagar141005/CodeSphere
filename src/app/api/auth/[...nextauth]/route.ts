@@ -26,20 +26,23 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-      
+
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         });
-      
+
         if (!user || !user.password) return null;
-      
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
         if (!isValid) return null;
-      
+
         // Omit password before returning
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
-      }
+      },
     }),
   ],
 
@@ -56,7 +59,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = String(user.id);  // Ensure string
+        token.id = String(user.id); // Ensure string
         token.name = user.name;
         token.email = user.email;
         token.image = user.image;
@@ -71,8 +74,7 @@ export const authOptions: AuthOptions = {
         }
       }
       return token;
-    }
-    ,
+    },
     async session({ session, token }) {
       // Add user.id to session
       if (token && session.user) {
@@ -85,7 +87,7 @@ export const authOptions: AuthOptions = {
       return session;
     },
     async redirect({ baseUrl }) {
-      return "/rooms"; // always redirect to editor after login
+      return "/rooms";
     },
   },
   debug: process.env.NODE_ENV === "development",

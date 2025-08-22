@@ -94,8 +94,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const socket = getSocket();
 
       const handleTerminalUpdate = (data: any) => {
-        console.log("Received terminal-update:", data, typeof data);
-
         const payload =
           typeof data === "string"
             ? {
