@@ -58,47 +58,43 @@ export default function RoomNavbar({
     if (status !== "authenticated" || !session?.user) return;
 
     if (!socketRef.current) {
-      socketRef.current = io({ path: "/api/socket" });
+      const socket = io({ path: "/api/socket" });
+      socketRef.current = socket;
+
+      socket.on("connect", () => {
+        const userPayload = {
+          id: session.user.id || session.user.email!,
+          name: session.user.name || "Anonymous",
+          image: session.user.image || "/default-avatar.jpg",
+        };
+        userIdRef.current = userPayload.id;
+
+        socket.emit("join-room", {
+          roomId,
+          user: userPayload,
+        });
+      });
+
+      socket.on("presence-update", (onlineUsers: UserPresence[]) => {
+        setUsers([...new Map(onlineUsers.map((u) => [u.id, u])).values()]);
+      });
+
+      socket.on("mic-status-update", ({ userId, status }) => {
+        setMicStatuses((prev) => ({ ...prev, [userId]: status }));
+      });
     }
 
-    const sock = socketRef.current;
-
-    const userPayload = {
-      id: session.user.id || session.user.email!,
-      name: session.user.name || "Anonymous",
-      image: session.user.image || "/default-avatar.jpg",
-    };
-    userIdRef.current = userPayload.id;
-
-    sock.emit("join-room", {
-      roomId: roomSlug,
-      user: userPayload,
-    });
-
-    sock.on("presence-update", (onlineUsers: UserPresence[]) => {
-      const uniqueUsers = Array.from(
-        new Map(
-          onlineUsers.filter((u) => u.id).map((user) => [user.id, user])
-        ).values()
-      );
-      setUsers(uniqueUsers);
-    });
-
-    sock.on("mic-status-update", ({ userId, status }) => {
-      setMicStatuses((prev) => ({ ...prev, [userId]: status }));
-    });
-
     return () => {
-      if (sock && userIdRef.current) {
-        sock.emit("leave-room", {
-          roomId: roomSlug,
+      if (socketRef.current && userIdRef.current) {
+        socketRef.current.emit("leave-room", {
+          roomId,
           userId: userIdRef.current,
         });
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
-      sock.disconnect();
-      socketRef.current = null;
     };
-  }, [roomSlug, session, status]);
+  }, [roomId, session, status]);
 
   // Split avatars + overflow count
   const visibleUsers = users.slice(0, MAX_VISIBLE_AVATARS);

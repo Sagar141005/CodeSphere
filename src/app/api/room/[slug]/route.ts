@@ -11,7 +11,7 @@ export async function GET(
   try {
     const room = await prisma.room.findUnique({
       where: { slug },
-      select: { name: true, content: true, slug: true },
+      select: { id: true, name: true, content: true, slug: true },
     });
 
     if (!room) {

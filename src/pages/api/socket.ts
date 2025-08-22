@@ -134,8 +134,6 @@ export default function SocketHandler(
       });
 
       socket.on("mic-status", ({ roomId, userId, status }) => {
-        console.log(`Mic status from ${userId} in room ${roomId}: ${status}`);
-        console.log("Rooms of socket:", socket.rooms);
         io.to(roomId).emit("mic-status-update", { userId, status });
       });
     });

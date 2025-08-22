@@ -1,6 +1,7 @@
 import { Mic, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 
 type RemoteAudio = {
   peerId: string;
@@ -36,6 +37,7 @@ const VoiceChatButton = ({
   roomId: string;
   userId: string;
 }) => {
+  const { data: session, status } = useSession();
   const [isMuted, setIsMuted] = useState(true);
   const [remoteAudios, setRemoteAudios] = useState<RemoteAudio[]>([]);
   const socketRef = useRef<Socket | null>(null);
@@ -43,12 +45,18 @@ const VoiceChatButton = ({
   const peersRef = useRef<Record<string, RTCPeerConnection>>({});
 
   useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+
     socketRef.current = io({ path: "/api/socket" });
 
     socketRef.current.on("connect", () => {
       socketRef.current?.emit("join-room", {
         roomId,
-        user: { id: socketRef.current.id },
+        user: {
+          id: session.user.id || session.user.email!,
+          name: session.user.name || "Anonymous",
+          image: session.user.image || "/default-avatar.jpg",
+        },
       });
     });
 
@@ -115,6 +123,15 @@ const VoiceChatButton = ({
 
     socketRef.current.on("disconnect", cleanupAllPeers);
 
+    socketRef.current.on(
+      "mic-status-update",
+      ({ userId: updatedUserId, status }) => {
+        if (updatedUserId === userId) {
+          setIsMuted(status === "muted");
+        }
+      }
+    );
+
     return () => {
       cleanupAllPeers();
       socketRef.current?.emit("mic-status", {
@@ -122,6 +139,7 @@ const VoiceChatButton = ({
         userId,
         status: "muted",
       });
+      socketRef.current?.removeAllListeners();
 
       socketRef.current?.disconnect();
     };

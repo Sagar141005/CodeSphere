@@ -8,7 +8,7 @@ import { AlertTriangle } from "lucide-react";
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
 
 interface CodeEditorProps {
-  slug: string;
+  roomId: string;
   fileId: string;
   user: {
     id: string;
@@ -22,7 +22,7 @@ interface CodeEditorProps {
 }
 
 export default function CodeEditor({
-  slug,
+  roomId,
   fileId,
   user,
   setIsSaving,
@@ -69,7 +69,7 @@ export default function CodeEditor({
     }
 
     const sock = socketRef.current;
-    sock.emit("join-room", { roomId: slug, user });
+    sock.emit("join-room", { roomId: roomId, user });
 
     const handleCodeUpdate = ({
       fileId: incomingFileId,
@@ -89,7 +89,7 @@ export default function CodeEditor({
     return () => {
       sock.off("code-update", handleCodeUpdate);
     };
-  }, [slug, fileId, code]);
+  }, [roomId, fileId, code]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -129,7 +129,7 @@ export default function CodeEditor({
     setCode(updatedCode);
     setIsTyping(true); // User is typing
     socketRef.current?.emit("code-change", {
-      roomId: slug,
+      roomId: roomId,
       fileId,
       code: updatedCode,
     });
@@ -183,7 +183,7 @@ export default function CodeEditor({
               editor.onDidChangeCursorPosition((e) => {
                 const position = editor.getPosition();
                 socketRef.current?.emit("cursor-update", {
-                  roomId: slug,
+                  roomId: roomId,
                   fileId,
                   userId: user.id,
                   cursorPosition: position,

@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
 import { useState } from "react";
-import { Files, GitGraph } from 'lucide-react';
+import { Files, GitGraph } from "lucide-react";
 import EditorFilePanel from "./EditorFilePanel";
 import GitSidebar from "./GitSidebar";
 import type { FileData } from "@/types/FileData";
-import clsx from 'clsx';
+import clsx from "clsx";
 
 interface TabbedSidebarProps {
   files: FileData[];
   onFileClick: (file: FileData) => void;
   slug: string;
+  roomId: string;
   activeFileId: string | null;
   onFileAdded: (file: FileData) => void;
   onFileDeleted: (id: string) => void;
@@ -22,13 +23,14 @@ export default function TabbedSidebar({
   files,
   onFileClick,
   slug,
+  roomId,
   activeFileId,
   onFileAdded,
   onFileDeleted,
   onFileRenamed,
   onPreview,
 }: TabbedSidebarProps) {
-  const [activeTab, setActiveTab] = useState<'explorer' | 'git'>('explorer');
+  const [activeTab, setActiveTab] = useState<"explorer" | "git">("explorer");
 
   return (
     <div className="w-64 flex h-full">
@@ -61,6 +63,7 @@ export default function TabbedSidebar({
             files={files}
             onFileClick={onFileClick}
             slug={slug}
+            roomId={roomId}
             activeFileId={activeFileId}
             onFileAdded={onFileAdded}
             onFileDeleted={onFileDeleted}

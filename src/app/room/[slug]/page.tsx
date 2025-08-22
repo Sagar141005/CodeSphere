@@ -68,6 +68,8 @@ export default function RoomPage({
   const editorRef = useRef<any>(null);
 
   useEffect(() => {
+    if (!slug) return;
+
     const loadRoomAndFiles = async () => {
       try {
         const roomRes = await fetch(`/api/room/${slug}`);
@@ -95,12 +97,12 @@ export default function RoomPage({
   }, [slug]);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.id) return;
+    if (!slug || status !== "authenticated" || !session?.user?.id) return;
 
     const socket = getSocket();
 
     socket.emit("join-room", {
-      roomId: slug,
+      roomId: roomId,
       user: {
         id: session.user.id,
         name: session.user.name || "Anonymous",
@@ -320,7 +322,7 @@ export default function RoomPage({
 
       const socket = getSocket();
       socket.emit("terminal-output", {
-        roomId: slug,
+        roomId: roomId,
         output,
         error,
         ranBy: username,
@@ -537,6 +539,10 @@ export default function RoomPage({
     window.addEventListener("mouseup", onMouseUp);
   };
 
+  if (!slug) {
+    return <div className="text-white p-4">Loading room...</div>;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
       {/* Header/Navbar */}
@@ -557,6 +563,7 @@ export default function RoomPage({
           files={files}
           onFileClick={openFile}
           slug={slug}
+          roomId={roomId}
           activeFileId={activeFile?.id || null}
           onFileAdded={(file) =>
             setFiles((prev) =>
@@ -659,7 +666,7 @@ export default function RoomPage({
             >
               {session && activeFile ? (
                 <CodeEditor
-                  slug={slug}
+                  roomId={roomId}
                   fileId={activeFile.id}
                   user={{
                     id: session.user.id,
@@ -735,7 +742,7 @@ export default function RoomPage({
               ) : (
                 <Terminal
                   ref={terminalRef}
-                  roomId={slug}
+                  roomId={roomId}
                   height={terminalHeight}
                   setHeight={setTerminalHeight}
                   isExpanded={terminalExpanded}
