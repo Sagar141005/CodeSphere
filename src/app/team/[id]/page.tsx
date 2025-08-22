@@ -39,9 +39,11 @@ interface Team {
 }
 
 export default function TeamDetailsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
-  const { data: session, status } = useSession();
+
   const [team, setTeam] = useState<Team | null>(null);
   const [newRoomName, setNewRoomName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -50,7 +52,12 @@ export default function TeamDetailsPage() {
   const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
     null
   );
-  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status]);
 
   // Fetch team details
   useEffect(() => {
@@ -173,13 +180,13 @@ export default function TeamDetailsPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             {/* Team Name & Creator */}
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold font-mono text-white tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
                 {team.name}
               </h1>
               <p className="text-sm text-gray-400 flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 Created by:
-                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded font-mono text-xs">
+                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded text-xs">
                   {team.createdById}
                 </code>
               </p>
@@ -200,7 +207,7 @@ export default function TeamDetailsPage() {
 
           {/* Members Section */}
           <div>
-            <h2 className="text-3xl font-semibold flex items-center gap-3 text-white font-mono mb-6">
+            <h2 className="text-3xl font-semibold flex items-center gap-3 text-white mb-6">
               <Users className="w-7 h-7 text-neutral-400" />
               Members
             </h2>
@@ -214,7 +221,7 @@ export default function TeamDetailsPage() {
                     className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
                   >
                     <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-mono font-bold text-lg select-none shadow-md">
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg select-none shadow-md">
                         {member.profilePic || member.image ? (
                           <img
                             src={member.profilePic || member.image}
@@ -232,7 +239,7 @@ export default function TeamDetailsPage() {
                         <span className="font-semibold truncate">
                           {member.name || member.email}
                         </span>
-                        <span className="text-xs text-gray-400 font-mono truncate">
+                        <span className="text-xs text-gray-400 truncate">
                           {member.email}
                         </span>
                       </div>
@@ -279,7 +286,7 @@ export default function TeamDetailsPage() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="Invite member by email"
-                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-5 py-3 text-white placeholder-gray-500 font-mono focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-5 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   aria-label="Email to invite"
                   required
                   spellCheck={false}
@@ -287,7 +294,7 @@ export default function TeamDetailsPage() {
                 />
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-5 py-2.5 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10 text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
+                  className="flex items-center gap-2 px-6 py-3 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10 text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
                 >
                   <UserPlus className="w-4 h-4" />
                   Invite Member
@@ -309,10 +316,10 @@ export default function TeamDetailsPage() {
 
                 <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-200 transition-colors mb-1 font-mono">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-200 transition-colors mb-1">
                       Create a New Room
                     </h3>
-                    <p className="text-sm text-gray-400 font-mono">
+                    <p className="text-sm text-gray-400">
                       Give your room a name and start collaborating instantly.
                     </p>
                   </div>
@@ -324,7 +331,7 @@ export default function TeamDetailsPage() {
                       onChange={(e) => setNewRoomName(e.target.value)}
                       placeholder="Enter room name"
                       className="px-4 py-2.5 rounded-lg bg-black/70 text-white border border-white/20 placeholder-gray-500 
-                                 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 text-sm w-full sm:w-64 font-mono"
+                                 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm w-full sm:w-64"
                       aria-label="Room name input"
                       spellCheck={false}
                       autoComplete="off"
@@ -332,9 +339,8 @@ export default function TeamDetailsPage() {
                     <button
                       onClick={createRoom}
                       className="px-6 py-3
-                      bg-gradient-to-r from-indigo-300 to-cyan-300 text-black font-semibold rounded-lg hover:brightness-105 active:scale-95 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                      bg-gradient-to-r from-indigo-300 to-cyan-300 text-black font-semibold rounded-lg hover:brightness-105 active:scale-95 transition-all duration-150 cursor-pointer"
                     >
-                      <DoorOpen className="w-4 h-4" />
                       Create Room
                     </button>
                   </div>
@@ -357,7 +363,7 @@ export default function TeamDetailsPage() {
                     {/* Top Row */}
                     <div className="flex items-baseline justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-mono font-bold text-lg">
+                        <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-bold text-lg">
                           {room.name[0].toUpperCase()}
                         </div>
                         <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
@@ -378,7 +384,7 @@ export default function TeamDetailsPage() {
                     </div>
 
                     {/* Metadata Row */}
-                    <div className="text-xs text-gray-400 font-mono flex justify-between items-center pt-1">
+                    <div className="text-xs text-gray-400 flex justify-between items-center pt-1">
                       <span className="uppercase tracking-wide">Created</span>
                       <span className="text-white/80">
                         {new Date(room.createdAt).toLocaleDateString(
@@ -414,7 +420,7 @@ export default function TeamDetailsPage() {
           <div className="max-w-5xl mx-auto text-right">
             <button
               onClick={leaveTeam}
-              className="flex items-center gap-2 text-gray-400 hover:text-red-500 underline font-mono text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
+              className="flex items-center gap-2 text-gray-400 hover:text-red-500 underline text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
               aria-label="Leave team"
             >
               <LogOut className="w-5 h-5" />

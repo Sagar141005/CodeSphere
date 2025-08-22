@@ -254,7 +254,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
                     )}
                   </div>
 
-                  <span className="truncate font-mono text-sm text-white">
+                  <span className="truncate text-sm text-white">
                     {file.name}
                   </span>
                 </div>

@@ -14,6 +14,7 @@ import ThemeSelector from "@/components/ThemeSelector";
 import LivePreviewModal from "@/components/LivePreviewModal";
 import { MessageSquareQuote, MonitorDot, Redo, Undo, X } from "lucide-react";
 import DiffView from "@/components/DiffView";
+import { useRouter } from "next/navigation";
 
 type Diff = {
   id: string;
@@ -38,6 +39,7 @@ export default function RoomPage({
 }) {
   const { slug } = use(params);
   const { data: session, status } = useSession();
+  const router = useRouter();
 
   const [files, setFiles] = useState<FileData[]>([]);
   const [roomName, setRoomName] = useState<string>("");
@@ -66,6 +68,12 @@ export default function RoomPage({
   const [aiHeight, setAiHeight] = useState(200);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status]);
 
   useEffect(() => {
     if (!slug) return;
@@ -732,7 +740,7 @@ export default function RoomPage({
 
                   {/* Content */}
                   {aiExpanded && (
-                    <div className="p-4 overflow-auto flex-1 font-mono text-sm text-gray-200 bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244]">
+                    <div className="p-4 overflow-auto flex-1 text-sm text-gray-200 bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244]">
                       <pre className="whitespace-pre-wrap break-words">
                         {aiOutput}
                       </pre>

@@ -3,10 +3,13 @@
 import HomeNavbar from "@/components/HomeNavbar";
 import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function ProfilePage() {
   const { data: session, status, update: updateSession } = useSession();
+  const router = useRouter();
+
   const [name, setName] = useState("");
   const [profilePic, setProfilePic] = useState("");
   const [oldPassword, setOldPassword] = useState("");
@@ -15,6 +18,12 @@ export default function ProfilePage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status]);
 
   useEffect(() => {
     if (session?.user) {

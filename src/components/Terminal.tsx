@@ -220,7 +220,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                 return (
                   <div
                     key={i}
-                    className={`mb-4 last:mb-0 p-4 rounded-lg border text-sm font-mono transition-all duration-200 animate-fade-in
+                    className={`mb-4 last:mb-0 p-4 rounded-lg border text-sm transition-all duration-200 animate-fade-in
                     ${
                       isError
                         ? "border-red-500/20 bg-[#2b1a1a]"
@@ -303,7 +303,7 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           </div>
         ) : (
           // Collapsed minimal view
-          <div className="flex flex-col items-center justify-center flex-1 px-4 pb-3 pt-2 text-gray-400 font-mono text-sm">
+          <div className="flex flex-col items-center justify-center flex-1 px-4 pb-3 pt-2 text-gray-400 text-sm">
             <div className="flex flex-col items-center gap-2">
               <div className="w-12 h-12 bg-[#2c2c2c] rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6" />

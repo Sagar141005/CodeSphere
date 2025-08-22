@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import HomeNavbar from "@/components/HomeNavbar";
+import { useSession } from "next-auth/react";
 
 interface Room {
   id: string;
@@ -31,6 +32,9 @@ interface Invite {
 }
 
 export default function RoomsPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomName, setRoomName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -41,8 +45,6 @@ export default function RoomsPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
-
-  const router = useRouter();
 
   const loadRoomsAndInvites = async () => {
     try {
@@ -61,6 +63,12 @@ export default function RoomsPage() {
       setPendingInvites([]);
     }
   };
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status]);
 
   useEffect(() => {
     loadRoomsAndInvites();
@@ -257,7 +265,7 @@ export default function RoomsPage() {
                         {/* Top Row */}
                         <div className="flex items-baseline justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-mono font-bold text-lg">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-bold text-lg">
                               {room.name[0].toUpperCase()}
                             </div>
                             <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
@@ -289,7 +297,7 @@ export default function RoomsPage() {
                         </div>
 
                         {/* Metadata Row */}
-                        <div className="text-xs text-gray-400 font-mono flex justify-between items-center pt-1">
+                        <div className="text-xs text-gray-400 flex justify-between items-center pt-1">
                           <span className="uppercase tracking-wide">
                             Created
                           </span>
@@ -341,7 +349,7 @@ export default function RoomsPage() {
                         {/* Top Row */}
                         <div className="flex items-baseline justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-mono font-bold text-lg">
+                            <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-bold text-lg">
                               {room.name[0].toUpperCase()}
                             </div>
                             <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
@@ -373,7 +381,7 @@ export default function RoomsPage() {
                         </div>
 
                         {/* Metadata Row */}
-                        <div className="text-xs text-gray-400 font-mono flex justify-between items-center pt-1">
+                        <div className="text-xs text-gray-400 flex justify-between items-center pt-1">
                           <span className="uppercase tracking-wide">
                             Created
                           </span>

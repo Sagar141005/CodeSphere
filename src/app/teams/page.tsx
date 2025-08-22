@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import HomeNavbar from "@/components/HomeNavbar";
 import { Users, ArrowRightCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Team {
   id: string;
@@ -16,9 +17,16 @@ interface Team {
 
 export default function TeamsPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamName, setTeamName] = useState("");
   const [loadingTeams, setLoadingTeams] = useState(true);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status]);
 
   useEffect(() => {
     if (!session) return;
@@ -129,16 +137,16 @@ export default function TeamsPage() {
                   <div className="relative z-10 p-5 space-y-3">
                     {/* Top: Avatar or Initial */}
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-mono font-bold text-lg uppercase">
+                      <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-bold text-lg uppercase">
                         {team.name.charAt(0)}
                       </div>
-                      <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition font-mono">
+                      <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
                         {team.name}
                       </h3>
                     </div>
 
                     {/* Metadata */}
-                    <div className="text-sm text-gray-500 flex items-center justify-between font-mono">
+                    <div className="text-sm text-gray-500 flex items-center justify-between">
                       <span>Members</span>
                       <span>{team.members.length}</span>
                     </div>
