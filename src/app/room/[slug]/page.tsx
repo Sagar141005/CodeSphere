@@ -15,6 +15,7 @@ import LivePreviewModal from "@/components/LivePreviewModal";
 import { MessageSquareQuote, MonitorDot, Redo, Undo, X } from "lucide-react";
 import DiffView from "@/components/DiffView";
 import { useRouter } from "next/navigation";
+import MobileBlocker from "@/components/MobileBlocker";
 
 type Diff = {
   id: string;
@@ -41,6 +42,7 @@ export default function RoomPage({
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [isSmallScreen, setIsSmallScreen] = useState<boolean | null>(null);
   const [files, setFiles] = useState<FileData[]>([]);
   const [roomName, setRoomName] = useState<string>("");
   const [roomId, setRoomId] = useState<string>("");
@@ -74,6 +76,13 @@ export default function RoomPage({
       router.push("/login");
     }
   }, [status]);
+
+  useEffect(() => {
+    const checkScreen = () => setIsSmallScreen(window.innerWidth < 1024);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -547,6 +556,15 @@ export default function RoomPage({
     window.addEventListener("mouseup", onMouseUp);
   };
 
+  if (isSmallScreen === null) {
+    // Avoid hydration mismatch
+    return null;
+  }
+
+  if (isSmallScreen) {
+    return <MobileBlocker />;
+  }
+
   if (!slug) {
     return <div className="text-white p-4">Loading room...</div>;
   }
@@ -837,7 +855,10 @@ export default function RoomPage({
                   onClick={() => {
                     if (editorRef.current && pendingApplyRange && diffs[0]) {
                       editorRef.current.executeEdits("", [
-                        { range: pendingApplyRange, text: diffs[0].content },
+                        {
+                          range: pendingApplyRange,
+                          text: diffs[0].content,
+                        },
                       ]);
                     }
                     setShowDiffModal(false);
