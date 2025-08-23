@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import {
   Bug,
   ChevronDown,
+  Download,
   Loader2,
   MessageSquareQuote,
   Mic,
@@ -45,8 +46,9 @@ export default function RoomNavbar({
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserPresence[]>([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const [AILoading, setAILoading] = useState(false);
+  const [AILoadingAction, setAILoadingAction] = useState<string | null>(null);
+  const [zipLoading, setZIPLoading] = useState(false);
   const [micStatuses, setMicStatuses] = useState<
     Record<string, "muted" | "unmuted">
   >({});
@@ -105,16 +107,36 @@ export default function RoomNavbar({
     callback: () => Promise<void> | void
   ) => {
     setOpen(false);
-    setLoading(true);
-    setLoadingAction(action);
+    setAILoading(true);
+    setAILoadingAction(action);
 
     try {
       await callback();
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
-      setLoadingAction(null);
+      setAILoading(false);
+      setAILoadingAction(null);
+    }
+  };
+
+  const handleZIPDownload = async () => {
+    try {
+      setZIPLoading(true);
+      const res = await fetch(`/api/room/${roomSlug}/export`);
+      if (!res.ok) throw new Error("Failed to download project");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${roomName}.zip`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    } finally {
+      setZIPLoading(false);
     }
   };
 
@@ -148,38 +170,6 @@ export default function RoomNavbar({
           />
         )}
 
-        {/* Avatars */}
-        <div
-          className="flex items-center -space-x-3"
-          aria-label={`${users.length} users online`}
-          role="group"
-          onClick={() => setShowUserList(!showUserList)}
-        >
-          {visibleUsers.map((user) => (
-            <img
-              key={user.id}
-              src={user.image || "/default-avatar.jpg"}
-              alt={user.name}
-              title={user.name}
-              className="w-9 h-9 rounded-full border-2 border-gray-900 object-cover shadow-sm"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  "/default-avatar.jpg";
-              }}
-              loading="lazy"
-            />
-          ))}
-          {overflowCount > 0 && (
-            <div
-              className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
-              title={`${overflowCount} more users`}
-              aria-hidden="true"
-            >
-              +{overflowCount}
-            </div>
-          )}
-        </div>
-
         {/* AI Assist Dropdown */}
         <div className="relative">
           <button
@@ -191,13 +181,13 @@ export default function RoomNavbar({
                text-white bg-[#1a1a1a] border border-white/10
                hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer"
           >
-            {loading ? (
+            {AILoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                {loadingAction === "explain" && "Explaining"}
-                {loadingAction === "refactor" && "Refactoring"}
-                {loadingAction === "comments" && "Adding"}
-                {loadingAction === "fix" && "Fixing"}
+                {AILoadingAction === "explain" && "Explaining"}
+                {AILoadingAction === "refactor" && "Refactoring"}
+                {AILoadingAction === "comments" && "Adding"}
+                {AILoadingAction === "fix" && "Fixing"}
                 <span className="animate-pulse -ml-1 text-white">...</span>
               </>
             ) : (
@@ -250,6 +240,58 @@ export default function RoomNavbar({
                 <Bug className="w-4 h-4 text-red-400" />
                 Fix Errors in File
               </button>
+            </div>
+          )}
+        </div>
+
+        {/* Download Button */}
+        <button
+          onClick={handleZIPDownload}
+          disabled={zipLoading}
+          title="Download Project as ZIP"
+          className="px-3 py-2 rounded-md text-sm font-medium
+        text-white bg-[#1a1a1a] border border-white/10
+        hover:bg-white/10 hover:text-white transition-colors duration-200 cursor-pointer"
+        >
+          {zipLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+            </>
+          )}
+        </button>
+
+        {/* Avatars */}
+        <div
+          className="flex items-center -space-x-3"
+          aria-label={`${users.length} users online`}
+          role="group"
+          onClick={() => setShowUserList(!showUserList)}
+        >
+          {visibleUsers.map((user) => (
+            <img
+              key={user.id}
+              src={user.image || "/default-avatar.jpg"}
+              alt={user.name}
+              title={user.name}
+              className="w-9 h-9 rounded-full border-2 border-gray-900 object-cover shadow-sm"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  "/default-avatar.jpg";
+              }}
+              loading="lazy"
+            />
+          ))}
+          {overflowCount > 0 && (
+            <div
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
+              title={`${overflowCount} more users`}
+              aria-hidden="true"
+            >
+              +{overflowCount}
             </div>
           )}
         </div>
