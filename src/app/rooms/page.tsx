@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import HomeNavbar from "@/components/HomeNavbar";
 import { useSession } from "next-auth/react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Room {
   id: string;
@@ -545,42 +546,27 @@ export default function RoomsPage() {
         )}
 
         {/* Delete Modal */}
-        {showDeleteConfirm && selectedRoomToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md px-4">
-            <div className="relative max-w-md w-full bg-[#161616] border border-red-600 rounded-2xl p-6 shadow-xl text-white space-y-6">
-              <div className="relative z-10 space-y-4 text-center">
-                <h2 className="text-xl font-semibold">
-                  Are you sure you want to delete this room?
-                </h2>
-                <p className="text-gray-400 text-sm">
-                  <strong>{selectedRoomToDelete.name}</strong> will be
-                  permanently removed. This action cannot be undone.
-                </p>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setSelectedRoomToDelete(null);
-                  }}
-                  className="px-5 py-3 text-sm text-gray-300 rounded-lg hover:bg-neutral-700 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleDelete(selectedRoomToDelete.slug);
-                    setShowDeleteConfirm(false);
-                    setSelectedRoomToDelete(null);
-                  }}
-                  className="px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition"
-                >
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmModal
+          isOpen={showDeleteConfirm && !!selectedRoomToDelete}
+          title="Are you sure you want to delete this room?"
+          message={
+            <>
+              <strong className="text-white">
+                {selectedRoomToDelete?.name}
+              </strong>{" "}
+              will be permanently removed. This action cannot be undone.
+            </>
+          }
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setSelectedRoomToDelete(null);
+          }}
+          onConfirm={() => {
+            handleDelete(selectedRoomToDelete!.slug);
+            setShowDeleteConfirm(false);
+            setSelectedRoomToDelete(null);
+          }}
+        />
       </main>
     </div>
   );

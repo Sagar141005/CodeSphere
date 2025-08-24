@@ -9,11 +9,11 @@ import {
   Users,
   Trash2,
   LogOut,
-  DoorOpen,
   Crown,
   ArrowRightCircle,
   UserPlus,
 } from "lucide-react";
+import ConfirmModal from "@/components/ConfirmModal";
 
 interface Room {
   id: string;
@@ -180,7 +180,7 @@ export default function TeamDetailsPage() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             {/* Team Name & Creator */}
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight capitalize">
                 {team.name}
               </h1>
               <p className="text-sm text-gray-400 flex items-center gap-2">
@@ -430,80 +430,46 @@ export default function TeamDetailsPage() {
         )}
 
         {/* Modals */}
-        {showDeleteConfirm && selectedRoomToDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 sm:px-0">
-            <div className="relative max-w-md w-full bg-black/80 border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/20 to-red-800/20 blur-lg opacity-80 pointer-events-none" />
-              <div className="relative z-10 space-y-4 text-center">
-                <h2 className="text-xl font-semibold text-white">
-                  Are you sure you want to delete this room?
-                </h2>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  <strong className="text-white">
-                    {selectedRoomToDelete.name}
-                  </strong>{" "}
-                  will be permanently removed. This action cannot be undone.
-                </p>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    setSelectedRoomToDelete(null);
-                  }}
-                  className="px-5 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    handleDeleteRoom(selectedRoomToDelete.slug);
-                    setShowDeleteConfirm(false);
-                    setSelectedRoomToDelete(null);
-                  }}
-                  className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                >
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Room Deletion */}
+        <ConfirmModal
+          isOpen={showDeleteConfirm && !!selectedRoomToDelete}
+          title="Are you sure you want to delete this room?"
+          message={
+            <>
+              <strong className="text-white">
+                {selectedRoomToDelete?.name}
+              </strong>{" "}
+              will be permanently removed. This action cannot be undone.
+            </>
+          }
+          onCancel={() => {
+            setShowDeleteConfirm(false);
+            setSelectedRoomToDelete(null);
+          }}
+          onConfirm={() => {
+            handleDeleteRoom(selectedRoomToDelete!.slug);
+            setShowDeleteConfirm(false);
+            setSelectedRoomToDelete(null);
+          }}
+        />
 
-        {showDeleteTeamConfirm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 sm:px-0">
-            <div className="relative max-w-md w-full bg-[#16161a] border border-red-600 rounded-2xl p-6 shadow-2xl text-white space-y-6">
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
-              <div className="relative z-10 space-y-4 text-center">
-                <h2 className="text-xl font-semibold text-white">
-                  Are you sure you want to delete this team?
-                </h2>
-                <p className="text-gray-400 text-sm leading-relaxed">
-                  <strong className="text-white">{team?.name}</strong> and all
-                  its rooms and members will be permanently removed. This action
-                  cannot be undone.
-                </p>
-              </div>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => setShowDeleteTeamConfirm(false)}
-                  className="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-neutral-700 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    await handleDeleteTeam(team!.id);
-                    setShowDeleteTeamConfirm(false);
-                  }}
-                  className="relative z-10 px-5 py-3 text-sm text-white font-semibold rounded-lg bg-red-600 hover:bg-red-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-                >
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Team Deletion */}
+        <ConfirmModal
+          isOpen={showDeleteTeamConfirm}
+          title="Are you sure you want to delete this team?"
+          message={
+            <>
+              <strong className="text-white">{team?.name}</strong> and all its
+              rooms and members will be permanently removed. This action cannot
+              be undone.
+            </>
+          }
+          onCancel={() => setShowDeleteTeamConfirm(false)}
+          onConfirm={async () => {
+            await handleDeleteTeam(team!.id);
+            setShowDeleteTeamConfirm(false);
+          }}
+        />
       </main>
     </div>
   );

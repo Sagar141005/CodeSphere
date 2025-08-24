@@ -3,11 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { getSocket } from "@/lib/socket";
 import type { FileData } from "@/types/FileData";
-import {
-  getIconForFile,
-  getIconForFolder,
-  getIconForOpenFolder,
-} from "vscode-icons-js";
+import { getIconForFile } from "vscode-icons-js";
 import {
   ChevronDown,
   ChevronRight,

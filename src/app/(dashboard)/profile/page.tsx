@@ -1,5 +1,6 @@
 "use client";
 
+import ConfirmModal from "@/components/ConfirmModal";
 import HomeNavbar from "@/components/HomeNavbar";
 import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
@@ -227,7 +228,7 @@ export default function ProfilePage() {
                   loading ||
                   (name.trim() === (user.name ?? "") && !newProfileImage) // Assuming you're using a newProfileImage/file
                 }
-                className="bg-neutral-700 hover:bg-neutral-600 text-white font-medium rounded-md px-6 py-3 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-gradient-to-br from-neutral-700 via-neutral-800 to-neutral-900 hover:from-neutral-600 hover:to-neutral-800 text-white font-semibold rounded-md px-6 py-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? "Updating..." : "Update Profile"}
               </button>
@@ -279,7 +280,7 @@ export default function ProfilePage() {
             <button
               onClick={changePassword}
               disabled={loading}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium rounded-md px-6 py-3 transition disabled:opacity-50"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md px-6 py-3 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Changing..." : "Change Password"}
             </button>
@@ -296,36 +297,19 @@ export default function ProfilePage() {
 
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-medium rounded-md px-6 py-3 transition"
+            className="bg-red-600 hover:bg-red-700 text-white font-medium rounded-md px-6 py-3 transition cursor-pointer"
           >
             Delete Account
           </button>
         </section>
 
         {/* --- Confirm Delete Modal --- */}
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 sm:px-0">
-            <div className="bg-neutral-900 p-6 rounded-xl border border-red-600 w-full max-w-md shadow-xl">
-              <p className="text-sm text-red-400 mb-6">
-                Are you absolutely sure? This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-4">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-5 py-2 text-sm font-medium text-gray-300 hover:bg-neutral-700 rounded-md transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={deleteAccount}
-                  className="px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition"
-                >
-                  Confirm Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmModal
+          isOpen={showDeleteConfirm}
+          message="Are you absolutely sure? This action cannot be undone."
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={deleteAccount}
+        />
       </main>
     </div>
   );

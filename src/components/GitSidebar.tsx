@@ -203,7 +203,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
         <button
           onClick={createCommit}
           disabled={loading || !message.trim()}
-          className="mt-2 w-full flex items-center justify-center gap-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded disabled:opacity-50 transition"
+          className="mt-2 w-full flex items-center justify-center gap-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded disabled:opacity-50 transition cursor-pointer"
         >
           <GitCommit className="w-4 h-4" /> Commit Changes
         </button>
@@ -301,9 +301,10 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
                 </div>
                 <button
                   onClick={() => revertCommit(commit.id)}
-                  className="text-red-400 hover:text-red-500 text-xs flex items-center gap-1"
+                  title="Revert"
+                  className="text-red-400 hover:text-red-500 text-xs flex items-center gap-1 cursor-pointer"
                 >
-                  <ArrowLeftToLine className="w-4 h-4" /> Revert
+                  <ArrowLeftToLine className="w-4 h-4" />
                 </button>
               </li>
             ))
