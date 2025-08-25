@@ -4,9 +4,17 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import HomeNavbar from "@/components/HomeNavbar";
-import { Users, ArrowRightCircle, Loader2 } from "lucide-react";
+import { Users, ArrowRightCircle, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Loader } from "@/components/Loader";
+
+interface TeamInvite {
+  id: string;
+  team: { id: string; name: string };
+  invitedBy: { id: string; name: string | null; email: string };
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  createdAt: string;
+}
 
 interface Team {
   id: string;
@@ -23,6 +31,9 @@ export default function TeamsPage() {
   const [teamName, setTeamName] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(true);
+  const [invites, setInvites] = useState<TeamInvite[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(true);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -35,9 +46,22 @@ export default function TeamsPage() {
     setLoadingTeams(true);
     fetch("/api/team/my-teams")
       .then((res) => res.json())
-      .then((data) => setTeams(data))
+      .then((data) => setTeams(data.teams))
       .catch((err) => console.error("Failed to fetch teams", err))
       .finally(() => setLoadingTeams(false));
+  }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    setLoadingInvites(true);
+
+    fetch("/api/team/my-teams")
+      .then((res) => res.json())
+      .then((data) => setInvites(data.teamInvites))
+      .catch((err) => console.error("Failed to fetch invites", err))
+      .finally(() => setLoadingInvites(false));
+
+    console.log(invites);
   }, [session]);
 
   const createTeam = async () => {
@@ -67,6 +91,46 @@ export default function TeamsPage() {
     }
   };
 
+  const acceptTeamInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch(`/api/team/invite/${inviteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "ACCEPT" }),
+      });
+
+      if (res.ok) {
+        alert("Invite accepted!");
+        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+        // optionally refresh teams
+        fetch("/api/team/my-teams")
+          .then((res) => res.json())
+          .then((data) => setTeams(data));
+      }
+    } catch (err) {
+      console.error("Accept invite failed:", err);
+    }
+  };
+
+  const rejectTeamInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch(`/api/team/invite/${inviteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "REJECT" }),
+      });
+
+      if (res.ok) {
+        alert("Invite rejected!");
+        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+      }
+    } catch (err) {
+      console.error("Reject invite failed:", err);
+    }
+  };
+
+  console.log(teams);
+
   if (status === "loading") {
     return <Loader />;
   }
@@ -91,40 +155,61 @@ export default function TeamsPage() {
         </header>
 
         {/* Create Team Section */}
-        <div className="relative max-w-3xl mx-auto w-full group">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
-          <div className="relative flex flex-col sm:flex-row items-center gap-4 bg-black/60 p-6 rounded-2xl border border-white/10 shadow-xl backdrop-blur-md">
-            <input
-              type="text"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              placeholder="Create new team..."
-              className="flex-1 w-full px-4 py-3 rounded-lg bg-black/70 text-white border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition"
-              aria-label="Team name input"
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <button
-              onClick={createTeam}
-              disabled={loading}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
+        <div className="max-w-3xl mx-auto w-full">
+          <div className="relative rounded-2xl bg-gradient-to-br from-white/5 to-white/10 border border-white/10 p-6 shadow-xl backdrop-blur-md">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <input
+                type="text"
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                placeholder="e.g. Microsoft, Netflix"
+                className="flex-1 w-full px-4 py-3 rounded-lg bg-black/60 text-white border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition"
+                aria-label="Team name input"
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <button
+                onClick={createTeam}
+                disabled={loading}
+                className={`px-6 py-3 text-sm rounded-lg font-medium transition-all duration-150 cursor-pointer
                 ${
                   loading
                     ? "bg-gray-500 text-white cursor-not-allowed"
                     : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
                 }
               `}
-            >
-              {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating{" "}
-                  <span className="animate-pulse -ml-2 text-white">...</span>
-                </div>
-              ) : (
-                "Create Room"
-              )}
-            </button>
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Creating{" "}
+                    <span className="animate-pulse -ml-2 text-white">...</span>
+                  </div>
+                ) : (
+                  "Create Room"
+                )}
+              </button>
+
+              <div className="relative inline-block">
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="px-6 py-3
+                bg-white/5 text-white/80
+                hover:bg-white/10 hover:text-white
+                border border-white/10
+                text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
+                >
+                  Manage Invitations
+                </button>
+
+                {/* Badge counter */}
+                {invites.length > 0 && (
+                  <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-red-500 text-white rounded-full">
+                    {invites.length}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -185,6 +270,71 @@ export default function TeamsPage() {
             </ul>
           )}
         </section>
+
+        {showInviteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+            <div className="relative w-full max-w-xl bg-[#1a1a1a] border border-white/10 rounded-2xl p-8 shadow-2xl text-white space-y-8">
+              {/* Close Icon */}
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition cursor-pointer"
+                aria-label="Close"
+              >
+                <X />
+              </button>
+
+              {/* Modal Header */}
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight">
+                  Manage Invitations
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Review your team invites and respond accordingly.
+                </p>
+              </div>
+
+              {/* Invite List */}
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                {invites.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic">
+                    You have no pending team invites.
+                  </p>
+                ) : (
+                  invites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-neutral-800 border border-white/10 px-4 py-3 rounded-md"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {invite.team.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Invited by{" "}
+                          {invite.invitedBy.name || invite.invitedBy.email}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => acceptTeamInvite(invite.id)}
+                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded-md text-white"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          onClick={() => rejectTeamInvite(invite.id)}
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-sm rounded-md text-white"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

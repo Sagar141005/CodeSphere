@@ -14,6 +14,7 @@ import {
   UserPlus,
   DoorClosed,
   Loader2,
+  Mail,
 } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { Loader } from "@/components/Loader";
@@ -33,12 +34,20 @@ interface TeamMember {
   image?: string;
 }
 
+interface TeamInvite {
+  id: string;
+  email: string;
+  status: "PENDING" | "ACCEPTED" | "REJECTED";
+  invitedAt: string;
+}
+
 interface Team {
   id: string;
   name: string;
   createdById: string;
   members: TeamMember[];
   rooms: Room[];
+  invites: TeamInvite[];
 }
 
 export default function TeamDetailsPage() {
@@ -102,6 +111,50 @@ export default function TeamDetailsPage() {
       alert("Something went wrong while inviting.");
     } finally {
       setInviting(false);
+    }
+  };
+
+  // Accept Team Invite
+  const acceptTeamInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch(`/api/team/invite/${inviteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "ACCEPT" }),
+      });
+
+      if (res.ok) {
+        alert("Invite accepted!");
+
+        fetch(`/api/team/${id}`)
+          .then((res) => res.json())
+          .then((data) => setTeam(data));
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to accept invite");
+      }
+    } catch (error) {
+      console.error("Accept invite failed:", error);
+    }
+  };
+
+  // Reject Team Invite
+  const rejectTeamInvite = async (inviteId: string) => {
+    try {
+      const res = await fetch(`/api/team/invite/${inviteId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "REJECT" }),
+      });
+
+      if (res.ok) {
+        alert("Invite rejected!");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to reject invite");
+      }
+    } catch (error) {
+      console.error("Reject invite failed:", error);
     }
   };
 
@@ -303,6 +356,50 @@ export default function TeamDetailsPage() {
                 );
               })}
             </ul>
+
+            {/* Pending Invites Section */}
+            {team.invites && team.invites.length > 0 && (
+              <div className="mt-10">
+                <h2 className="text-2xl font-semibold flex items-center gap-3 text-white mb-6">
+                  <Mail className="w-6 h-6 text-neutral-400" />
+                  Pending Invites
+                </h2>
+
+                <ul className="space-y-4">
+                  {team.invites.map((invite) => (
+                    <li
+                      key={invite.id}
+                      className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#111111] hover:bg-white/5 transition"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{invite.email}</span>
+                        <span className="text-xs text-gray-400">
+                          {invite.status} — invited on{" "}
+                          {new Date(invite.invitedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {invite.status === "PENDING" && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => acceptTeamInvite(invite.id)}
+                            className="px-3 py-1 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            Accept
+                          </button>
+                          <button
+                            onClick={() => rejectTeamInvite(invite.id)}
+                            className="px-3 py-1 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Invite Member Form */}
             {isOwner && (

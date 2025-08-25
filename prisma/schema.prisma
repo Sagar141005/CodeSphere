@@ -33,6 +33,9 @@ model User {
   teams        Team[] @relation("UserTeams")
   createdTeams Team[] @relation("TeamCreators")
 
+  teamInvites   TeamInvite[] @relation("TeamInvitedUser")
+  teamInvitedBy TeamInvite[] @relation("TeamInvitedByUser")
+
   accounts Account[]
   sessions Session[]
 
@@ -74,13 +77,29 @@ model VerificationToken {
 }
 
 model Team {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   name        String
-  members     User[]   @relation("UserTeams")
-  createdBy   User     @relation("TeamCreators", fields: [createdById], references: [id])
+  members     User[]       @relation("UserTeams")
+  createdBy   User         @relation("TeamCreators", fields: [createdById], references: [id])
   createdById String
   rooms       Room[]
-  createdAt   DateTime @default(now())
+  invites     TeamInvite[]
+  createdAt   DateTime     @default(now())
+}
+
+model TeamInvite {
+  id     String @id @default(cuid())
+  team   Team   @relation(fields: [teamId], references: [id])
+  teamId String
+
+  invited   User   @relation("TeamInvitedUser", fields: [invitedId], references: [id])
+  invitedId String
+
+  invitedBy   User   @relation("TeamInvitedByUser", fields: [invitedById], references: [id])
+  invitedById String
+
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime     @default(now())
 }
 
 model Room {

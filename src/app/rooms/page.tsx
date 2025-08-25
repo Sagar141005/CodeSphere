@@ -203,7 +203,7 @@ export default function RoomsPage() {
             <DoorClosed className="w-4 h-4" />
             Collaborative Coding Rooms
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
+          <h1 className="leading-[1.1] text-5xl md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
             Your Rooms
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
@@ -225,7 +225,7 @@ export default function RoomsPage() {
               <button
                 onClick={handleCreate}
                 disabled={loading}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
+                className={`px-6 py-3 text-sm rounded-lg font-medium transition-all duration-150 cursor-pointer
                 ${
                   loading
                     ? "bg-gray-500 text-white cursor-not-allowed"
