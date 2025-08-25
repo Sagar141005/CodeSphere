@@ -34,7 +34,10 @@ export async function GET() {
     }));
     const joinedRooms = user.rooms.map((room) => ({ ...room, owned: false }));
 
-    const uniqueRooms = [...ownedRooms, ...joinedRooms];
+    const uniqueRooms = [...ownedRooms, ...joinedRooms].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     return NextResponse.json(uniqueRooms);
   } catch (error) {

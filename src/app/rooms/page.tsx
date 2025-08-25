@@ -6,6 +6,7 @@ import {
   ArrowRightCircle,
   ChevronDown,
   DoorClosed,
+  Loader2,
   LogOut,
   Send,
   Trash2,
@@ -46,6 +47,7 @@ export default function RoomsPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const loadRoomsAndInvites = async () => {
     try {
@@ -135,24 +137,32 @@ export default function RoomsPage() {
 
   const handleCreate = async () => {
     if (!roomName.trim()) return alert("Please enter a room name");
+    setLoading(true);
 
-    const res = await fetch("/api/rooms", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: roomName,
-        slug: roomName.toLowerCase().replace(/\s+/g, "-"),
-      }),
-    });
+    try {
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: roomName,
+          slug: roomName.toLowerCase().replace(/\s+/g, "-"),
+        }),
+      });
 
-    if (res.ok) {
-      const newRoom = await res.json();
-      setRooms((prev) => [...prev, newRoom]);
-      setRoomName("");
-      router.push(`/room/${newRoom.slug}`);
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to create room");
+      if (res.ok) {
+        const newRoom = await res.json();
+        setRooms((prev) => [...prev, newRoom]);
+        setRoomName("");
+        router.push(`/room/${newRoom.slug}`);
+      } else {
+        const error = await res.json();
+        alert(error.error || "Failed to create room");
+      }
+    } catch (err) {
+      console.error("Room creation failed:", err);
+      alert("Something went wrong while creating the room.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -214,13 +224,23 @@ export default function RoomsPage() {
               />
               <button
                 onClick={handleCreate}
-                className="px-6 py-3
-                bg-gradient-to-r from-indigo-300 to-cyan-300
-                text-black font-semibold rounded-lg
-                hover:brightness-105 active:scale-95
-                transition-all duration-150 cursor-pointer"
+                disabled={loading}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
+                ${
+                  loading
+                    ? "bg-gray-500 text-white cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
+                }`}
               >
-                Create Room
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Creating{" "}
+                    <span className="animate-pulse -ml-2 text-white">...</span>
+                  </div>
+                ) : (
+                  "Create Room"
+                )}
               </button>
               <div className="relative inline-block">
                 <button

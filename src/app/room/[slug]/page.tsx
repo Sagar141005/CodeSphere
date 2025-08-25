@@ -16,6 +16,7 @@ import { MessageSquareQuote, MonitorDot, Redo, Undo, X } from "lucide-react";
 import DiffView from "@/components/DiffView";
 import { useRouter } from "next/navigation";
 import MobileBlocker from "@/components/MobileBlocker";
+import { Loader } from "@/components/Loader";
 
 type Diff = {
   id: string;
@@ -68,6 +69,7 @@ export default function RoomPage({
   const [aiOutput, setAiOutput] = useState<string | null>(null);
   const [aiExpanded, setAiExpanded] = useState(false);
   const [aiHeight, setAiHeight] = useState(200);
+  const [loading, setLoading] = useState(false);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
 
@@ -85,7 +87,24 @@ export default function RoomPage({
   }, []);
 
   useEffect(() => {
+    if (!slug || status !== "authenticated" || !session?.user?.id) return;
+
+    const socket = getSocket();
+
+    socket.emit("join-room", {
+      roomId: roomId,
+      user: {
+        id: session.user.id,
+        name: session.user.name || "Anonymous",
+        image: session.user.image || null,
+        email: session.user.email || null,
+      },
+    });
+  }, [slug, session, status, roomId]);
+
+  useEffect(() => {
     if (!slug) return;
+    setLoading(true);
 
     const loadRoomAndFiles = async () => {
       try {
@@ -95,6 +114,8 @@ export default function RoomPage({
         setRoomId(roomData.id);
       } catch {
         setRoomName(slug);
+      } finally {
+        setLoading(false);
       }
 
       try {
@@ -112,22 +133,6 @@ export default function RoomPage({
 
     loadRoomAndFiles();
   }, [slug]);
-
-  useEffect(() => {
-    if (!slug || status !== "authenticated" || !session?.user?.id) return;
-
-    const socket = getSocket();
-
-    socket.emit("join-room", {
-      roomId: roomId,
-      user: {
-        id: session.user.id,
-        name: session.user.name || "Anonymous",
-        image: session.user.image || null,
-        email: session.user.email || null,
-      },
-    });
-  }, [slug, session, status]);
 
   const openFile = async (file: FileData) => {
     if (!openTabs.find((f) => f.id === file.id)) {
@@ -565,8 +570,10 @@ export default function RoomPage({
     return <MobileBlocker />;
   }
 
+  if (status === "loading" || loading) return <Loader />;
+
   if (!slug) {
-    return <div className="text-white p-4">Loading room...</div>;
+    return <Loader />;
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import ConfirmModal from "@/components/ConfirmModal";
 import HomeNavbar from "@/components/HomeNavbar";
+import { Loader } from "@/components/Loader";
 import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -33,16 +34,11 @@ export default function ProfilePage() {
     }
   }, [session]);
 
-  if (status === "loading")
-    return (
-      <p className="p-8 text-center text-gray-400 italic animate-pulse">
-        Loading profile...
-      </p>
-    );
+  if (status === "loading") return <Loader />;
 
   if (!session)
     return (
-      <p className="p-8 text-center text-red-400 font-semibold">
+      <p className="w-full h-screen p-8 text-center text-red-400 font-semibold">
         Please log in to view your profile.
       </p>
     );
@@ -128,7 +124,6 @@ export default function ProfilePage() {
       alert("Failed to delete account");
     }
   };
-  console.log("createdAt:", user.createdAt, typeof user.createdAt);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white">

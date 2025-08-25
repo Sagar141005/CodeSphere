@@ -12,8 +12,11 @@ import {
   Crown,
   ArrowRightCircle,
   UserPlus,
+  DoorClosed,
+  Loader2,
 } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
+import { Loader } from "@/components/Loader";
 
 interface Room {
   id: string;
@@ -47,6 +50,9 @@ export default function TeamDetailsPage() {
   const [team, setTeam] = useState<Team | null>(null);
   const [newRoomName, setNewRoomName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [inviting, setInviting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
   const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
@@ -62,27 +68,40 @@ export default function TeamDetailsPage() {
   // Fetch team details
   useEffect(() => {
     if (!id || !session) return;
+
+    setLoading(true);
+
     fetch(`/api/team/${id}`)
       .then((res) => res.json())
       .then((data) => setTeam(data))
-      .catch(() => setTeam(null));
+      .catch(() => setTeam(null))
+      .finally(() => setLoading(false));
   }, [id, session]);
 
   // Invite Member
   const inviteMember = async () => {
-    if (!inviteEmail.trim()) return alert("Email is required");
-    const res = await fetch(`/api/team/${id}/add-member`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: inviteEmail }),
-    });
-    if (res.ok) {
-      const updatedTeam = await res.json();
-      setTeam(updatedTeam);
-      setInviteEmail("");
-    } else {
-      const err = await res.json();
-      alert(err.error || "Failed to invite member");
+    if (!inviteEmail.trim()) return;
+
+    setInviting(true);
+    try {
+      const res = await fetch(`/api/team/${id}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+
+      if (res.ok) {
+        alert("Invitation sent!");
+        setInviteEmail("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to invite member");
+      }
+    } catch (err) {
+      console.error("Invite failed:", err);
+      alert("Something went wrong while inviting.");
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -105,18 +124,31 @@ export default function TeamDetailsPage() {
 
   // Create Room
   const createRoom = async () => {
-    if (!newRoomName) return;
-    const res = await fetch(`/api/team/${id}/room/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newRoomName }),
-    });
-    if (res.ok) {
-      const newRoom = await res.json();
-      setTeam((prev) =>
-        prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
-      );
-      setNewRoomName("");
+    if (!newRoomName.trim()) return;
+
+    setCreatingRoom(true);
+    try {
+      const res = await fetch(`/api/team/${id}/room/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newRoomName }),
+      });
+
+      if (res.ok) {
+        const newRoom = await res.json();
+        setTeam((prev) =>
+          prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
+        );
+        setNewRoomName("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create room");
+      }
+    } catch (err) {
+      console.error("Room creation failed:", err);
+      alert("Something went wrong while creating the room.");
+    } finally {
+      setCreatingRoom(false);
     }
   };
 
@@ -159,14 +191,14 @@ export default function TeamDetailsPage() {
       alert(error.error || "Failed to delete team");
     }
   };
-
-  if (status === "loading") {
-    return <p className="text-center mt-10">Loading session...</p>;
+  if (status === "loading" || loading) {
+    return <Loader />;
   }
 
   if (!team) {
     return <p className="text-center mt-10">Team not found.</p>;
   }
+
   const isOwner = session?.user?.id === team.createdById;
 
   return (
@@ -294,10 +326,29 @@ export default function TeamDetailsPage() {
                 />
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-6 py-3 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10 text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
+                  disabled={inviting}
+                  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg transition duration-200 cursor-pointer
+                    ${
+                      inviting
+                        ? "bg-gray-500 cursor-not-allowed text-white/70"
+                        : "bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10"
+                    }
+                  `}
                 >
-                  <UserPlus className="w-4 h-4" />
-                  Invite Member
+                  {inviting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending{" "}
+                      <span className="animate-pulse -ml-2 text-white">
+                        ...
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Invite Member
+                    </>
+                  )}
                 </button>
               </form>
             )}
@@ -338,10 +389,26 @@ export default function TeamDetailsPage() {
                     />
                     <button
                       onClick={createRoom}
-                      className="px-6 py-3
-                      bg-gradient-to-r from-indigo-300 to-cyan-300 text-black font-semibold rounded-lg hover:brightness-105 active:scale-95 transition-all duration-150 cursor-pointer"
+                      disabled={creatingRoom}
+                      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
+                      ${
+                        creatingRoom
+                          ? "bg-gray-500 text-white cursor-not-allowed"
+                          : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
+                      }
+                    `}
                     >
-                      Create Room
+                      {creatingRoom ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Creating{" "}
+                          <span className="animate-pulse -ml-2 text-white">
+                            ...
+                          </span>
+                        </div>
+                      ) : (
+                        "Create Room"
+                      )}
                     </button>
                   </div>
                 </div>
@@ -350,7 +417,17 @@ export default function TeamDetailsPage() {
           )}
 
           {team.rooms.length === 0 ? (
-            <p className="text-gray-400 text-sm italic">No rooms yet.</p>
+            <div className="text-center mt-20">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-white/5 ring-1 ring-white/10 mb-6">
+                <DoorClosed className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                No Rooms Yet
+              </h3>
+              <p className="text-gray-500 italic max-w-xs mx-auto">
+                Start by creating one above.
+              </p>
+            </div>
           ) : (
             <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {team.rooms.map((room) => (

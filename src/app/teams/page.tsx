@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import HomeNavbar from "@/components/HomeNavbar";
-import { Users, ArrowRightCircle } from "lucide-react";
+import { Users, ArrowRightCircle, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Loader } from "@/components/Loader";
 
 interface Team {
   id: string;
@@ -20,6 +21,7 @@ export default function TeamsPage() {
   const router = useRouter();
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamName, setTeamName] = useState("");
+  const [loading, setLoading] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(true);
 
   useEffect(() => {
@@ -40,23 +42,33 @@ export default function TeamsPage() {
 
   const createTeam = async () => {
     if (!teamName.trim()) return alert("Team name is required");
-    const res = await fetch("/api/team/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: teamName }),
-    });
-    if (res.ok) {
-      const newTeam = await res.json();
-      setTeams((prev) => [...prev, newTeam]);
-      setTeamName("");
-    } else {
-      const err = await res.json();
-      alert(err.error || "Failed to create team");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/team/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: teamName }),
+      });
+
+      if (res.ok) {
+        const newTeam = await res.json();
+        setTeams((prev) => [...prev, newTeam]);
+        setTeamName("");
+      } else {
+        const err = await res.json();
+        alert(err.error || "Failed to create team");
+      }
+    } catch (err) {
+      console.error("Team creation failed:", err);
+      alert("Something went wrong while creating the team.");
+    } finally {
+      setLoading(false);
     }
   };
 
   if (status === "loading") {
-    return <p className="text-center mt-10">Loading session...</p>;
+    return <Loader />;
   }
 
   return (
@@ -70,7 +82,7 @@ export default function TeamsPage() {
             <Users className="w-4 h-4" />
             Team Management
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
+          <h1 className="text-5xl leading-[1.1] md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
             Manage Your Teams
           </h1>
           <p className="text-gray-400 text-lg max-w-xl mx-auto">
@@ -94,13 +106,24 @@ export default function TeamsPage() {
             />
             <button
               onClick={createTeam}
-              className="px-6 py-3
-              bg-gradient-to-r from-indigo-300 to-cyan-300
-              text-black font-semibold rounded-lg
-              hover:brightness-105 active:scale-95
-              transition-all duration-150 cursor-pointer"
+              disabled={loading}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
+                ${
+                  loading
+                    ? "bg-gray-500 text-white cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
+                }
+              `}
             >
-              Create Team
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating{" "}
+                  <span className="animate-pulse -ml-2 text-white">...</span>
+                </div>
+              ) : (
+                "Create Room"
+              )}
             </button>
           </div>
         </div>

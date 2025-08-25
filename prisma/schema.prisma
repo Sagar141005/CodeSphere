@@ -84,21 +84,19 @@ model Team {
 }
 
 model Room {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String
-  owner       User         @relation("OwnedRooms", fields: [ownerId], references: [id])
-  ownerId     String
-  members     User[]       @relation("RoomMembers")
-  invites     RoomInvite[]
-  content     String       @default("")
-  team        Team?        @relation(fields: [teamId], references: [id])
-  teamId      String?
-  files       File[]
-  githubRepo  String?
-  githubToken String?
-  createdAt   DateTime     @default(now())
-  commits     Commit[]
+  id        String       @id @default(cuid())
+  slug      String       @unique
+  name      String
+  owner     User         @relation("OwnedRooms", fields: [ownerId], references: [id])
+  ownerId   String
+  members   User[]       @relation("RoomMembers")
+  invites   RoomInvite[]
+  content   String       @default("")
+  team      Team?        @relation(fields: [teamId], references: [id])
+  teamId    String?
+  files     File[]
+  createdAt DateTime     @default(now())
+  commits   Commit[]
 }
 
 model RoomInvite {
