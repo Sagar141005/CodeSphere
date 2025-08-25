@@ -18,13 +18,8 @@ import {
 } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { Loader } from "@/components/Loader";
-
-interface Room {
-  id: string;
-  slug: string;
-  name: string;
-  createdAt: string;
-}
+import { Room } from "@/types/Room";
+import { RoomList } from "@/components/RoomList";
 
 interface TeamMember {
   id: string;
@@ -111,50 +106,6 @@ export default function TeamDetailsPage() {
       alert("Something went wrong while inviting.");
     } finally {
       setInviting(false);
-    }
-  };
-
-  // Accept Team Invite
-  const acceptTeamInvite = async (inviteId: string) => {
-    try {
-      const res = await fetch(`/api/team/invite/${inviteId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "ACCEPT" }),
-      });
-
-      if (res.ok) {
-        alert("Invite accepted!");
-
-        fetch(`/api/team/${id}`)
-          .then((res) => res.json())
-          .then((data) => setTeam(data));
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to accept invite");
-      }
-    } catch (error) {
-      console.error("Accept invite failed:", error);
-    }
-  };
-
-  // Reject Team Invite
-  const rejectTeamInvite = async (inviteId: string) => {
-    try {
-      const res = await fetch(`/api/team/invite/${inviteId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "REJECT" }),
-      });
-
-      if (res.ok) {
-        alert("Invite rejected!");
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to reject invite");
-      }
-    } catch (error) {
-      console.error("Reject invite failed:", error);
     }
   };
 
@@ -357,50 +308,6 @@ export default function TeamDetailsPage() {
               })}
             </ul>
 
-            {/* Pending Invites Section */}
-            {team.invites && team.invites.length > 0 && (
-              <div className="mt-10">
-                <h2 className="text-2xl font-semibold flex items-center gap-3 text-white mb-6">
-                  <Mail className="w-6 h-6 text-neutral-400" />
-                  Pending Invites
-                </h2>
-
-                <ul className="space-y-4">
-                  {team.invites.map((invite) => (
-                    <li
-                      key={invite.id}
-                      className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#111111] hover:bg-white/5 transition"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{invite.email}</span>
-                        <span className="text-xs text-gray-400">
-                          {invite.status} — invited on{" "}
-                          {new Date(invite.invitedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      {invite.status === "PENDING" && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => acceptTeamInvite(invite.id)}
-                            className="px-3 py-1 text-sm rounded-lg bg-green-600 hover:bg-green-700 text-white"
-                          >
-                            Accept
-                          </button>
-                          <button
-                            onClick={() => rejectTeamInvite(invite.id)}
-                            className="px-3 py-1 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* Invite Member Form */}
             {isOwner && (
               <form
@@ -513,6 +420,14 @@ export default function TeamDetailsPage() {
             </section>
           )}
 
+          {/* Rooms Heading if user is NOT owner */}
+          {!isOwner && team.rooms.length > 0 && (
+            <h2 className="text-2xl font-semibold flex items-center gap-3 text-white mb-6">
+              <DoorClosed className="w-6 h-6 text-neutral-400" />
+              Rooms
+            </h2>
+          )}
+
           {team.rooms.length === 0 ? (
             <div className="text-center mt-20">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-white/5 ring-1 ring-white/10 mb-6">
@@ -526,66 +441,13 @@ export default function TeamDetailsPage() {
               </p>
             </div>
           ) : (
-            <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {team.rooms.map((room) => (
-                <li
-                  key={room.id}
-                  tabIndex={0}
-                  className="group relative rounded-2xl border border-white/10 bg-[#141414] hover:bg-white/5 hover:border-white/20 transition-all shadow hover:shadow-2xl backdrop-blur-md focus:outline-none"
-                >
-                  <div className="relative z-10 p-5 space-y-3">
-                    {/* Top Row */}
-                    <div className="flex items-baseline justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 text-white/70 flex items-center justify-center font-bold text-lg">
-                          {room.name[0].toUpperCase()}
-                        </div>
-                        <h3 className="text-lg font-semibold truncate w-20 group-hover:text-white/90 transition">
-                          {room.name}
-                        </h3>
-                      </div>
-                      {isOwner && (
-                        <div
-                          onClick={() => {
-                            setSelectedRoomToDelete(room);
-                            setShowDeleteConfirm(true);
-                          }}
-                          className="p-2 border border-white/10 rounded-md hover:text-red-400 transition-colors cursor-pointer"
-                        >
-                          <Trash2 width={15} height={15} />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Metadata Row */}
-                    <div className="text-xs text-gray-400 flex justify-between items-center pt-1">
-                      <span className="uppercase tracking-wide">Created</span>
-                      <span className="text-white/80">
-                        {new Date(room.createdAt).toLocaleDateString(
-                          undefined,
-                          {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }
-                        )}
-                      </span>
-                    </div>
-
-                    {/* CTA */}
-                    <div
-                      onClick={() =>
-                        window.location.assign(`/room/${room.slug}`)
-                      }
-                      className="flex items-center justify-between pt-2 border-t border-white/10 text-sm font-semibold cursor-pointer text-gray-400 hover:text-white transition"
-                    >
-                      <span>Enter Room</span>
-                      <ArrowRightCircle className="w-4 h-4" />
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <RoomList
+              rooms={team.rooms}
+              onDelete={(room) => {
+                setSelectedRoomToDelete(room);
+                setShowDeleteConfirm(true);
+              }}
+            />
           )}
         </section>
 

@@ -7,7 +7,7 @@ export async function POST(
   req: Request,
   context: { params: { inviteId: string } }
 ) {
-  const { inviteId } = context.params;
+  const { inviteId } = await context.params;
   const { action } = await req.json();
 
   const session = await getServerSession(authOptions);

@@ -46,7 +46,7 @@ export default function TeamsPage() {
     setLoadingTeams(true);
     fetch("/api/team/my-teams")
       .then((res) => res.json())
-      .then((data) => setTeams(data.teams))
+      .then((data) => setTeams(data?.teams ?? []))
       .catch((err) => console.error("Failed to fetch teams", err))
       .finally(() => setLoadingTeams(false));
   }, [session]);
@@ -57,7 +57,7 @@ export default function TeamsPage() {
 
     fetch("/api/team/my-teams")
       .then((res) => res.json())
-      .then((data) => setInvites(data.teamInvites))
+      .then((data) => setInvites(data?.teamInvites ?? []))
       .catch((err) => console.error("Failed to fetch invites", err))
       .finally(() => setLoadingInvites(false));
 
@@ -186,7 +186,7 @@ export default function TeamsPage() {
                     <span className="animate-pulse -ml-2 text-white">...</span>
                   </div>
                 ) : (
-                  "Create Room"
+                  "Create Team"
                 )}
               </button>
 
@@ -317,13 +317,13 @@ export default function TeamsPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => acceptTeamInvite(invite.id)}
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded-md text-white"
+                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded-md text-white cursor-pointer"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => rejectTeamInvite(invite.id)}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-sm rounded-md text-white"
+                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-sm rounded-md text-white cursor-pointer"
                         >
                           Reject
                         </button>

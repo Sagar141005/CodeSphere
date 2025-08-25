@@ -29,5 +29,8 @@ export async function GET() {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  return NextResponse.json(user);
+  return NextResponse.json({
+    teams: user.teams,
+    teamInvites: user.teamInvites,
+  });
 }

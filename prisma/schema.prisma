@@ -113,6 +113,8 @@ model Room {
   content   String       @default("")
   team      Team?        @relation(fields: [teamId], references: [id])
   teamId    String?
+  @@unique([name, teamId]) 
+  
   files     File[]
   createdAt DateTime     @default(now())
   commits   Commit[]
