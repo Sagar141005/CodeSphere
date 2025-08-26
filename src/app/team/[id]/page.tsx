@@ -10,11 +10,9 @@ import {
   Trash2,
   LogOut,
   Crown,
-  ArrowRightCircle,
   UserPlus,
   DoorClosed,
   Loader2,
-  Mail,
 } from "lucide-react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { Loader } from "@/components/Loader";
@@ -62,6 +60,8 @@ export default function TeamDetailsPage() {
   const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
     null
   );
+  const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+  const [confirmLeaveTeam, setConfirmLeaveTeam] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -111,7 +111,6 @@ export default function TeamDetailsPage() {
 
   // Remove Member
   const removeMember = async (memberId: string) => {
-    if (!confirm("Remove this member?")) return;
     const res = await fetch(`/api/team/${id}/remove-member`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -123,6 +122,9 @@ export default function TeamDetailsPage() {
           ? { ...prev, members: prev.members.filter((m) => m.id !== memberId) }
           : prev
       );
+    } else {
+      const error = await res.json();
+      alert(error.error || "Failed to remove member");
     }
   };
 
@@ -158,10 +160,12 @@ export default function TeamDetailsPage() {
 
   // Leave Team
   const leaveTeam = async () => {
-    if (!confirm("Are you sure you want to leave this team?")) return;
     const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
     if (res.ok) {
       router.push("/teams");
+    } else {
+      const error = await res.json();
+      alert(error.error || "Failed to leave team");
     }
   };
 
@@ -295,7 +299,7 @@ export default function TeamDetailsPage() {
                       member.email !== session?.user?.email &&
                       !isTeamOwner && (
                         <button
-                          onClick={() => removeMember(member.id)}
+                          onClick={() => setMemberToRemove(member)}
                           className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
                           aria-label={`Remove ${member.name || member.email}`}
                         >
@@ -358,7 +362,6 @@ export default function TeamDetailsPage() {
             )}
           </div>
         </section>
-
         {/* Rooms Section */}
         <section className="max-w-5xl mx-auto">
           {isOwner && (
@@ -450,12 +453,11 @@ export default function TeamDetailsPage() {
             />
           )}
         </section>
-
         {/* Leave Team Button */}
         {!isOwner && (
           <div className="max-w-5xl mx-auto text-right">
             <button
-              onClick={leaveTeam}
+              onClick={() => setConfirmLeaveTeam(true)}
               className="flex items-center gap-2 text-gray-400 hover:text-red-500 underline text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
               aria-label="Leave team"
             >
@@ -464,7 +466,6 @@ export default function TeamDetailsPage() {
             </button>
           </div>
         )}
-
         {/* Modals */}
         {/* Room Deletion */}
         <ConfirmModal
@@ -488,7 +489,6 @@ export default function TeamDetailsPage() {
             setSelectedRoomToDelete(null);
           }}
         />
-
         {/* Team Deletion */}
         <ConfirmModal
           isOpen={showDeleteTeamConfirm}
@@ -504,6 +504,48 @@ export default function TeamDetailsPage() {
           onConfirm={async () => {
             await handleDeleteTeam(team!.id);
             setShowDeleteTeamConfirm(false);
+          }}
+        />
+        {/* Remove Member */}
+        <ConfirmModal
+          isOpen={!!memberToRemove}
+          title="Remove Team Member"
+          message={
+            <>
+              Are you sure you want to remove{" "}
+              <strong className="text-white">
+                {memberToRemove?.name || memberToRemove?.email}
+              </strong>{" "}
+              from the team?
+            </>
+          }
+          confirmLabel="Remove"
+          cancelLabel="Cancel"
+          onCancel={() => setMemberToRemove(null)}
+          onConfirm={async () => {
+            if (memberToRemove) {
+              await removeMember(memberToRemove.id);
+              setMemberToRemove(null);
+            }
+          }}
+        />
+        {/* Leave Room */}
+        <ConfirmModal
+          isOpen={confirmLeaveTeam}
+          title="Leave Team"
+          message={
+            <>
+              Are you sure you want to leave{" "}
+              <strong className="text-white">{team?.name}</strong>? You will
+              lose access to all rooms and team data.
+            </>
+          }
+          confirmLabel="Leave Team"
+          cancelLabel="Stay"
+          onCancel={() => setConfirmLeaveTeam(false)}
+          onConfirm={async () => {
+            await leaveTeam();
+            setConfirmLeaveTeam(false);
           }}
         />
       </main>

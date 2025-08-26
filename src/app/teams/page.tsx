@@ -105,7 +105,7 @@ export default function TeamsPage() {
         // optionally refresh teams
         fetch("/api/team/my-teams")
           .then((res) => res.json())
-          .then((data) => setTeams(data));
+          .then((data) => setTeams(data?.teams ?? []));
       }
     } catch (err) {
       console.error("Accept invite failed:", err);

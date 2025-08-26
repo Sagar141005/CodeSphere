@@ -42,6 +42,7 @@ export default function RoomsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
+  const [roomToLeave, setRoomToLeave] = useState<Room | null>(null);
 
   const loadRoomsAndInvites = async () => {
     try {
@@ -175,7 +176,7 @@ export default function RoomsPage() {
 
   const handleLeave = async (slug: string) => {
     const res = await fetch(`/api/room/${slug}`, {
-      method: "POST",
+      method: "POST", // Leaving room via POST
     });
 
     if (res.ok) {
@@ -287,7 +288,10 @@ export default function RoomsPage() {
 
               <RoomList
                 rooms={rooms.filter((room) => !room.owned)}
-                onLeave={(slug) => handleLeave(slug)}
+                onLeave={(slug) => {
+                  const room = rooms.find((r) => r.slug === slug);
+                  if (room) setRoomToLeave(room);
+                }}
               />
             </div>
           )}
@@ -424,7 +428,7 @@ export default function RoomsPage() {
           </div>
         )}
 
-        {/* Delete Modal */}
+        {/* Delete Room */}
         <ConfirmModal
           isOpen={showDeleteConfirm && !!selectedRoomToDelete}
           title="Are you sure you want to delete this room?"
@@ -440,10 +444,32 @@ export default function RoomsPage() {
             setShowDeleteConfirm(false);
             setSelectedRoomToDelete(null);
           }}
-          onConfirm={() => {
-            handleDelete(selectedRoomToDelete!.slug);
+          onConfirm={async () => {
+            await handleDelete(selectedRoomToDelete!.slug);
             setShowDeleteConfirm(false);
             setSelectedRoomToDelete(null);
+          }}
+        />
+
+        {/* Leave Room */}
+        <ConfirmModal
+          isOpen={!!roomToLeave}
+          title="Leave Room"
+          message={
+            <>
+              Are you sure you want to leave{" "}
+              <strong className="text-white">{roomToLeave?.name}</strong>?
+              You’ll lose access to its content.
+            </>
+          }
+          confirmLabel="Leave Room"
+          cancelLabel="Cancel"
+          onCancel={() => setRoomToLeave(null)}
+          onConfirm={async () => {
+            if (roomToLeave) {
+              await handleLeave(roomToLeave.slug);
+              setRoomToLeave(null);
+            }
           }}
         />
       </main>
