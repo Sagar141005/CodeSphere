@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
 import { AppWindow, X } from "lucide-react";
 import React, { useCallback, useEffect } from "react";
+import toast from "react-hot-toast";
 
 type Props = {
   html: string;
@@ -12,26 +13,43 @@ type Props = {
   onClose: () => void;
 };
 
-export default function LivePreviewModal({ html, css, js, onClose, cssFileName, jsFileName }: Props) {
+export default function LivePreviewModal({
+  html,
+  css,
+  js,
+  onClose,
+  cssFileName,
+  jsFileName,
+}: Props) {
   const [error, setError] = React.useState<string | null>(null);
 
   useEffect(() => {
     async function runCode() {
-      // Example error check - your API might differ
-      const response = await fetch('/api/exec', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language: 'javascript', code: js }),
-      });
-      const data = await response.json();
+      try {
+        const response = await fetch("/api/exec", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ language: "javascript", code: js }),
+        });
 
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setError(null);
+        const data = await response.json();
+
+        if (data.error) {
+          setError(data.error);
+          toast.error(`Execution error: ${data.error}`);
+        } else {
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Run code failed:", err);
+        setError("Failed to run code");
+        toast.error("Failed to run code");
       }
     }
-    runCode();
+
+    if (js.trim()) {
+      runCode();
+    }
   }, [js]);
 
   let cleanedHTML = html;
@@ -110,16 +128,16 @@ export default function LivePreviewModal({ html, css, js, onClose, cssFileName, 
   }, [handleKeyDown]);
 
   useEffect(() => {
-    document.body.classList.add('disable-cursor-blob');
+    document.body.classList.add("disable-cursor-blob");
     return () => {
-      document.body.classList.remove('disable-cursor-blob');
+      document.body.classList.remove("disable-cursor-blob");
     };
   }, []);
 
   const openInNewTab = () => {
-    const blob = new Blob([combined], { type: 'text/html' });
+    const blob = new Blob([combined], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   return (
@@ -134,7 +152,6 @@ export default function LivePreviewModal({ html, css, js, onClose, cssFileName, 
 
       {/* Modal Shell */}
       <div className="relative w-[95%] h-[95%] border border-[#2a2a2e] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scaleIn">
-
         {/* Glow Overlay */}
         <div className="absolute inset-0 rounded-2xl pointer-events-none bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-md opacity-0 hover:opacity-100 transition-all duration-300" />
 

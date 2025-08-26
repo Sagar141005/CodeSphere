@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ explanation });
   } catch (error) {
-    console.log("AI explain error:", error);
+    console.error("AI explain error:", error);
     return NextResponse.json(
       { error: "Failed to generate explanation" },
       { status: 500 }

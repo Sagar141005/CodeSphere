@@ -3,5 +3,6 @@ export interface Room {
   name: string;
   slug: string;
   createdAt: string;
-  owned: boolean;
+  owned?: boolean;
+  ownerId?: string;
 }

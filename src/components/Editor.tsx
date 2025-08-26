@@ -5,6 +5,7 @@ import Editor, { loader } from "@monaco-editor/react";
 import { io, Socket } from "socket.io-client";
 import { AlertTriangle } from "lucide-react";
 import { defineMonacoThemes } from "@/lib/monaco-themes";
+import toast from "react-hot-toast";
 
 const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
 
@@ -111,6 +112,7 @@ export default function CodeEditor({
         if (isCurrent) {
           setLoadingError(true);
           setCode("// Error loading file.");
+          toast.error("Failed to load file.");
         }
       } finally {
         if (isCurrent) setFileLoading(false); // loading finished
@@ -145,13 +147,19 @@ export default function CodeEditor({
     saveTimeoutRef.current = setTimeout(async () => {
       setIsSaving(true);
       try {
-        await fetch(`/api/file/${fileId}`, {
+        const res = await fetch(`/api/file/${fileId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ content: code, language }),
         });
+
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error || "Auto-save failed.");
+        }
       } catch (err) {
         console.error("Failed to save:", err);
+        toast.error("Failed to auto-save.");
       } finally {
         setIsSaving(false);
         setIsTyping(false);

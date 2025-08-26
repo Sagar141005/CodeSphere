@@ -19,6 +19,7 @@ import { useSession } from "next-auth/react";
 import ConfirmModal from "@/components/ConfirmModal";
 import { RoomList } from "@/components/RoomList";
 import { Room } from "@/types/Room";
+import toast from "react-hot-toast";
 
 interface Invite {
   id: string;
@@ -57,6 +58,7 @@ export default function RoomsPage() {
       setRooms(Array.isArray(roomsData) ? roomsData : []);
       setPendingInvites(Array.isArray(invitesData) ? invitesData : []);
     } catch (error) {
+      toast.error("Failed to load rooms or invites");
       setRooms([]);
       setPendingInvites([]);
     }
@@ -80,12 +82,12 @@ export default function RoomsPage() {
 
   const sendInvite = async () => {
     if (!selectedRoomSlug) {
-      alert("Please select a room to invite to");
+      toast.error("Please select a room to invite to");
       return;
     }
 
     if (!inviteEmail.trim()) {
-      alert("Please enter an email to invite");
+      toast.error("Please enter an email to invite");
       return;
     }
 
@@ -104,12 +106,12 @@ export default function RoomsPage() {
         throw new Error(err.error || "Failed to send invite");
       }
 
+      toast.success("Invite sent successfully");
       setInviteEmail("");
       setSelectedRoomSlug("");
-
       loadRoomsAndInvites();
     } catch (error: any) {
-      console.log(error);
+      toast.error(error.message || "Something went wrong while sending invite");
     }
   };
 
@@ -127,11 +129,15 @@ export default function RoomsPage() {
       loadRoomsAndInvites();
     } catch (err) {
       console.error(err);
+      toast.error("Failed to respond to invite");
     }
   };
 
   const handleCreate = async () => {
-    if (!roomName.trim()) return alert("Please enter a room name");
+    if (!roomName.trim()) {
+      toast.error("Please enter a room name");
+      return;
+    }
     setLoading(true);
 
     try {
@@ -148,42 +154,55 @@ export default function RoomsPage() {
         const newRoom = await res.json();
         setRooms((prev) => [...prev, newRoom]);
         setRoomName("");
+        toast.success("Room created");
         router.push(`/room/${newRoom.slug}`);
       } else {
         const error = await res.json();
-        alert(error.error || "Failed to create room");
+        toast.error(error.error || "Failed to create room");
       }
     } catch (err) {
       console.error("Room creation failed:", err);
-      alert("Something went wrong while creating the room.");
+      toast.error("Something went wrong while creating the room");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (slug: string) => {
-    const res = await fetch(`/api/room/${slug}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/room/${slug}`, {
+        method: "DELETE",
+      });
 
-    if (res.ok) {
-      setRooms((prev) => prev.filter((room) => room.slug !== slug));
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to delete room");
+      if (res.ok) {
+        setRooms((prev) => prev.filter((room) => room.slug !== slug));
+        toast.success("Room deleted successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to delete room");
+      }
+    } catch (err) {
+      console.error("Delete room failed:", err);
+      toast.error("Something went wrong while deleting the room");
     }
   };
 
   const handleLeave = async (slug: string) => {
-    const res = await fetch(`/api/room/${slug}`, {
-      method: "POST", // Leaving room via POST
-    });
+    try {
+      const res = await fetch(`/api/room/${slug}`, {
+        method: "POST",
+      });
 
-    if (res.ok) {
-      setRooms((prev) => prev.filter((room) => room.slug !== slug));
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to leave room");
+      if (res.ok) {
+        setRooms((prev) => prev.filter((room) => room.slug !== slug));
+        toast.success("Room leaved successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to leave room");
+      }
+    } catch (err) {
+      console.error("Leave room failed:", err);
+      toast.error("Something went wrong while leaving the room");
     }
   };
 

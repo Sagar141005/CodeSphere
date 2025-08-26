@@ -28,6 +28,7 @@
     "python-shell": "^5.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hot-toast": "^2.6.0",
     "react-spinners": "^0.17.0",
     "remixicon-react": "^1.0.0",
     "socket.io": "^4.8.1",

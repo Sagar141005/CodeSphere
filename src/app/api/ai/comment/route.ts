@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result });
   } catch (error) {
-    console.log("AI commenr error:", error);
+    console.error("AI commenr error:", error);
     return NextResponse.json(
       { error: "Failed to generate comments" },
       { status: 500 }

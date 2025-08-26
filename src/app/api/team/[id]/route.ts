@@ -58,6 +58,26 @@ export async function DELETE(
     );
   }
 
+  await prisma.roomInvite.deleteMany({
+    where: {
+      room: {
+        teamId: id,
+      },
+    },
+  });
+
+  await prisma.room.deleteMany({
+    where: {
+      teamId: id,
+    },
+  });
+
+  await prisma.teamInvite.deleteMany({
+    where: {
+      teamId: id,
+    },
+  });
+
   await prisma.team.delete({
     where: { id },
   });

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ result });
   } catch (error) {
-    console.log("AI refactor error:", error);
+    console.error("AI refactor error:", error);
     return NextResponse.json(
       { error: "Failed to refactor code" },
       { status: 500 }

@@ -17,6 +17,7 @@ import DiffView from "@/components/DiffView";
 import { useRouter } from "next/navigation";
 import MobileBlocker from "@/components/MobileBlocker";
 import { Loader } from "@/components/Loader";
+import toast from "react-hot-toast";
 
 type Diff = {
   id: string;
@@ -271,6 +272,7 @@ export default function RoomPage({
       }
     } catch (error) {
       console.warn("Failed to load linked files:", error);
+      toast.error("Failed to load linked files.");
     }
 
     setHtmlCode(htmlContent);
@@ -353,6 +355,7 @@ export default function RoomPage({
     } catch (error) {
       console.error("Execution failed:", error);
       terminalRef.current?.displayOutput("Execution failed.", "error");
+      toast.error("Failed to run code.");
     } finally {
       terminalRef.current?.setRunning(false); // ✅ Hide the running message
     }
@@ -370,7 +373,7 @@ export default function RoomPage({
 
     const selection = editor.getModel()?.getValueInRange(editor.getSelection());
     if (!selection || selection.trim().length === 0) {
-      alert("Please select some code first.");
+      toast.error("Please select some code first.");
       return;
     }
 
@@ -395,7 +398,7 @@ export default function RoomPage({
       setAiExpanded(true);
     } catch (error) {
       console.error(error);
-      alert("Failed to explain the selected code.");
+      toast.error("Failed to explain the selected code.");
     }
   };
 
@@ -406,7 +409,7 @@ export default function RoomPage({
     const selectionRange = editor.getSelection();
     const selection = editor.getModel()?.getValueInRange(selectionRange);
     if (!selection || selection.trim().length === 0) {
-      alert("Please select some code first.");
+      toast.error("Please select some code first.");
       return;
     }
 
@@ -443,7 +446,7 @@ export default function RoomPage({
       setShowDiffModal(true);
     } catch (error) {
       console.error(error);
-      alert("Failed to explain the selected code.");
+      toast.error("Failed to refactor the selected code.");
     }
   };
 
@@ -482,7 +485,7 @@ export default function RoomPage({
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to explain the selected code.");
+      toast.error("Failed to comment the code.");
     }
   };
 
@@ -492,7 +495,7 @@ export default function RoomPage({
 
     const currentCode = editor.getValue();
     if (!lastError) {
-      alert("No error to fix. Run the code first.");
+      toast.error("No error to fix. Run the code first.");
       return;
     }
 
@@ -532,8 +535,7 @@ export default function RoomPage({
 
       setLastError(null);
     } catch (error) {
-      console.log(error);
-      alert("Failed to apply AI fix.");
+      toast.error("Failed to apply AI fix.");
     }
   };
 

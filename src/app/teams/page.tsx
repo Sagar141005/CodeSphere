@@ -7,6 +7,7 @@ import HomeNavbar from "@/components/HomeNavbar";
 import { Users, ArrowRightCircle, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Loader } from "@/components/Loader";
+import toast from "react-hot-toast";
 
 interface TeamInvite {
   id: string;
@@ -32,7 +33,6 @@ export default function TeamsPage() {
   const [loading, setLoading] = useState(false);
   const [loadingTeams, setLoadingTeams] = useState(true);
   const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [loadingInvites, setLoadingInvites] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
@@ -44,29 +44,24 @@ export default function TeamsPage() {
   useEffect(() => {
     if (!session) return;
     setLoadingTeams(true);
+
     fetch("/api/team/my-teams")
       .then((res) => res.json())
-      .then((data) => setTeams(data?.teams ?? []))
-      .catch((err) => console.error("Failed to fetch teams", err))
+      .then((data) => {
+        setTeams(data?.teams ?? []);
+        setInvites(data?.teamInvites ?? []);
+      })
+      .catch((err) => {
+        console.error("[Team] Failed to fetch teams/invites:", err); // keep one important error log
+      })
       .finally(() => setLoadingTeams(false));
   }, [session]);
 
-  useEffect(() => {
-    if (!session) return;
-    setLoadingInvites(true);
-
-    fetch("/api/team/my-teams")
-      .then((res) => res.json())
-      .then((data) => setInvites(data?.teamInvites ?? []))
-      .catch((err) => console.error("Failed to fetch invites", err))
-      .finally(() => setLoadingInvites(false));
-
-    console.log(invites);
-  }, [session]);
-
   const createTeam = async () => {
-    if (!teamName.trim()) return alert("Team name is required");
-    setLoading(true);
+    if (!teamName.trim()) {
+      toast.error("Team name is required");
+      return;
+    }
 
     try {
       const res = await fetch("/api/team/create", {
@@ -79,13 +74,14 @@ export default function TeamsPage() {
         const newTeam = await res.json();
         setTeams((prev) => [...prev, newTeam]);
         setTeamName("");
+        toast.success("Team created successfully");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create team");
+        toast.error(err.error || "Failed to create team");
       }
     } catch (err) {
-      console.error("Team creation failed:", err);
-      alert("Something went wrong while creating the team.");
+      console.error("[Team] Creation failed:", err);
+      toast.error("Something went wrong while creating the team.");
     } finally {
       setLoading(false);
     }
@@ -100,15 +96,17 @@ export default function TeamsPage() {
       });
 
       if (res.ok) {
-        alert("Invite accepted!");
+        toast.success("Invite accepted");
         setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-        // optionally refresh teams
-        fetch("/api/team/my-teams")
-          .then((res) => res.json())
-          .then((data) => setTeams(data?.teams ?? []));
+        const teamRes = await fetch("/api/team/my-teams");
+        const data = await teamRes.json();
+        setTeams(data?.teams ?? []);
+      } else {
+        toast.error("Failed to accept invite");
       }
     } catch (err) {
-      console.error("Accept invite failed:", err);
+      console.error("[Team] Accept invite failed:", err);
+      toast.error("Something went wrong while accepting invite");
     }
   };
 
@@ -121,11 +119,14 @@ export default function TeamsPage() {
       });
 
       if (res.ok) {
-        alert("Invite rejected!");
+        toast.success("Invite rejected");
         setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+      } else {
+        toast.error("Failed to reject invite");
       }
     } catch (err) {
-      console.error("Reject invite failed:", err);
+      console.error("[Team] Reject invite failed:", err);
+      toast.error("Something went wrong while rejecting invite");
     }
   };
 
@@ -264,7 +265,8 @@ export default function TeamsPage() {
         {/* Invite Modal */}
         {showInviteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
-            <div className="relative w-full max-w-lg bg-[#1a1a1a] border border-white/10 rounded-2xl p-5 sm:p-8 shadow-2xl text-white space-y-6 sm:space-y-8">
+            <div className="relative w-full max-w-sm sm:max-w-lg bg-[#1a1a1a] border border-white/10 rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl text-white space-y-5 sm:space-y-6 md:space-y-8 max-h-[85vh] overflow-y-auto">
+              {/* Close button */}
               <button
                 onClick={() => setShowInviteModal(false)}
                 className="absolute top-3 sm:top-4 right-3 sm:right-4 text-gray-400 hover:text-white transition cursor-pointer"
@@ -273,8 +275,9 @@ export default function TeamsPage() {
                 <X />
               </button>
 
+              {/* Header */}
               <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight">
                   Manage Invitations
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-400">
@@ -282,7 +285,8 @@ export default function TeamsPage() {
                 </p>
               </div>
 
-              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Invite list */}
+              <div className="space-y-3">
                 {invites.length === 0 ? (
                   <p className="text-sm text-gray-500 italic">
                     You have no pending team invites.
@@ -291,27 +295,30 @@ export default function TeamsPage() {
                   invites.map((invite) => (
                     <div
                       key={invite.id}
-                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 bg-neutral-800 border border-white/10 px-4 py-3 rounded-md"
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 bg-neutral-800 border border-white/10 px-3 sm:px-4 py-3 rounded-lg"
                     >
+                      {/* Invite details */}
                       <div>
                         <p className="text-sm font-semibold text-white">
                           {invite.team.name}
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs sm:text-sm text-gray-400">
                           Invited by{" "}
                           {invite.invitedBy.name || invite.invitedBy.email}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+
+                      {/* Actions */}
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => acceptTeamInvite(invite.id)}
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-xs sm:text-sm rounded-md text-white cursor-pointer"
+                          className="flex-1 sm:flex-none px-3 py-1.5 bg-green-600 hover:bg-green-700 text-xs sm:text-sm rounded-md text-white cursor-pointer"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => rejectTeamInvite(invite.id)}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs sm:text-sm rounded-md text-white cursor-pointer"
+                          className="flex-1 sm:flex-none px-3 py-1.5 bg-red-600 hover:bg-red-700 text-xs sm:text-sm rounded-md text-white cursor-pointer"
                         >
                           Reject
                         </button>

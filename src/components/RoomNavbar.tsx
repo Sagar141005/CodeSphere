@@ -17,6 +17,7 @@ import {
   Wrench,
 } from "lucide-react";
 import VoiceChatButton from "./Mic";
+import toast from "react-hot-toast";
 
 interface UserPresence {
   id: string;
@@ -123,6 +124,8 @@ export default function RoomNavbar({
   const handleZIPDownload = async () => {
     try {
       setZIPLoading(true);
+      toast.loading("Preparing download...");
+
       const res = await fetch(`/api/room/${roomSlug}/export`);
       if (!res.ok) throw new Error("Failed to download project");
 
@@ -135,8 +138,10 @@ export default function RoomNavbar({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Download failed:", error);
+      toast.error("Failed to download project");
     } finally {
       setZIPLoading(false);
+      toast.dismiss();
     }
   };
 

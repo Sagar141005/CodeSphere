@@ -14,6 +14,7 @@ import {
   Edit3,
 } from "lucide-react";
 import clsx from "clsx";
+import toast from "react-hot-toast";
 
 interface SidebarProps {
   files: FileData[];
@@ -91,43 +92,75 @@ export default function EditorFilePanel({
   const createItem = async (parentId: string | null) => {
     if (!newName.trim()) return;
     const type = detectType(newName);
-    const res = await fetch(`/api/room/${slug}/files`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName, type, parentId }),
-    });
+    try {
+      const res = await fetch(`/api/room/${slug}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName, type, parentId }),
+      });
 
-    const newFile = await res.json();
-    onFileAdded(newFile);
-    socket.emit("file-add", { roomId: roomId, file: newFile });
-    setNewName("");
-    setCreatingInFolder(null);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create item");
+      }
+
+      const newFile = await res.json();
+      onFileAdded(newFile);
+      socket.emit("file-add", { roomId: roomId, file: newFile });
+      setNewName("");
+      setCreatingInFolder(null);
+    } catch (error) {
+      console.error("Create failed:", error);
+      toast.error("Failed to create file or folder.");
+    }
   };
 
   const handleRename = async (id: string) => {
     if (!newName.trim()) return;
-    const res = await fetch(`/api/file/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName }),
-    });
+    try {
+      const res = await fetch(`/api/file/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName }),
+      });
 
-    const updatedFile = await res.json();
-    onFileRenamed(id, updatedFile.name);
-    socket.emit("file-rename", {
-      roomId: roomId,
-      fileId: id,
-      newName: updatedFile.name,
-    });
-    setRenamingId(null);
-    setNewName("");
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Rename failed");
+      }
+
+      const updatedFile = await res.json();
+      onFileRenamed(id, updatedFile.name);
+      socket.emit("file-rename", {
+        roomId: roomId,
+        fileId: id,
+        newName: updatedFile.name,
+      });
+      setRenamingId(null);
+      setNewName("");
+    } catch (error) {
+      console.error("Rename failed:", error);
+      toast.error("Failed to rename item.");
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-    await fetch(`/api/file/${id}`, { method: "DELETE" });
-    onFileDeleted(id);
-    socket.emit("file-delete", { roomId: roomId, fileId: id });
+    const confirmed = confirm("Are you sure you want to delete this item?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/file/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Delete failed");
+      }
+
+      onFileDeleted(id);
+      socket.emit("file-delete", { roomId: roomId, fileId: id });
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete item.");
+    }
   };
 
   const renderTree = (parentId: string | null, depth = 0) => {

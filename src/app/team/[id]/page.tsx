@@ -18,6 +18,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { Loader } from "@/components/Loader";
 import { Room } from "@/types/Room";
 import { RoomList } from "@/components/RoomList";
+import toast from "react-hot-toast";
 
 interface TeamMember {
   id: string;
@@ -95,15 +96,15 @@ export default function TeamDetailsPage() {
       });
 
       if (res.ok) {
-        alert("Invitation sent!");
+        toast.success("Invitation sent");
         setInviteEmail("");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to invite member");
+        toast.error(err.error || "Failed to invite member");
       }
     } catch (err) {
       console.error("Invite failed:", err);
-      alert("Something went wrong while inviting.");
+      toast.error("Something went wrong while inviting");
     } finally {
       setInviting(false);
     }
@@ -111,20 +112,30 @@ export default function TeamDetailsPage() {
 
   // Remove Member
   const removeMember = async (memberId: string) => {
-    const res = await fetch(`/api/team/${id}/remove-member`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: memberId }),
-    });
-    if (res.ok) {
-      setTeam((prev) =>
-        prev
-          ? { ...prev, members: prev.members.filter((m) => m.id !== memberId) }
-          : prev
-      );
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to remove member");
+    try {
+      const res = await fetch(`/api/team/${id}/remove-member`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: memberId }),
+      });
+
+      if (res.ok) {
+        setTeam((prev) =>
+          prev
+            ? {
+                ...prev,
+                members: prev.members.filter((m) => m.id !== memberId),
+              }
+            : prev
+        );
+        toast.success("Member removed successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to remove member");
+      }
+    } catch (err) {
+      console.error("Remove member failed:", err);
+      toast.error("Something went wrong while removing member");
     }
   };
 
@@ -146,13 +157,14 @@ export default function TeamDetailsPage() {
           prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
         );
         setNewRoomName("");
+        toast.success("Room created");
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create room");
+        toast.error(err.error || "Failed to create room");
       }
     } catch (err) {
       console.error("Room creation failed:", err);
-      alert("Something went wrong while creating the room.");
+      toast.error("Something went wrong while creating the room.");
     } finally {
       setCreatingRoom(false);
     }
@@ -160,45 +172,68 @@ export default function TeamDetailsPage() {
 
   // Leave Team
   const leaveTeam = async () => {
-    const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
-    if (res.ok) {
-      router.push("/teams");
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to leave team");
+    try {
+      const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
+      if (res.ok) {
+        router.push("/teams");
+        toast.success("Room leaved successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to leave team");
+      }
+    } catch (err) {
+      console.error("Leave team failed:", err);
+      toast.error("Something went wrong while leaving the team");
     }
   };
 
+  // Delete Room
   const handleDeleteRoom = async (slug: string) => {
-    const res = await fetch(`/api/room/${slug}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/room/${slug}`, {
+        method: "DELETE",
+      });
 
-    if (res.ok) {
-      setTeam((prev) =>
-        prev
-          ? { ...prev, rooms: prev.rooms.filter((room) => room.slug !== slug) }
-          : prev
-      );
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to delete room");
+      if (res.ok) {
+        setTeam((prev) =>
+          prev
+            ? {
+                ...prev,
+                rooms: prev.rooms.filter((room) => room.slug !== slug),
+              }
+            : prev
+        );
+        toast.success("Room deleted successfully");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to delete room");
+      }
+    } catch (err) {
+      console.error("Delete room failed:", err);
+      toast.error("Something went wrong while deleting the room");
     }
   };
 
+  // Delete Team
   const handleDeleteTeam = async (id: string) => {
-    const res = await fetch(`/api/team/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/team/${id}`, {
+        method: "DELETE",
+      });
 
-    if (res.ok) {
-      alert("Team deleted successfully");
-      router.push("/teams");
-    } else {
-      const error = await res.json();
-      alert(error.error || "Failed to delete team");
+      if (res.ok) {
+        toast.success("Team deleted successfully");
+        router.push("/teams");
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to delete team");
+      }
+    } catch (err) {
+      console.error("Delete team failed:", err);
+      toast.error("Something went wrong while deleting the team");
     }
   };
+
   if (status === "loading" || loading) {
     return <Loader />;
   }
@@ -468,7 +503,10 @@ export default function TeamDetailsPage() {
             </div>
           ) : (
             <RoomList
-              rooms={team.rooms}
+              rooms={team.rooms.map((room) => ({
+                ...room,
+                owned: room.ownerId === session?.user?.id,
+              }))}
               onDelete={(room) => {
                 setSelectedRoomToDelete(room);
                 setShowDeleteConfirm(true);

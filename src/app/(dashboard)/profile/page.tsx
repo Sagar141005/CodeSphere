@@ -7,6 +7,7 @@ import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const { data: session, status, update: updateSession } = useSession();
@@ -57,55 +58,80 @@ export default function ProfilePage() {
       process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!
     );
 
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    try {
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-    const data = await res.json();
-    if (data.secure_url) {
-      setProfilePic(data.secure_url);
-    } else {
-      alert("Failed to upload image");
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setProfilePic(data.secure_url);
+        toast.success("Image uploaded successfully!");
+      } else {
+        toast.error("Failed to upload image");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred during image upload.");
     }
   };
 
   const updateProfile = async () => {
     setLoading(true);
-    const res = await fetch("/api/user/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image: profilePic }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      alert("Profile updated!");
-      await updateSession();
-    } else {
-      alert("Failed to update profile");
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, image: profilePic }),
+      });
+
+      if (res.ok) {
+        toast.success("Profile updated!");
+        await updateSession();
+      } else {
+        toast.error("Failed to update profile");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An unexpected error occurred while updating profile.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const changePassword = async () => {
-    if (!oldPassword || !newPassword)
-      return alert("Please fill out all password fields.");
+    if (!oldPassword || !newPassword) {
+      toast.error("Please fill out all password fields.");
+      return;
+    }
+
     setLoading(true);
-    const res = await fetch("/api/user/change-password", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ oldPassword, newPassword }),
-    });
-    setLoading(false);
-    if (res.ok) {
-      alert("Password changed!");
-      setOldPassword("");
-      setNewPassword("");
-    } else {
-      const data = await res.json();
-      alert(data.error || "Failed to change password.");
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+
+      if (res.ok) {
+        toast.success("Password changed!");
+        setOldPassword("");
+        setNewPassword("");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to change password.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An unexpected error occurred while changing password.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -116,12 +142,21 @@ export default function ProfilePage() {
       )
     )
       return;
-    const res = await fetch("/api/user/delete", { method: "DELETE" });
-    if (res.ok) {
-      alert("Account deleted.");
-      signOut();
-    } else {
-      alert("Failed to delete account");
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/user/delete", { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Account deleted.");
+        signOut();
+      } else {
+        toast.error("Failed to delete account");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An unexpected error occurred while deleting account.");
+    } finally {
+      setLoading(false);
     }
   };
 

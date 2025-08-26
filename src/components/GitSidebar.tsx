@@ -5,6 +5,7 @@ import { ArrowLeftToLine, GitCommit, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 interface GitSidebarProps {
   roomId: string;
@@ -72,6 +73,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       }
     } catch (err) {
       console.error("Failed to fetch commits:", err);
+      toast.error("Could not load commits");
     }
   }
 
@@ -83,46 +85,50 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       setRoomFiles(data);
     } catch (err) {
       console.error("Failed to fetch room files:", err);
+      toast.error("Failed to load room files");
     }
   }
 
   async function previewCommit(commitId: string) {
-    // Get clicked commit data
-    const commitRes = await fetch(`/api/room/${roomId}/commit/${commitId}`);
-    if (!commitRes.ok) return console.error("Failed to fetch commit");
-    const commitData = await commitRes.json();
+    try {
+      const commitRes = await fetch(`/api/room/${roomId}/commit/${commitId}`);
+      if (!commitRes.ok) throw new Error("Failed to fetch commit");
 
-    // Find parent commit id from commits[] list
-    const idx = commits.findIndex((c) => c.id === commitId);
-    let parentFiles: any[] = [];
-    if (idx >= 0 && idx + 1 < commits.length) {
-      const parentId = commits[idx + 1].id;
-      const parentRes = await fetch(`/api/room/${roomId}/commit/${parentId}`);
-      if (parentRes.ok) {
-        const parentData = await parentRes.json();
-        parentFiles = parentData.files || [];
-      }
-    }
+      const commitData = await commitRes.json();
 
-    // Build diffs (just like your old code but commit vs parent)
-    const changes = (commitData.files || [])
-      .map((file: any) => {
-        const prev = parentFiles.find((f) => f.fileId === file.fileId);
-        if (!prev || prev.content !== file.content) {
-          return {
-            id: file.fileId,
-            name: file.name,
-            language: file.language,
-            oldContent: prev?.content || file.oldContent || "",
-            newContent: file.content || "",
-          };
+      const idx = commits.findIndex((c) => c.id === commitId);
+      let parentFiles: any[] = [];
+      if (idx >= 0 && idx + 1 < commits.length) {
+        const parentId = commits[idx + 1].id;
+        const parentRes = await fetch(`/api/room/${roomId}/commit/${parentId}`);
+        if (parentRes.ok) {
+          const parentData = await parentRes.json();
+          parentFiles = parentData.files || [];
         }
-        return null;
-      })
-      .filter(Boolean);
+      }
 
-    if (onPreview) {
-      onPreview(commitId);
+      const changes = (commitData.files || [])
+        .map((file: any) => {
+          const prev = parentFiles.find((f) => f.fileId === file.fileId);
+          if (!prev || prev.content !== file.content) {
+            return {
+              id: file.fileId,
+              name: file.name,
+              language: file.language,
+              oldContent: prev?.content || file.oldContent || "",
+              newContent: file.content || "",
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (onPreview) {
+        onPreview(commitId);
+      }
+    } catch (err) {
+      console.error("Commit preview failed:", err);
+      toast.error("Unable to preview commit.");
     }
   }
 
@@ -152,8 +158,10 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
 
       setMessage("");
       await fetchCommits();
+      toast.success("Commit created");
     } catch (err) {
       console.error("Failed to create commit:", err);
+      toast.error("Commit creation failed");
     } finally {
       setLoading(false);
     }
@@ -168,8 +176,10 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       if (!res.ok) throw new Error("Failed to revert commit");
 
       await fetchCommits();
+      toast.success("Commit reverted");
     } catch (err) {
       console.error("Failed to revert commit:", err);
+      toast.error("Failed to revert commit");
     }
   }
 

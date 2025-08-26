@@ -52,8 +52,10 @@ const HomeNavbar = () => {
               <Link
                 key={href}
                 href={href}
-                className={`text-sm font-medium text-blue-200 hover:text-blue-300 transition-colors ${
-                  isActive ? "text-blue-300 shadow-inner" : ""
+                className={`text-sm font-medium relative pb-1 transition-colors ${
+                  isActive
+                    ? "text-blue-300 font-semibold"
+                    : "text-blue-200 hover:text-blue-300"
                 }`}
                 aria-current={isActive ? "page" : undefined}
                 tabIndex={0}
