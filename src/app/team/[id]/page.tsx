@@ -213,20 +213,20 @@ export default function TeamDetailsPage() {
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white font-sans">
       <HomeNavbar />
 
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-20 space-y-20 overflow-y-auto">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-10 sm:py-16 md:py-20 space-y-16 sm:space-y-20">
         {/* Header */}
-        <section className="max-w-5xl mx-auto bg-black/60 border border-white/10 rounded-3xl p-8 shadow-xl space-y-8">
+        <section className="max-w-5xl mx-auto bg-black/60 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl space-y-6 sm:space-y-8">
           {/* Top Row: Team Info + Delete Button */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 relative">
             {/* Team Name & Creator */}
-            <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight capitalize">
+            <div className="space-y-2 text-center md:text-left">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight capitalize break-words">
                 {team.name}
               </h1>
-              <p className="text-sm text-gray-400 flex items-center gap-2">
+              <p className="text-xs sm:text-sm text-gray-400 flex flex-wrap items-center justify-center md:justify-start gap-1">
                 <User className="w-4 h-4 text-gray-500" />
                 Created by:
-                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded text-xs">
+                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded text-[10px] sm:text-xs break-all">
                   {team.createdById}
                 </code>
               </p>
@@ -234,34 +234,48 @@ export default function TeamDetailsPage() {
 
             {/* Delete Button (if owner) */}
             {isOwner && (
-              <button
-                onClick={() => setShowDeleteTeamConfirm(true)}
-                className="flex items-center gap-1 text-sm text-red-500 hover:text-white hover:bg-red-600 border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer"
-                aria-label="Delete team"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
+              <>
+                {/* For small screens: absolute top-right */}
+                <button
+                  onClick={() => setShowDeleteTeamConfirm(true)}
+                  className="absolute top-0 right-0 sm:hidden flex items-center justify-center gap-1 
+                   text-xs text-red-500 hover:text-white hover:bg-red-600 
+                   border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                {/* For md+ screens: inline button */}
+                <button
+                  onClick={() => setShowDeleteTeamConfirm(true)}
+                  className="hidden sm:flex items-center justify-center gap-1 
+                   text-xs sm:text-sm text-red-500 hover:text-white hover:bg-red-600 
+                   border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer w-full md:w-auto"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </>
             )}
           </div>
 
           {/* Members Section */}
           <div>
-            <h2 className="text-3xl font-semibold flex items-center gap-3 text-white mb-6">
-              <Users className="w-7 h-7 text-neutral-400" />
+            <h2 className="text-2xl sm:text-3xl font-semibold flex items-center gap-2 sm:gap-3 text-white mb-4 sm:mb-6">
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-neutral-400" />
               Members
             </h2>
 
-            <ul className="space-y-4 mb-6 max-h-[400px] overflow-y-auto">
+            <ul className="space-y-3 sm:space-y-4 mb-6 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
               {team.members.map((member) => {
                 const isTeamOwner = member.id === team.createdById;
                 return (
                   <li
                     key={member.id}
-                    className="flex justify-between items-center rounded-xl px-6 py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
+                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 rounded-xl px-4 sm:px-6 py-3 sm:py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
                   >
-                    <div className="flex items-center gap-5">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg select-none shadow-md">
+                    <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg select-none shadow-md">
                         {member.profilePic || member.image ? (
                           <img
                             src={member.profilePic || member.image}
@@ -275,7 +289,7 @@ export default function TeamDetailsPage() {
                         )}
                       </div>
 
-                      <div className="flex flex-col max-w-xs">
+                      <div className="flex flex-col max-w-[150px] sm:max-w-xs">
                         <span className="font-semibold truncate">
                           {member.name || member.email}
                         </span>
@@ -286,10 +300,10 @@ export default function TeamDetailsPage() {
 
                       {isTeamOwner && (
                         <span
-                          className="flex items-center gap-1 bg-yellow-400 text-gray-900 text-xs font-semibold px-3 py-1 rounded-full select-none"
+                          className="flex items-center gap-1 bg-yellow-400 text-gray-900 text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full select-none"
                           title="Team Owner"
                         >
-                          <Crown className="w-4 h-4" />
+                          <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
                           Owner
                         </span>
                       )}
@@ -300,7 +314,7 @@ export default function TeamDetailsPage() {
                       !isTeamOwner && (
                         <button
                           onClick={() => setMemberToRemove(member)}
-                          className="flex items-center gap-1 text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
+                          className="flex items-center justify-center gap-1 text-xs sm:text-sm text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
                           aria-label={`Remove ${member.name || member.email}`}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -319,14 +333,14 @@ export default function TeamDetailsPage() {
                   e.preventDefault();
                   inviteMember();
                 }}
-                className="flex gap-4"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
               >
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="Invite member by email"
-                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-5 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
                   aria-label="Email to invite"
                   required
                   spellCheck={false}
@@ -335,7 +349,7 @@ export default function TeamDetailsPage() {
                 <button
                   type="submit"
                   disabled={inviting}
-                  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg transition duration-200 cursor-pointer
+                  className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition duration-200 cursor-pointer w-full sm:w-auto
                     ${
                       inviting
                         ? "bg-gray-500 cursor-not-allowed text-white/70"
@@ -345,7 +359,7 @@ export default function TeamDetailsPage() {
                 >
                   {inviting ? (
                     <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
                       Sending{" "}
                       <span className="animate-pulse -ml-2 text-white">
                         ...
@@ -354,7 +368,7 @@ export default function TeamDetailsPage() {
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      Invite Member
+                      Invite
                     </>
                   )}
                 </button>
@@ -367,13 +381,20 @@ export default function TeamDetailsPage() {
           {isOwner && (
             <section className="relative max-w-5xl mx-auto mb-6">
               <div
-                className="group relative cursor-pointer rounded-2xl border border-white/20 bg-gradient-to-br from-black/70 to-black/90
-                           hover:border-blue-300 hover:shadow-xl transition-all duration-300 shadow-lg backdrop-blur-md p-6"
+                className="group relative cursor-pointer rounded-2xl border border-white/20 
+                   bg-gradient-to-br from-black/70 to-black/90
+                   hover:border-blue-300 hover:shadow-xl transition-all duration-300 
+                   shadow-lg backdrop-blur-md p-6"
               >
-                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 blur-md" />
+                <div
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 
+                        transition-all duration-500 pointer-events-none 
+                        bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 blur-md"
+                />
 
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1">
+                <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  {/* Left: Title */}
+                  <div className="flex-1 text-center sm:text-left">
                     <h3 className="text-lg font-semibold text-white group-hover:text-cyan-200 transition-colors mb-1">
                       Create a New Room
                     </h3>
@@ -382,14 +403,16 @@ export default function TeamDetailsPage() {
                     </p>
                   </div>
 
+                  {/* Right: Input + Button */}
                   <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
                     <input
                       type="text"
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
                       placeholder="Enter room name"
-                      className="px-4 py-2.5 rounded-lg bg-black/70 text-white border border-white/20 placeholder-gray-500 
-                                 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm w-full sm:w-64"
+                      className="px-4 py-2.5 rounded-lg bg-black/70 text-white border border-white/20 
+                         placeholder-gray-500 focus:outline-none focus:ring-2 
+                         focus:ring-blue-300 text-sm w-full sm:w-64"
                       aria-label="Room name input"
                       spellCheck={false}
                       autoComplete="off"
@@ -397,13 +420,13 @@ export default function TeamDetailsPage() {
                     <button
                       onClick={createRoom}
                       disabled={creatingRoom}
-                      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 cursor-pointer
-                      ${
-                        creatingRoom
-                          ? "bg-gray-500 text-white cursor-not-allowed"
-                          : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
-                      }
-                    `}
+                      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 
+                         ${
+                           creatingRoom
+                             ? "bg-gray-500 text-white cursor-not-allowed"
+                             : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
+                         }
+              `}
                     >
                       {creatingRoom ? (
                         <div className="flex items-center justify-center gap-2">

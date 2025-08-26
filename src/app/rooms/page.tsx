@@ -191,25 +191,25 @@ export default function RoomsPage() {
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white">
       <HomeNavbar />
 
-      <main className="max-w-7xl mx-auto px-6 md:px-12 py-20 space-y-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-12 sm:py-20 space-y-16 sm:space-y-20">
         {/* Header */}
         <header className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-4 bg-white/5 text-sm text-gray-400 border border-white/10">
+          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full mb-4 bg-white/5 text-xs sm:text-sm text-gray-400 border border-white/10">
             <DoorClosed className="w-4 h-4" />
             Collaborative Coding Rooms
           </div>
-          <h1 className="leading-[1.1] text-5xl md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
+          <h1 className="leading-[1.2] text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-white to-gray-300 text-transparent bg-clip-text mb-4">
             Your Rooms
           </h1>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto">
+          <p className="text-gray-400 text-base sm:text-lg max-w-xl mx-auto">
             Manage real-time collaborative coding spaces — easily and securely.
           </p>
         </header>
 
         {/* Create Room */}
         <section className="max-w-3xl mx-auto w-full">
-          <div className="relative rounded-2xl bg-gradient-to-br from-white/5 to-white/10 border border-white/10 p-6 shadow-xl backdrop-blur-md">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative rounded-2xl bg-gradient-to-br from-white/5 to-white/10 border border-white/10 p-4 sm:p-6 shadow-xl backdrop-blur-md">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <input
                 type="text"
                 placeholder="e.g. Design Sync, Project X"
@@ -220,7 +220,7 @@ export default function RoomsPage() {
               <button
                 onClick={handleCreate}
                 disabled={loading}
-                className={`px-6 py-3 text-sm rounded-lg font-medium transition-all duration-150 cursor-pointer
+                className={`w-full sm:w-auto px-6 py-3 text-sm rounded-lg font-medium transition-all duration-150 cursor-pointer
                 ${
                   loading
                     ? "bg-gray-500 text-white cursor-not-allowed"
@@ -237,14 +237,14 @@ export default function RoomsPage() {
                   "Create Room"
                 )}
               </button>
-              <div className="relative inline-block">
+              <div className="relative w-full sm:w-auto">
                 <button
                   onClick={() => setShowInviteModal(true)}
-                  className="px-6 py-3
-                bg-white/5 text-white/80
-                hover:bg-white/10 hover:text-white
-                border border-white/10
-                text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
+                  className="w-full sm:w-auto px-6 py-3
+                  bg-white/5 text-white/80
+                  hover:bg-white/10 hover:text-white
+                  border border-white/10
+                  text-sm font-medium rounded-lg transition duration-200 cursor-pointer"
                 >
                   Manage Invitations
                 </button>
@@ -259,15 +259,16 @@ export default function RoomsPage() {
         </section>
 
         {/* Room List */}
-        <section className="max-w-5xl mx-auto space-y-14">
+        <section className="max-w-5xl mx-auto space-y-10 sm:space-y-14">
           {/* Owned Rooms */}
           {rooms.filter((r) => r.owned).length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5 text-white/70" />
-                <h2 className="text-xl font-semibold">Owned Rooms</h2>
+                <h2 className="text-lg sm:text-xl font-semibold">
+                  Owned Rooms
+                </h2>
               </div>
-
               <RoomList
                 rooms={rooms.filter((room) => room.owned)}
                 onDelete={(room) => {
@@ -280,12 +281,13 @@ export default function RoomsPage() {
 
           {/* Joined Rooms */}
           {rooms.filter((r) => !r.owned).length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-white/70" />
-                <h2 className="text-xl font-semibold">Joined Rooms</h2>
+                <h2 className="text-lg sm:text-xl font-semibold">
+                  Joined Rooms
+                </h2>
               </div>
-
               <RoomList
                 rooms={rooms.filter((room) => !room.owned)}
                 onLeave={(slug) => {
@@ -298,27 +300,28 @@ export default function RoomsPage() {
 
           {/* Empty State */}
           {rooms.length === 0 && (
-            <div className="text-center mt-20">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-white/5 ring-1 ring-white/10 mb-6">
-                <DoorClosed className="w-8 h-8 text-gray-400" />
+            <div className="text-center mt-12 sm:mt-20">
+              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/5 ring-1 ring-white/10 mb-6">
+                <DoorClosed className="w-7 h-7 sm:w-8 sm:h-8 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
                 No Rooms Yet
               </h3>
-              <p className="text-gray-500 italic max-w-xs mx-auto">
+              <p className="text-gray-500 italic max-w-xs mx-auto text-sm sm:text-base">
                 Start by creating one above.
               </p>
             </div>
           )}
         </section>
 
+        {/* Invite Modal (responsive) */}
         {showInviteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-            <div className="relative w-full max-w-xl bg-[#1a1a1a] border border-white/10 rounded-2xl p-8 shadow-2xl text-white space-y-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-3 sm:px-4">
+            <div className="relative w-full max-w-md sm:max-w-xl bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl text-white space-y-6 sm:space-y-8">
               {/* Close Icon */}
               <button
                 onClick={() => setShowInviteModal(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition cursor-pointer"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-white transition cursor-pointer"
                 aria-label="Close"
               >
                 <X />
@@ -326,7 +329,7 @@ export default function RoomsPage() {
 
               {/* Modal Header */}
               <div className="space-y-1">
-                <h2 className="text-2xl font-bold tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
                   Manage Invitations
                 </h2>
                 <p className="text-sm text-gray-400">
@@ -342,7 +345,7 @@ export default function RoomsPage() {
                     <select
                       value={selectedRoomSlug}
                       onChange={(e) => setSelectedRoomSlug(e.target.value)}
-                      className="appearance-none w-full px-4 py-3 rounded-lg bg-neutral-900 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition pr-10"
+                      className="appearance-none w-full px-4 py-3 rounded-lg bg-neutral-900 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition pr-10 text-sm sm:text-base"
                     >
                       <option value="" disabled>
                         Select Room
@@ -355,7 +358,6 @@ export default function RoomsPage() {
                           </option>
                         ))}
                     </select>
-                    {/* Custom Arrow */}
                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
                       <ChevronDown />
                     </div>
@@ -367,7 +369,7 @@ export default function RoomsPage() {
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="Enter user email"
-                    className="w-full px-4 py-3 rounded-lg bg-neutral-900 text-white border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition"
+                    className="w-full px-4 py-3 rounded-lg bg-neutral-900 text-white border border-white/10 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 transition text-sm sm:text-base"
                   />
                 </div>
 
@@ -375,7 +377,7 @@ export default function RoomsPage() {
                 <div className="flex justify-end">
                   <button
                     onClick={sendInvite}
-                    className="w-full flex justify-around px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-500 text-sm font-semibold text-white rounded-md shadow hover:brightness-110 active:scale-95 transition-transform cursor-pointer"
+                    className="w-full sm:w-auto flex justify-center sm:justify-around px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-indigo-500 text-sm font-semibold text-white rounded-md shadow hover:brightness-110 active:scale-95 transition-transform cursor-pointer"
                   >
                     <span className="flex items-center gap-2">
                       <Send />
@@ -387,7 +389,9 @@ export default function RoomsPage() {
 
               {/* Pending Invites */}
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold">Pending Invites</h3>
+                <h3 className="text-base sm:text-lg font-semibold">
+                  Pending Invites
+                </h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                   {pendingInvites.length === 0 ? (
                     <p className="text-sm text-gray-500 italic">
@@ -397,7 +401,7 @@ export default function RoomsPage() {
                     pendingInvites.map((invite) => (
                       <div
                         key={invite.id}
-                        className="flex items-center justify-between gap-3 bg-neutral-800 border border-white/10 px-4 py-2 rounded-md"
+                        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-neutral-800 border border-white/10 px-4 py-2 rounded-md"
                       >
                         <div className="text-sm text-white flex-1">
                           Invitation to join{" "}
@@ -405,16 +409,16 @@ export default function RoomsPage() {
                             {invite.room.name}
                           </span>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto">
                           <button
                             onClick={() => respondToInvite(invite.id, "ACCEPT")}
-                            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded-md text-white cursor-pointer"
+                            className="flex-1 sm:flex-none px-3 py-1.5 bg-green-600 hover:bg-green-700 text-sm rounded-md text-white cursor-pointer"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => respondToInvite(invite.id, "REJECT")}
-                            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-sm rounded-md text-white cursor-pointer"
+                            className="flex-1 sm:flex-none px-3 py-1.5 bg-red-600 hover:bg-red-700 text-sm rounded-md text-white cursor-pointer"
                           >
                             Reject
                           </button>
@@ -428,7 +432,7 @@ export default function RoomsPage() {
           </div>
         )}
 
-        {/* Delete Room */}
+        {/* Confirm Modals (already centered, just ensure spacing works on mobile) */}
         <ConfirmModal
           isOpen={showDeleteConfirm && !!selectedRoomToDelete}
           title="Are you sure you want to delete this room?"
@@ -451,7 +455,6 @@ export default function RoomsPage() {
           }}
         />
 
-        {/* Leave Room */}
         <ConfirmModal
           isOpen={!!roomToLeave}
           title="Leave Room"

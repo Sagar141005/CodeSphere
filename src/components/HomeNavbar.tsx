@@ -1,9 +1,10 @@
 "use client";
 
-import { SquareDashedBottomCode } from "lucide-react";
+import { Menu, SquareDashedBottomCode, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const navItems = [
   { href: "/rooms", label: "Rooms" },
@@ -14,9 +15,10 @@ const HomeNavbar = () => {
   const { data: session, status } = useSession();
   const user = session?.user;
   const pathname = usePathname();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="w-full flex items-center justify-between px-8 py-5 bg-black z-50">
+    <div className="w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 py-5 bg-black z-50">
       {/* Logo + Left Nav */}
       <div className="flex items-center gap-12">
         <Link href="/" className="flex items-center gap-3 group relative">
@@ -40,7 +42,7 @@ const HomeNavbar = () => {
         </Link>
 
         {/* Navigation links */}
-        <div className="flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-6 ml-8">
           {navItems.map(({ href, label }) => {
             const isActive =
               href === "/teams"
@@ -63,23 +65,72 @@ const HomeNavbar = () => {
         </div>
       </div>
 
-      {/* Right: Avatar or Sign Up */}
-      {status === "authenticated" && user ? (
-        <Link href="/profile">
-          <img
-            src={user.image ?? "/default-avatar.png"}
-            alt={user.name ?? "User"}
-            onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
-            className="w-9 h-9 rounded-full border border-blue-400 hover:scale-105 transition-transform duration-300 object-cover"
-          />
-        </Link>
-      ) : (
-        <Link
-          href="/signup"
-          className="px-5 py-2 rounded-lg text-sm font-medium text-blue-100 bg-gray-800/40 hover:bg-blue-500/20 border border-gray-700 hover:border-blue-400 transition-all duration-300 shadow-lg"
+      <div className="flex items-center gap-4">
+        {/* Mobile Menu Toggle */}
+        <button
+          className="md:hidden text-blue-300 hover:text-white focus:outline-none"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
         >
-          Sign up
-        </Link>
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6 text-blue-300" />
+          ) : (
+            <Menu className="w-6 h-6 text-blue-300" />
+          )}
+        </button>
+
+        {/* Right: Avatar or Sign Up */}
+        {status === "authenticated" && user ? (
+          <Link href="/profile">
+            <img
+              src={user.image ?? "/default-avatar.png"}
+              alt={user.name ?? "User"}
+              onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
+              className="w-9 h-9 rounded-full border border-blue-400 hover:scale-105 transition-transform duration-300 object-cover"
+            />
+          </Link>
+        ) : (
+          <Link
+            href="/signup"
+            className="hidden sm:inline-block px-5 py-2 rounded-lg text-sm font-medium text-blue-100 bg-gray-800/40 hover:bg-blue-500/20 border border-gray-700 hover:border-blue-400 transition-all duration-300 shadow-lg"
+          >
+            Sign up
+          </Link>
+        )}
+      </div>
+
+      {mobileMenuOpen && (
+        <div className="absolute top-16 left-0 w-full bg-black border-t border-white/10 px-4 py-4 z-40 md:hidden">
+          <div className="flex flex-col gap-4">
+            {navItems.map(({ href, label }) => {
+              const isActive =
+                href === "/teams"
+                  ? pathname?.startsWith("/team")
+                  : pathname?.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`text-sm font-medium text-blue-200 hover:text-blue-300 transition-colors ${
+                    isActive ? "text-blue-300 shadow-inner" : ""
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+            {status !== "authenticated" && (
+              <Link
+                href="/signup"
+                className="px-5 py-2 rounded-lg text-sm font-medium text-blue-100 bg-gray-800/40 hover:bg-blue-500/20 border border-gray-700 hover:border-blue-400 transition-all duration-300 shadow"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign up
+              </Link>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
