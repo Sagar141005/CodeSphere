@@ -157,3 +157,13 @@ body {
     }
   }
 }
+
+@media (min-width: 1024px) {
+  .clip-bottom-cut1 {
+    clip-path: inset(0 0 31.6% 0);
+  }
+
+  .clip-bottom-cut2 {
+    clip-path: inset(0 0 31% 0);
+  }
+}

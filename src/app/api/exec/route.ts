@@ -140,7 +140,7 @@ export async function POST(req: Request) {
     switch (language) {
       case "javascript":
       case "node":
-        checkResult = checkJavaScript(codeToCheck);
+        checkResult = checkJavaScript(codeToCheck, mode);
         break;
       case "python":
         checkResult = checkPython(codeToCheck);

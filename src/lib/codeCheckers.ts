@@ -10,7 +10,10 @@ function makeCheckResult(issues: string[]): CodeCheckResult {
 }
 
 // JavaScript / Node
-export function checkJavaScript(code: string): CodeCheckResult {
+export function checkJavaScript(
+  code: string,
+  mode: "preview" | "execute" = "execute"
+): CodeCheckResult {
   const issues: string[] = [];
 
   try {
@@ -26,7 +29,12 @@ export function checkJavaScript(code: string): CodeCheckResult {
       "fs",
       "os",
     ];
-    const browserAPIs = ["window", "document", "HTMLElement", "navigator"];
+
+    // Only flag browser APIs during server-side execution
+    const browserAPIs =
+      mode === "execute"
+        ? ["window", "document", "HTMLElement", "navigator"]
+        : [];
 
     for (const token of tokens) {
       if (token.type === "Identifier") {

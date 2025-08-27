@@ -71,6 +71,8 @@ export default function RoomPage({
   const [aiExpanded, setAiExpanded] = useState(false);
   const [aiHeight, setAiHeight] = useState(200);
   const [loading, setLoading] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [execError, setExecError] = useState<string | null>(null);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
 
@@ -182,6 +184,7 @@ export default function RoomPage({
   const handlePreview = async () => {
     const htmlFile = openTabs.find((f) => f.name.endsWith(".html"));
     if (!htmlFile) return;
+    setExecuting(true);
 
     const htmlRes = await fetch(`/api/file/${htmlFile.id}`);
     const htmlData = await htmlRes.json();
@@ -238,6 +241,14 @@ export default function RoomPage({
         });
 
         const execData = await jsExecRes.json();
+
+        if (execData.error) {
+          setExecError(execData.error);
+          toast.error(`Execution error: ${execData.error}`);
+        } else {
+          setExecError(null);
+        }
+
         const existing = files.find((f) => f.name === "package.json");
         const packageContent = JSON.stringify(execData.packageJson, null, 2);
 
@@ -279,6 +290,7 @@ export default function RoomPage({
     setCssCode(cssContent);
     setJsCode(jsContent);
     setPreviewOpen(true);
+    setExecuting(false);
   };
 
   const runCode = async () => {
@@ -676,9 +688,18 @@ export default function RoomPage({
               {hasHtml && hasCss && hasJs ? (
                 <button
                   onClick={handlePreview}
-                  className="flex items-center gap-2 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer"
+                  disabled={executing}
+                  className={`flex items-center gap-2 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 
+                  active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer
+                  ${executing ? "opacity-50 cursor-not-allowed" : ""}
+                `}
                 >
-                  <MonitorDot className="w-4 h-4" /> Preview
+                  {executing ? (
+                    <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  ) : (
+                    <MonitorDot className="w-4 h-4" />
+                  )}
+                  Preview
                 </button>
               ) : (
                 <button
@@ -795,6 +816,7 @@ export default function RoomPage({
           js={jsCode}
           cssFileName={cssFileName}
           jsFileName={jsFileName}
+          error={execError}
           onClose={() => setPreviewOpen(false)}
         />
       )}

@@ -78,6 +78,12 @@ export default function RoomNavbar({
         });
       });
 
+      socketRef.current?.emit("mic-status", {
+        roomId,
+        userId: session.user.id,
+        status: "muted",
+      });
+
       socket.on("presence-update", (onlineUsers: UserPresence[]) => {
         setUsers([...new Map(onlineUsers.map((u) => [u.id, u])).values()]);
       });
@@ -323,8 +329,10 @@ export default function RoomNavbar({
                 {/* Mic status icon - e.g. muted/unmuted */}
                 {micStatuses[user.id] === "muted" ? (
                   <MicOff className="w-4 h-4 text-gray-400" />
-                ) : (
+                ) : micStatuses[user.id] === "unmuted" ? (
                   <Mic className="w-4 h-4 text-green-400" />
+                ) : (
+                  <MicOff className="w-4 h-4 text-gray-500 opacity-50" /> // fallback for unknown
                 )}
               </li>
             ))}

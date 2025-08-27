@@ -314,7 +314,7 @@ export default function EditorFilePanel({
               handleDelete(contextMenu.fileId!);
               setContextMenu(null);
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-600 transition text-sm text-red-400"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-600 hover:text-white transition text-sm text-red-400"
             role="menuitem"
             type="button"
           >

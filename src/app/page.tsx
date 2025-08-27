@@ -1,7 +1,8 @@
 "use client";
 
+import Footer from "@/components/Footer";
 import HomeNavbar from "@/components/HomeNavbar";
-import { ArrowRight, Facebook, Github, Instagram } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -66,9 +67,10 @@ export default function Home() {
       {/* First Feature Section */}
       <div className="w-full bg-black flex flex-col gap-6 sm:gap-8 lg:gap-12 items-center justify-center px-6 lg:px-10 py-14 sm:py-16 lg:py-20">
         <img
-          src="landing1.png"
+          src="home1.webp"
           className="w-full max-w-xl sm:max-w-2xl lg:max-w-4xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-          alt=""
+          alt="Editor"
+          loading="lazy"
         />
         <div className="flex flex-col items-center text-center max-w-2xl">
           <h4 className="text-gray-400 text-xs sm:text-sm font-semibold uppercase">
@@ -100,32 +102,43 @@ export default function Home() {
             Real-time sync and change history so your whole team always stays in
             context.
           </p>
-
-          <Link
-            href="/rooms"
-            className="w-fit bg-black text-neutral-300 border border-neutral-300 rounded-lg flex items-center px-4 py-2 gap-2 mt-4 lg:mt-6 transition-all duration-300 hover:bg-neutral-300 hover:text-black"
-          >
-            Open Web Editor <ArrowRight />
-          </Link>
         </div>
         <div>
           <img
-            src="landing1.png"
-            className="w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-            alt=""
+            src="home2.webp"
+            className="hidden lg:block w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
+            alt="Preview modal"
+            loading="lazy"
           />
         </div>
       </div>
 
       {/* Feature Section 2 */}
-      <div className="w-full min-h-96 bg-[#739CFC] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
+      <div className="relative w-full min-h-96 bg-[#6FB1FC] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
         <div>
           <img
-            src="landing1.png"
-            className="w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-            alt=""
+            src="home4.webp"
+            className="hidden lg:block lg:absolute lg:-left-90 lg:top-25 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut1"
+            alt="Voice chat"
+            loading="lazy"
           />
         </div>
+        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72">
+          <h4 className="text-xs font-semibold uppercase text-black tracking-wide">
+            Live Collaboration + Voice
+          </h4>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight lg:leading-10">
+            Talk and code together — in real-time
+          </h2>
+          <p className="text-sm sm:text-base leading-relaxed">
+            Jump on a built-in voice call right inside your coding room. Discuss
+            changes, share insights, and ship faster without juggling tools.
+          </p>
+        </div>
+      </div>
+
+      {/* Feature Section 3 */}
+      <div className="w-full min-h-96 bg-[#7FDBB6] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
         <div className="flex flex-col gap-4 text-left max-w-md">
           <h4 className="text-xs font-semibold uppercase text-black tracking-wide">
             Work Anywhere
@@ -137,43 +150,38 @@ export default function Home() {
             Your sessions run in the cloud and can be resumed from any browser
             at any time.
           </p>
-
-          <Link
-            href="/rooms"
-            className="w-fit bg-black text-neutral-300 border border-black rounded-lg flex items-center px-4 py-2 gap-2 mt-4 lg:mt-6 transition-all duration-300 hover:bg-white hover:text-black hover:border-white"
-          >
-            Continue Coding <ArrowRight />
-          </Link>
-        </div>
-      </div>
-
-      {/* Feature Section 3 */}
-      <div className="w-full min-h-96 bg-[#8ADC79] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
-        <div className="flex flex-col gap-4 text-left max-w-md">
-          <h4 className="text-xs font-semibold uppercase text-black tracking-wide">
-            Live Collaboration
-          </h4>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight lg:leading-10">
-            Collaborate with developers <br /> in real-time
-          </h2>
-          <p className="text-sm sm:text-base leading-relaxed">
-            Multiple users can edit and preview code together with full version
-            history and diff previews.
-          </p>
-
-          <Link
-            href="/rooms"
-            className="w-fit bg-black text-neutral-300 border border-black rounded-lg flex items-center px-4 py-2 gap-2 mt-4 lg:mt-6 transition-all duration-300 hover:bg-white hover:text-black hover:border-white"
-          >
-            Try Collaboration <ArrowRight />
-          </Link>
         </div>
         <div>
           <img
-            src="landing1.png"
-            className="w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
-            alt=""
+            src="home3.webp"
+            className="hidden lg:block w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
+            alt="Rooms"
+            loading="lazy"
           />
+        </div>
+      </div>
+
+      {/* Feature Section 4 */}
+      <div className="relative w-full min-h-96 bg-[#FFC66D] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-20">
+        <div>
+          <img
+            src="home5.webp"
+            alt="AI assistant"
+            loading="lazy"
+            className="hidden lg:block lg:absolute lg:-left-90 lg:top-30 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut2"
+          />
+        </div>
+        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72">
+          <h4 className="text-xs font-semibold uppercase tracking-wide">
+            AI-Powered Development
+          </h4>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight lg:leading-10">
+            Debug, explain, and autocomplete <br /> with AI built-in
+          </h2>
+          <p className="text-sm sm:text-base leading-relaxed">
+            Let AI speed up your workflow — get instant code explanations, fix
+            errors, and autocomplete functions without leaving your room.
+          </p>
         </div>
       </div>
 
@@ -197,6 +205,7 @@ export default function Home() {
                   key={lang}
                   src={`${lang}.svg`}
                   alt={lang}
+                  loading="lazy"
                   className="w-10 sm:w-12 bg-[#1A1A1A] rounded-md p-2 transition-transform duration-200 hover:scale-110"
                 />
               )
@@ -206,19 +215,20 @@ export default function Home() {
 
         <div className="mt-16 sm:mt-24 px-4 sm:px-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-center md:text-left">
-            Start coding with{" "}
+            Explore your code in{" "}
             <span className="bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300">
-              one click
+              different editor themes
             </span>{" "}
-            — no setup required
+            — with theme options designed for every workflow
           </h2>
           <div className="relative flex flex-col md:flex-row items-center justify-center md:justify-around mt-8 sm:mt-12">
             <img
-              src="landing1.png"
-              alt=""
+              src="home6.webp"
+              alt="Editor themes"
+              loading="lazy"
               className="w-full max-w-sm sm:max-w-lg md:max-w-3xl relative z-10 rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
             />
-            <div className="absolute -bottom-2 w-3/4 md:w-3xl h-40 sm:h-64 md:h-96 rounded-full z-0 bg-gradient-to-b from-cyan-200 to-cyan-400 blur-3xl" />
+            <div className="absolute -bottom-2 w-3/4 md:w-xl h-20 sm:h-64 md:h-60 rounded-full z-0 bg-gradient-to-r from-indigo-200 to-cyan-400 blur-3xl" />
           </div>
         </div>
 
@@ -243,92 +253,7 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <footer className="bg-[#1A1A1A] px-6 sm:px-10 py-10 sm:py-12 text-neutral-300 flex flex-col gap-12">
-          {/* Top Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start gap-12 md:gap-16">
-            {/* Social Icons */}
-            <div className="flex items-center gap-4">
-              {[Instagram, Github, Facebook].map((Icon, i) => (
-                <div
-                  key={i}
-                  className="group size-10 p-2 rounded-full border border-neutral-500 hover:bg-gradient-to-r from-indigo-300 to-cyan-300 transition-all duration-300 cursor-pointer"
-                >
-                  <Icon className="w-full h-full text-white group-hover:scale-110 transition-transform duration-300" />
-                </div>
-              ))}
-            </div>
-
-            {/* Footer Links */}
-            <div className="flex flex-col sm:flex-row gap-8 sm:gap-16">
-              {/* Features */}
-              <div className="flex flex-col gap-2">
-                <h4 className="text-white text-md font-semibold mb-1">
-                  Features
-                </h4>
-                {[
-                  "Real-time collaboration",
-                  "Version history",
-                  "Diff previews",
-                  "Live execution",
-                ].map((item, idx) => (
-                  <p
-                    key={idx}
-                    className="text-sm text-neutral-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                  >
-                    {item}
-                  </p>
-                ))}
-              </div>
-
-              {/* Languages */}
-              <div className="flex flex-col gap-2">
-                <h4 className="text-white text-md font-semibold mb-1">
-                  Supported languages
-                </h4>
-                {["JavaScript / Node.js", "Python", "C / C++", "Java"].map(
-                  (lang, idx) => (
-                    <p
-                      key={idx}
-                      className="text-sm text-neutral-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                    >
-                      {lang}
-                    </p>
-                  )
-                )}
-              </div>
-
-              {/* About */}
-              <div className="flex flex-col gap-2">
-                <h4 className="text-white text-md font-semibold mb-1">About</h4>
-                {["Contact", "Support", "Roadmap"].map((item, idx) => (
-                  <p
-                    key={idx}
-                    className="text-sm text-neutral-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                  >
-                    {item}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 pt-6 border-t border-neutral-800">
-            <p className="text-xs sm:text-sm text-neutral-500 text-center sm:text-left">
-              © {new Date().getFullYear()} CodeSphere. All rights reserved.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
-              {["Terms and Conditions", "Privacy Policy"].map((item, idx) => (
-                <p
-                  key={idx}
-                  className="text-xs sm:text-sm text-neutral-400 hover:text-white transition-colors duration-200 cursor-pointer"
-                >
-                  {item}
-                </p>
-              ))}
-            </div>
-          </div>
-        </footer>
+        <Footer />
       </div>
     </div>
   );

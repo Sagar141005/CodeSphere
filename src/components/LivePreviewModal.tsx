@@ -11,6 +11,7 @@ type Props = {
   cssFileName: string;
   jsFileName: string;
   onClose: () => void;
+  error?: string | null;
 };
 
 export default function LivePreviewModal({
@@ -20,38 +21,8 @@ export default function LivePreviewModal({
   onClose,
   cssFileName,
   jsFileName,
+  error = null,
 }: Props) {
-  const [error, setError] = React.useState<string | null>(null);
-
-  useEffect(() => {
-    async function runCode() {
-      try {
-        const response = await fetch("/api/exec", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ language: "javascript", code: js }),
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          setError(data.error);
-          toast.error(`Execution error: ${data.error}`);
-        } else {
-          setError(null);
-        }
-      } catch (err) {
-        console.error("Run code failed:", err);
-        setError("Failed to run code");
-        toast.error("Failed to run code");
-      }
-    }
-
-    if (js.trim()) {
-      runCode();
-    }
-  }, [js]);
-
   let cleanedHTML = html;
 
   // Replace CSS <link> tag with inline <style>

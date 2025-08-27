@@ -65,8 +65,19 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     }));
 
     const handleCopy = async () => {
-      if (!output && !error) return;
-      await navigator.clipboard.writeText(error || output);
+      if (log.length === 0) return;
+
+      const latestEntry = log[log.length - 1];
+      const content = latestEntry.error || latestEntry.output || "";
+
+      // Extract only the part starting with "Top 10 words:"
+      const startIndex = content.indexOf("Top 10 words:");
+      const textToCopy =
+        startIndex !== -1 ? content.slice(startIndex).trim() : content.trim();
+
+      if (!textToCopy) return;
+
+      await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     };
