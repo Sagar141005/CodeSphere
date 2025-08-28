@@ -10,7 +10,13 @@ export default function Home() {
     <div className="w-full bg-black text-white">
       <HomeNavbar />
 
+<<<<<<< HEAD
       <div className="relative w-full min-h-[50vh] sm:min-h-[70vh] lg:min-h-screen flex flex-col justify-start pt-30 sm:pt-24 lg:pt-40 px-6 lg:px-10 bg-black overflow-hidden">
+=======
+      {/* Hero Section */}
+      <div className="relative w-full min-h-[50vh] sm:min-h-[70vh] lg:min-h-screen flex flex-col justify-start pt-30 sm:pt-24 lg:pt-40 px-6 lg:px-10 bg-black overflow-hidden">
+        {/* Pattern Layer with Side Blur */}
+>>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -24,6 +30,10 @@ export default function Home() {
           }}
         />
 
+<<<<<<< HEAD
+=======
+        {/* Main Content Layer */}
+>>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             <div>
@@ -38,6 +48,10 @@ export default function Home() {
             </div>
           </div>
 
+<<<<<<< HEAD
+=======
+          {/* Trusted By */}
+>>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
           <div className="h-auto flex flex-col items-center text-center px-6 lg:px-10 mt-12 sm:mt-16 lg:mt-24">
             <h1 className="font-semibold text-gray-400 text-sm sm:text-base">
               TRUSTED BY DEVELOPERS WORLDWIDE
@@ -79,6 +93,10 @@ export default function Home() {
 
       {/* First Feature Section */}
       <div className="relative w-full bg-black flex flex-col gap-6 sm:gap-8 lg:gap-12 items-center justify-center px-6 lg:px-10 py-14 sm:py-16 lg:py-20">
+<<<<<<< HEAD
+=======
+        {/* Pattern overlay */}
+>>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none"
@@ -95,6 +113,11 @@ export default function Home() {
             WebkitMaskComposite: "destination-in",
           }}
         ></div>
+<<<<<<< HEAD
+=======
+
+        {/* Content */}
+>>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
         <img
           src="home1.webp"
           className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-4xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
