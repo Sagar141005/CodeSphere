@@ -22,15 +22,15 @@ export default function LoginPage() {
     e.preventDefault();
 
     const result = await signIn("credentials", {
-      redirect: false,
+      redirect: true,
       email,
       password,
     });
 
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
+    if (result?.ok) {
       router.push("/rooms");
+    } else {
+      setError(result?.error || "Invalid email or password");
     }
   };
 
