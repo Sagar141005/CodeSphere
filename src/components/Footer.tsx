@@ -1,4 +1,4 @@
-import { Facebook, Github, Instagram } from "lucide-react";
+import { Facebook, Github, Instagram, Twitter } from "lucide-react";
 import Link from "next/link";
 
 const Footer = () => {
@@ -14,6 +14,10 @@ const Footer = () => {
     {
       href: "https://www.facebook.com/profile.php?id=100019223773994",
       icon: Facebook,
+    },
+    {
+      href: "https://x.com/not_sagar1410",
+      icon: Twitter,
     },
   ];
   return (
