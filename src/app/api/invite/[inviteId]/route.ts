@@ -10,7 +10,7 @@ export async function POST(
   const { inviteId } = context.params;
   const { action } = await req.json(); // "ACCEPT" or "REJECT"
 
-  const session = await getServerSession({ req, ...authOptions });
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
