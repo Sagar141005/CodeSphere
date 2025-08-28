@@ -1,33 +1,15 @@
-<<<<<<< HEAD
-=======
-// app/not-found.tsx
->>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export default function NotFound() {
   return (
     <div className="w-full min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
-<<<<<<< HEAD
       <h1 className="text-6xl sm:text-8xl font-bold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 text-center">
         404
       </h1>
       <p className="mt-4 text-gray-400 text-lg sm:text-xl text-center">
         Oops! The page you’re looking for doesn’t exist.
       </p>
-=======
-      {/* Big gradient 404 */}
-      <h1 className="text-6xl sm:text-8xl font-bold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 text-center">
-        404
-      </h1>
-
-      {/* Subtitle */}
-      <p className="mt-4 text-gray-400 text-lg sm:text-xl text-center">
-        Oops! The page you’re looking for doesn’t exist.
-      </p>
-
-      {/* CTA */}
->>>>>>> 597aadb087aa90d0b3ba7b75a23942033869f7f2
       <div className="mt-8">
         <Link
           href="/"
