@@ -40,7 +40,7 @@ export async function GET(
     const zip = new JSZip();
     await bundleFileTree(zip, room.files, null);
 
-    const content = await zip.generateAsync({ type: "nodebuffer" });
+    const content = await zip.generateAsync({ type: "uint8array" });
 
     return new NextResponse(content, {
       status: 200,
