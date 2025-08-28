@@ -42,7 +42,9 @@ export async function GET(
 
     const content = await zip.generateAsync({ type: "uint8array" });
 
-    return new NextResponse(content, {
+    const blob = new Blob([content], { type: "application/zip" });
+
+    return new NextResponse(blob.stream(), {
       status: 200,
       headers: {
         "Content-Type": "application/zip",
