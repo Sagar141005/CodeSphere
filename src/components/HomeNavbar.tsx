@@ -85,7 +85,7 @@ const HomeNavbar = () => {
         {status === "authenticated" && user ? (
           <Link href="/profile">
             <img
-              src={user.image ?? "/default-avatar.png"}
+              src={user.image ?? "/default-avatar.jpg"}
               alt={user.name ?? "User"}
               onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
               className="w-9 h-9 rounded-full border border-blue-400 hover:scale-105 transition-transform duration-300 object-cover"

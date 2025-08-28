@@ -10,54 +10,67 @@ export default function Home() {
     <div className="w-full bg-black text-white">
       <HomeNavbar />
 
-      {/* Hero Section */}
-      <div className="w-full min-h-[50vh] sm:min-h-[70vh] lg:min-h-screen flex flex-col justify-start pt-30 sm:pt-24 lg:pt-40 px-6 lg:px-10">
-        <div className="flex flex-col lg:flex-row items-center justify-between">
-          <div>
-            {["Code.", "Collaborate.", "Preview."].map((word) => (
-              <h1
-                key={word}
-                className="text-5xl sm:text-8xl lg:text-9xl font-semibold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 transition-all duration-300 hover:brightness-125 text-center lg:text-left"
-              >
-                {word}
-              </h1>
-            ))}
-          </div>
-        </div>
+      <div className="relative w-full min-h-[50vh] sm:min-h-[70vh] lg:min-h-screen flex flex-col justify-start pt-30 sm:pt-24 lg:pt-40 px-6 lg:px-10 bg-black overflow-hidden">
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23333236' fill-opacity='0.3'%3E%3Cpolygon fill-rule='evenodd' points='8 4 12 6 8 8 6 12 4 8 0 6 4 4 6 0 8 4'/%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundColor: "#000000",
+            backgroundSize: "40px 40px",
+            filter: "blur(2px)",
+            maskImage: `radial-gradient(circle at center, black 60%, transparent 100%)`,
+            WebkitMaskImage: `radial-gradient(circle at center, black 60%, transparent 100%)`,
+          }}
+        />
 
-        {/* Trusted By */}
-        <div className="h-auto flex flex-col items-center text-center px-6 lg:px-10 mt-12 sm:mt-16 lg:mt-24">
-          <h1 className="font-semibold text-gray-400 text-sm sm:text-base">
-            TRUSTED BY DEVELOPERS WORLDWIDE
-          </h1>
-          <div className="w-full overflow-hidden mt-6 lg:mt-8">
-            <div className="scroll-wrapper">
-              <div className="scroll-horizontal">
-                {[...Array(2)].map((_, rowIndex) => (
-                  <div
-                    key={rowIndex}
-                    className="flex items-center gap-6 sm:gap-12 pr-6 sm:pr-12"
-                  >
-                    {[
-                      "Google",
-                      "Adobe",
-                      "Airbnb",
-                      "Spotify",
-                      "Meta",
-                      "Microsoft",
-                      "Netflix",
-                      "Tesla",
-                    ].map((company, i) => (
-                      <img
-                        key={`${rowIndex}-${i}`}
-                        loading="lazy"
-                        src={`/${company}.svg`}
-                        alt={company}
-                        className="h-5 sm:h-8 lg:h-10 logo-img grayscale brightness-75 transition-transform duration-300 hover:grayscale-0 hover:scale-105"
-                      />
-                    ))}
-                  </div>
-                ))}
+        <div className="relative z-10">
+          <div className="flex flex-col lg:flex-row items-center justify-between">
+            <div>
+              {["Code.", "Collaborate.", "Preview."].map((word) => (
+                <h1
+                  key={word}
+                  className="text-5xl sm:text-8xl lg:text-9xl font-semibold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 transition-all duration-300 hover:brightness-125 text-center lg:text-left"
+                >
+                  {word}
+                </h1>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-auto flex flex-col items-center text-center px-6 lg:px-10 mt-12 sm:mt-16 lg:mt-24">
+            <h1 className="font-semibold text-gray-400 text-sm sm:text-base">
+              TRUSTED BY DEVELOPERS WORLDWIDE
+            </h1>
+            <div className="w-full overflow-hidden mt-6 lg:mt-8">
+              <div className="scroll-wrapper">
+                <div className="scroll-horizontal">
+                  {[...Array(2)].map((_, rowIndex) => (
+                    <div
+                      key={rowIndex}
+                      className="flex items-center gap-6 sm:gap-12 pr-6 sm:pr-12"
+                    >
+                      {[
+                        "Google",
+                        "Adobe",
+                        "Airbnb",
+                        "Spotify",
+                        "Meta",
+                        "Microsoft",
+                        "Netflix",
+                        "Tesla",
+                      ].map((company, i) => (
+                        <img
+                          key={`${rowIndex}-${i}`}
+                          loading="lazy"
+                          src={`/${company}.svg`}
+                          alt={company}
+                          className="h-5 sm:h-8 lg:h-10 logo-img grayscale brightness-75 transition-transform duration-300 hover:grayscale-0 hover:scale-105"
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -65,14 +78,30 @@ export default function Home() {
       </div>
 
       {/* First Feature Section */}
-      <div className="w-full bg-black flex flex-col gap-6 sm:gap-8 lg:gap-12 items-center justify-center px-6 lg:px-10 py-14 sm:py-16 lg:py-20">
+      <div className="relative w-full bg-black flex flex-col gap-6 sm:gap-8 lg:gap-12 items-center justify-center px-6 lg:px-10 py-14 sm:py-16 lg:py-20">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill='%23333236' fill-opacity='0.3'%3E%3Cpolygon fill-rule='evenodd' points='8 4 12 6 8 8 6 12 4 8 0 6 4 4 6 0 8 4'/%3E%3C/g%3E%3C/svg%3E\")",
+            backgroundSize: "40px 40px",
+            filter: "blur(2px)",
+            maskImage:
+              "radial-gradient(circle at 50% 75%, black 60%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(circle at 50% 75%, black 60%, transparent 100%)",
+            maskComposite: "intersect",
+            WebkitMaskComposite: "destination-in",
+          }}
+        ></div>
         <img
           src="home1.webp"
-          className="w-full max-w-xl sm:max-w-2xl lg:max-w-4xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
+          className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-4xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105"
           alt="Editor"
           loading="lazy"
         />
-        <div className="flex flex-col items-center text-center max-w-2xl">
+        <div className="relative flex flex-col items-center text-center max-w-2xl">
           <h4 className="text-gray-400 text-xs sm:text-sm font-semibold uppercase">
             Build & preview in real-time
           </h4>
