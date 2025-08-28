@@ -267,6 +267,18 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => signOut()}
+              disabled={loading}
+              className="w-full sm:w-auto border border-red-500 hover:bg-red-600 
+               text-red-500 hover:text-white font-medium rounded-md px-6 py-2.5 sm:py-3 
+               transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              {loading ? "Logging out..." : "Log Out"}
+            </button>
+          </div>
         </section>
 
         {/* --- Password Section --- */}

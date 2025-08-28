@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
@@ -25,7 +25,10 @@ export async function PATCH(req: Request) {
 
   const isValid = await bcrypt.compare(currentPassword, user.password);
   if (!isValid)
-    return NextResponse.json({ error: "Incorrect current password" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Incorrect current password" },
+      { status: 400 }
+    );
 
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   await prisma.user.update({
