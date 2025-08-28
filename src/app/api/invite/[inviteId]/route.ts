@@ -1,13 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function POST(
-  req: NextRequest,
-  context: { params: { inviteId: string } }
+  req: Request,
+  { params }: { params: { inviteId: string } }
 ) {
-  const { inviteId } = context.params;
+  const { inviteId } = params;
   const { action } = await req.json(); // "ACCEPT" or "REJECT"
 
   const session = await getServerSession(authOptions);
@@ -31,7 +31,6 @@ export async function POST(
   }
 
   if (action === "ACCEPT") {
-    // Add user to room & mark invite as ACCEPTED
     await prisma.$transaction([
       prisma.roomInvite.update({
         where: { id: inviteId },
@@ -47,7 +46,6 @@ export async function POST(
   }
 
   if (action === "REJECT") {
-    // Just mark invite as REJECTED
     await prisma.roomInvite.update({
       where: { id: inviteId },
       data: { status: "REJECTED" },
