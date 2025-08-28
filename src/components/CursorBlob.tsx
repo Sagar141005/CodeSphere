@@ -1,9 +1,31 @@
-import { useEffect } from "react";
+"use client";
+
+import { useEffect, useState } from "react";
 
 export default function CursorBlob() {
-  useEffect(() => {
+  const [shouldRender, setShouldRender] = useState(false);
 
-    if(document.body.classList.contains('disable-cursor-blob')) return;
+  useEffect(() => {
+    // Run only on client
+    const handleResize = () => {
+      const isLargeScreen = window.innerWidth >= 1024;
+      setShouldRender(isLargeScreen);
+    };
+
+    // Check on mount
+    handleResize();
+
+    // Optional: update on resize (in case screen size changes)
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (
+      !shouldRender ||
+      document.body.classList.contains("disable-cursor-blob")
+    )
+      return;
 
     const blob = document.createElement("div");
     blob.className = "cursor-blob";
@@ -20,7 +42,7 @@ export default function CursorBlob() {
       window.removeEventListener("mousemove", moveBlob);
       blob.remove();
     };
-  }, []);
+  }, [shouldRender]);
 
   return null;
 }
