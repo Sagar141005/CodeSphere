@@ -120,8 +120,8 @@ export default function Home() {
       </div>
 
       {/* Feature Section 1 */}
-      <div className="w-full min-h-96 bg-[#1A1A1A] flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
-        <div className="flex flex-col gap-4 text-left max-w-md">
+      <div className="w-full min-h-[28rem] bg-[#1A1A1A] flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
+        <div className="flex flex-col gap-4 text-left max-w-md flex-1 justify-center h-full">
           <h4 className="text-xs font-semibold uppercase text-gray-400 tracking-wide">
             Anywhere & Anytime
           </h4>
@@ -149,16 +149,16 @@ export default function Home() {
       </div>
 
       {/* Feature Section 2 */}
-      <div className="relative w-full min-h-96 bg-[#6FB1FC] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
+      <div className="relative w-full min-h-[28rem] bg-[#6FB1FC] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
         <div>
           <img
             src="home4.webp"
-            className="hidden lg:block lg:absolute lg:-left-90 lg:top-25 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut1"
+            className="hidden lg:block lg:absolute lg:-left-90 lg:top-41 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut1"
             alt="Voice chat"
             loading="lazy"
           />
         </div>
-        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72">
+        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72 flex-1 justify-center h-full">
           <h4 className="text-xs font-semibold uppercase text-black tracking-wide">
             Live Collaboration + Voice
           </h4>
@@ -173,8 +173,8 @@ export default function Home() {
       </div>
 
       {/* Feature Section 3 */}
-      <div className="w-full min-h-96 bg-[#7FDBB6] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
-        <div className="flex flex-col gap-4 text-left max-w-md">
+      <div className="w-full min-h-[28rem] bg-[#7FDBB6] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-12">
+        <div className="flex flex-col gap-4 text-left max-w-md flex-1 justify-center h-full">
           <h4 className="text-xs font-semibold uppercase text-black tracking-wide">
             Work Anywhere
           </h4>
@@ -197,16 +197,16 @@ export default function Home() {
       </div>
 
       {/* Feature Section 4 */}
-      <div className="relative w-full min-h-96 bg-[#FFC66D] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-20">
+      <div className="relative w-full min-h-[28rem] bg-[#FFC66D] text-black flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 px-6 lg:px-10 py-20">
         <div>
           <img
             src="home5.webp"
             alt="AI assistant"
             loading="lazy"
-            className="hidden lg:block lg:absolute lg:-left-90 lg:top-30 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut2"
+            className="hidden lg:block lg:absolute lg:-left-90 lg:top-40 w-full sm:w-3xl lg:w-3xl rounded-xl shadow-lg transition-transform duration-300 hover:scale-105 clip-bottom-cut2"
           />
         </div>
-        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72">
+        <div className="flex flex-col gap-4 text-left max-w-md lg:max-w-3xl lg:pr-72 flex-1 justify-center h-full">
           <h4 className="text-xs font-semibold uppercase tracking-wide">
             AI-Powered Development
           </h4>
