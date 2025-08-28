@@ -11,11 +11,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const isPasswordInvalid = () => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+    return !passwordRegex.test(password);
+  };
+
+  const isFormInvalid = !email || !password || isPasswordInvalid();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const result = await signIn("credentials", {
-      redirect: true,
+      redirect: false,
       email,
       password,
     });
@@ -26,6 +33,13 @@ export default function LoginPage() {
       router.push("/rooms");
     }
   };
+
+  const inputClass = (hasError: boolean) =>
+    `w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-red-500 focus:ring-red-500"
+        : "border-gray-500 focus:ring-blue-500"
+    }`;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-black text-black p-4 bg-animated-gradient">
@@ -64,14 +78,26 @@ export default function LoginPage() {
               placeholder="At least 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={inputClass(!!password && isPasswordInvalid())}
               required
             />
+            {password && isPasswordInvalid() && (
+              <p className="text-red-500 text-xs mt-1">
+                Must be 8+ characters, with uppercase, lowercase, number, and
+                symbol.
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-[#1f1f1f] text-white font-semibold text-lg border border-[#333] hover:bg-[#1d1d1d] hover:border-[#555] hover:shadow-[0_0_12px_#000]  active:scale-95 transition-all duration-200 cursor-pointer"
+            disabled={isFormInvalid}
+            className={`w-full py-3 rounded-xl font-semibold text-lg border transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
+            ${
+              isFormInvalid
+                ? "bg-neutral-800 border-neutral-700 text-neutral-500 cursor-not-allowed"
+                : "bg-[#1f1f1f] text-white border-[#333] hover:bg-[#3a3a3a] hover:border-[#666] cursor-pointer"
+            }`}
           >
             Login
           </button>
