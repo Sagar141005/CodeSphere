@@ -311,12 +311,13 @@ export default function TeamDetailsPage() {
                     className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 rounded-xl px-4 sm:px-6 py-3 sm:py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
                   >
                     <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg select-none shadow-md">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-md">
                         <UserAvatar
                           user={{
                             name: member.name ?? "Anonymous",
                             image: member.image ?? undefined,
                           }}
+                          size="full"
                         />
                       </div>
 

@@ -20,13 +20,14 @@ type UserAvatarProps = {
     image?: string;
   };
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "full";
 };
 
 const sizeClasses = {
   sm: "w-9 h-9 text-sm",
   md: "w-16 h-16 text-2xl",
   lg: "w-full h-full text-[3rem] sm:text-[4rem]",
+  full: "w-full h-full text-sm sm:text-md md:text-lg",
 };
 
 export const UserAvatar = ({
