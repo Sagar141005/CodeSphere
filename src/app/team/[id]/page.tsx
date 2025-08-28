@@ -19,6 +19,7 @@ import { Loader } from "@/components/Loader";
 import { Room } from "@/types/Room";
 import { RoomList } from "@/components/RoomList";
 import toast from "react-hot-toast";
+import { UserAvatar } from "@/components/UserAvatar";
 
 interface TeamMember {
   id: string;
@@ -311,17 +312,12 @@ export default function TeamDetailsPage() {
                   >
                     <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-gradient-to-br from-cyan-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg select-none shadow-md">
-                        {member.profilePic || member.image ? (
-                          <img
-                            src={member.profilePic || member.image}
-                            alt={member.name || member.email}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span>
-                            {(member.name || member.email)?.[0]?.toUpperCase()}
-                          </span>
-                        )}
+                        <UserAvatar
+                          user={{
+                            name: member.name ?? "Anonymous",
+                            image: member.image ?? undefined,
+                          }}
+                        />
                       </div>
 
                       <div className="flex flex-col max-w-[150px] sm:max-w-xs">

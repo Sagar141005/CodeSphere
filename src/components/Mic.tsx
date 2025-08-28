@@ -14,9 +14,7 @@ const RemoteAudioPlayer = ({ stream }: { stream: MediaStream }) => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.srcObject = stream;
-      audioRef.current.play().catch(() => {
-        // Autoplay might be blocked by browser, ignore error
-      });
+      audioRef.current.play().catch(() => {});
     }
   }, [stream]);
 
@@ -55,7 +53,7 @@ const VoiceChatButton = ({
         user: {
           id: session.user.id || session.user.email!,
           name: session.user.name || "Anonymous",
-          image: session.user.image || "/default-avatar.jpg",
+          image: session.user.image || null,
         },
       });
     });
@@ -146,10 +144,8 @@ const VoiceChatButton = ({
   }, [roomId]);
 
   const cleanupAllPeers = () => {
-    // Remove remote audios
     setRemoteAudios([]);
 
-    // Close and delete all peer connections
     for (const peerId in peersRef.current) {
       const pc = peersRef.current[peerId];
       pc.getSenders().forEach((sender) => {
@@ -159,7 +155,6 @@ const VoiceChatButton = ({
       delete peersRef.current[peerId];
     }
 
-    // Stop local stream
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
     setIsMuted(true);
@@ -186,7 +181,6 @@ const VoiceChatButton = ({
         pc.connectionState === "failed" ||
         pc.connectionState === "closed"
       ) {
-        // Clean up on disconnection
         removePeer(peerId);
       }
     };
@@ -196,7 +190,6 @@ const VoiceChatButton = ({
       if (!stream) return;
 
       setRemoteAudios((prev) => {
-        // Avoid duplicates
         if (prev.find((r) => r.peerId === peerId)) return prev;
         return [...prev, { peerId, stream }];
       });
@@ -235,7 +228,6 @@ const VoiceChatButton = ({
 
   const toggleMic = async () => {
     if (isMuted) {
-      // Unmute: get new audio stream and add tracks to peers
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -260,7 +252,6 @@ const VoiceChatButton = ({
         console.error("Mic access denied:", err);
       }
     } else {
-      // Mute: remove audio tracks from peers and stop local stream
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
         localStreamRef.current = null;

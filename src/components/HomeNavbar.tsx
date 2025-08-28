@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { UserAvatar } from "./UserAvatar";
 
 const navItems = [
   { href: "/rooms", label: "Rooms" },
@@ -84,11 +85,11 @@ const HomeNavbar = () => {
         {/* Right: Avatar or Sign Up */}
         {status === "authenticated" && user ? (
           <Link href="/profile">
-            <img
-              src={user.image ?? "/default-avatar.jpg"}
-              alt={user.name ?? "User"}
-              onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
-              className="w-9 h-9 rounded-full border border-blue-400 hover:scale-105 transition-transform duration-300 object-cover"
+            <UserAvatar
+              user={{
+                name: user.name ?? "Anonymous",
+                image: user.image ?? undefined,
+              }}
             />
           </Link>
         ) : (

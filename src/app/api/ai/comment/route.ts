@@ -46,11 +46,14 @@ export async function POST(req: Request) {
       ],
     });
 
-    const result = response.choices[0].message.content?.trim() || "";
+    let result = response.choices[0].message.content?.trim() || "";
+    if (result.startsWith("```")) {
+      result = result.replace(/^```[\w]*\n/, "").replace(/```$/, "");
+    }
 
     return NextResponse.json({ result });
   } catch (error) {
-    console.error("AI commenr error:", error);
+    console.error("AI comment error:", error);
     return NextResponse.json(
       { error: "Failed to generate comments" },
       { status: 500 }

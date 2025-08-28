@@ -80,7 +80,7 @@ model Team {
   id          String       @id @default(cuid())
   name        String
   members     User[]       @relation("UserTeams")
-  createdBy   User         @relation("TeamCreators", fields: [createdById], references: [id])
+  createdBy   User         @relation("TeamCreators", fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
   rooms       Room[]
   invites     TeamInvite[]
@@ -89,13 +89,13 @@ model Team {
 
 model TeamInvite {
   id     String @id @default(cuid())
-  team   Team   @relation(fields: [teamId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   teamId String
 
-  invited   User   @relation("TeamInvitedUser", fields: [invitedId], references: [id])
+  invited   User   @relation("TeamInvitedUser", fields: [invitedId], references: [id], onDelete: Cascade)
   invitedId String
 
-  invitedBy   User   @relation("TeamInvitedByUser", fields: [invitedById], references: [id])
+  invitedBy   User   @relation("TeamInvitedByUser", fields: [invitedById], references: [id], onDelete: Cascade)
   invitedById String
 
   status    InviteStatus @default(PENDING)
@@ -103,32 +103,33 @@ model TeamInvite {
 }
 
 model Room {
-  id        String       @id @default(cuid())
-  slug      String       @unique
-  name      String
-  owner     User         @relation("OwnedRooms", fields: [ownerId], references: [id])
-  ownerId   String
-  members   User[]       @relation("RoomMembers")
-  invites   RoomInvite[]
-  content   String       @default("")
-  team      Team?        @relation(fields: [teamId], references: [id])
-  teamId    String?
-  @@unique([name, teamId]) 
-  
+  id      String       @id @default(cuid())
+  slug    String       @unique
+  name    String
+  owner   User         @relation("OwnedRooms", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+  members User[]       @relation("RoomMembers")
+  invites RoomInvite[]
+  content String       @default("")
+  team    Team?        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId  String?
+
   files     File[]
-  createdAt DateTime     @default(now())
+  createdAt DateTime @default(now())
   commits   Commit[]
+
+  @@unique([name, teamId])
 }
 
 model RoomInvite {
   id     String @id @default(cuid())
-  room   Room   @relation(fields: [roomId], references: [id])
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId String
 
-  invited   User   @relation("InvitedUser", fields: [invitedId], references: [id])
+  invited   User   @relation("InvitedUser", fields: [invitedId], references: [id], onDelete: Cascade)
   invitedId String
 
-  invitedBy   User   @relation("InvitedByUser", fields: [invitedById], references: [id])
+  invitedBy   User   @relation("InvitedByUser", fields: [invitedById], references: [id], onDelete: Cascade)
   invitedById String
 
   status    InviteStatus @default(PENDING)
@@ -153,9 +154,9 @@ model File {
   type      FileType
   language  String?
   parentId  String?
-  parent    File?    @relation("FileChildren", fields: [parentId], references: [id])
+  parent    File?    @relation("FileChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children  File[]   @relation("FileChildren")
-  room      Room     @relation(fields: [roomId], references: [id])
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -166,8 +167,8 @@ model Commit {
   message   String
   createdAt DateTime     @default(now())
   roomId    String
-  room      Room         @relation(fields: [roomId], references: [id])
-  user      User?        @relation(fields: [userId], references: [id])
+  room      Room         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String?
   files     CommitFile[]
 }
@@ -180,5 +181,5 @@ model CommitFile {
   language   String?
   content    String
   oldContent String?
-  commit     Commit  @relation(fields: [commitId], references: [id])
+  commit     Commit  @relation(fields: [commitId], references: [id], onDelete: Cascade)
 }

@@ -3,6 +3,7 @@
 import ConfirmModal from "@/components/ConfirmModal";
 import HomeNavbar from "@/components/HomeNavbar";
 import { Loader } from "@/components/Loader";
+import { UserAvatar } from "@/components/UserAvatar";
 import { User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -136,13 +137,6 @@ export default function ProfilePage() {
   };
 
   const deleteAccount = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    )
-      return;
-
     setLoading(true);
     try {
       const res = await fetch("/api/user/delete", { method: "DELETE" });
@@ -189,20 +183,16 @@ export default function ProfilePage() {
           {/* Avatar */}
           <div
             className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden 
-                          bg-gradient-to-br from-blue-600 to-purple-600 
-                          flex items-center justify-center border-4 border-neutral-700 
-                          text-white text-3xl sm:text-4xl font-bold select-none"
+             flex items-center justify-center border-4 border-neutral-700"
           >
-            {profilePic ? (
-              <img
-                src={profilePic}
-                alt={user.name ?? user.email ?? "User"}
-                className="w-full h-full object-cover"
-                onError={(e) => (e.currentTarget.src = "/default-avatar.jpg")}
-              />
-            ) : (
-              <span>{(user.name || user.email)?.[0]?.toUpperCase()}</span>
-            )}
+            <UserAvatar
+              user={{
+                name: user.name ?? "Anonymous",
+                image: user.image ?? undefined,
+              }}
+              className="w-full h-full"
+              size="lg"
+            />
           </div>
 
           {/* Details and Form */}

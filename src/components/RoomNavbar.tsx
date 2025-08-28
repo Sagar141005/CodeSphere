@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import VoiceChatButton from "./Mic";
 import toast from "react-hot-toast";
+import { UserAvatar } from "./UserAvatar";
 
 interface UserPresence {
   id: string;
@@ -68,7 +69,7 @@ export default function RoomNavbar({
         const userPayload = {
           id: session.user.id || session.user.email!,
           name: session.user.name || "Anonymous",
-          image: session.user.image || "/default-avatar.jpg",
+          image: session.user.image || null,
         };
         userIdRef.current = userPayload.id;
 
@@ -283,18 +284,7 @@ export default function RoomNavbar({
           onClick={() => setShowUserList(!showUserList)}
         >
           {visibleUsers.map((user) => (
-            <img
-              key={user.id}
-              src={user.image || "/default-avatar.jpg"}
-              alt={user.name}
-              title={user.name}
-              className="w-9 h-9 rounded-full border-2 border-gray-900 object-cover shadow-sm"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  "/default-avatar.jpg";
-              }}
-              loading="lazy"
-            />
+            <UserAvatar user={user} />
           ))}
           {overflowCount > 0 && (
             <div
@@ -319,11 +309,7 @@ export default function RoomNavbar({
                 key={user.id}
                 className="flex items-center gap-2 px-3 py-2 text-white"
               >
-                <img
-                  src={user.image || "/default-avatar.jpg"}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover border border-gray-800"
-                />
+                <UserAvatar user={user} />
                 <span className="truncate flex-1">{user.name}</span>
 
                 {/* Mic status icon - e.g. muted/unmuted */}

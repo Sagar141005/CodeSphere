@@ -152,7 +152,7 @@ export default function RoomsPage() {
 
       if (res.ok) {
         const newRoom = await res.json();
-        setRooms((prev) => [...prev, newRoom]);
+        setRooms((prev) => [...prev, { ...newRoom, owned: true }]);
         setRoomName("");
         toast.success("Room created");
         router.push(`/room/${newRoom.slug}`);
