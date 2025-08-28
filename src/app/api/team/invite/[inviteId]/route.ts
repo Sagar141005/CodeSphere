@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  context: { params: { inviteId: string } }
+  context: { params: Promise<{ inviteId: string }> }
 ) {
   const { inviteId } = await context.params;
   const { action } = await req.json();

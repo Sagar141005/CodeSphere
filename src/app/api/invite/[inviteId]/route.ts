@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   req: Request,
-  { params }: { params: { inviteId: string } }
+  context: { params: Promise<{ inviteId: string }> }
 ) {
-  const { inviteId } = params;
+  const { inviteId } = await context.params;
   const { action } = await req.json(); // "ACCEPT" or "REJECT"
 
   const session = await getServerSession(authOptions);
