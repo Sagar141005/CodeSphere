@@ -84,7 +84,9 @@ export default function CodeEditor({
     const handleCodeUpdate = ({
       fileId: incomingFileId,
       code: incomingCode,
+      senderId,
     }: any) => {
+      if (senderId === socketRef.current?.id) return;
       if (currentFileIdRef.current !== incomingFileId) return;
 
       const editor = editorRef.current;
@@ -150,6 +152,7 @@ export default function CodeEditor({
         roomId,
         fileId,
         code: updatedCode,
+        senderId: socketRef.current?.id,
       });
     }, 200)
   ).current;
