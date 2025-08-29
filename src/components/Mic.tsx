@@ -45,7 +45,7 @@ const VoiceChatButton = ({
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
 
-    socketRef.current = io(process.env.BACKEND_URL, {
+    socketRef.current = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
       path: "/api/socket",
     });
 

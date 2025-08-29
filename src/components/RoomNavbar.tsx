@@ -62,7 +62,7 @@ export default function RoomNavbar({
     if (status !== "authenticated" || !session?.user) return;
 
     if (!socketRef.current) {
-      const socket = io(process.env.BACKEND_URL, {
+      const socket = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
         path: "/api/socket",
       });
       socketRef.current = socket;
