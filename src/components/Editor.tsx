@@ -79,12 +79,12 @@ export default function CodeEditor({
     }
 
     const sock = socketRef.current;
-    sock.emit("join-room", { roomId, user });
-
-    const handleConnect = () => {
+    const joinRoom = () => {
       sock.emit("join-room", { roomId, user });
     };
-    sock.on("connect", handleConnect);
+    joinRoom();
+
+    sock.on("connect", joinRoom);
 
     const handleCodeUpdate = ({
       fileId: incomingFileId,
@@ -117,27 +117,6 @@ export default function CodeEditor({
       sock.off("code-update", handleCodeUpdate);
     };
   }, [roomId, user]);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetch(`/api/file/${fileId}`)
-          .then((res) => res.json())
-          .then((data) => {
-            setCode(data.content || "// Start coding here");
-            if (data.name) setLanguage(getLanguageFromExtension(data.name));
-          })
-          .catch(() => {
-            toast.error("Failed to sync file on tab focus");
-          });
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [fileId]);
 
   useEffect(() => {
     let isCurrent = true;
