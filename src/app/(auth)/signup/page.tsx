@@ -11,6 +11,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isPasswordInvalid = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -21,6 +22,7 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError("");
 
     const res = await fetch("/api/auth/signup", {
@@ -29,6 +31,7 @@ export default function SignupPage() {
       body: JSON.stringify({ name, email, password }),
     });
 
+    setLoading(false);
     if (res.ok) {
       router.push("/login");
     } else {
@@ -112,15 +115,15 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={isFormInvalid}
+            disabled={isFormInvalid || loading}
             className={`w-full py-3 rounded-xl font-semibold text-lg border transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
               ${
-                isFormInvalid
+                isFormInvalid || loading
                   ? "bg-neutral-800 border-neutral-700 text-neutral-500 cursor-not-allowed"
                   : "bg-[#1f1f1f] text-white border-[#333] hover:bg-[#3a3a3a] hover:border-[#666] cursor-pointer"
               }`}
           >
-            Create Account
+            {loading ? "Creating..." : "Create Account"}
           </button>
         </form>
 

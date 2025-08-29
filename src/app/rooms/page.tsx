@@ -3,13 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRightCircle,
   ChevronDown,
   DoorClosed,
   Loader2,
-  LogOut,
   Send,
-  Trash2,
   User,
   Users,
   X,
@@ -20,6 +17,7 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { RoomList } from "@/components/RoomList";
 import { Room } from "@/types/Room";
 import toast from "react-hot-toast";
+import { Loader } from "@/components/Loader";
 
 interface Invite {
   id: string;
@@ -205,6 +203,10 @@ export default function RoomsPage() {
       toast.error("Something went wrong while leaving the room");
     }
   };
+
+  if (status === "loading") {
+    return <Loader />;
+  }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white">

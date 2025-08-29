@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const isPasswordInvalid = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -20,14 +21,18 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const result = await signIn("credentials", {
-      redirect: true,
+      redirect: false,
       email,
       password,
     });
 
-    if (result?.ok) {
+    setLoading(false);
+
+    if (result?.ok && !result.error) {
       router.push("/rooms");
     } else {
       setError(result?.error || "Invalid email or password");
@@ -91,15 +96,15 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isFormInvalid}
+            disabled={isFormInvalid || loading}
             className={`w-full py-3 rounded-xl font-semibold text-lg border transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
             ${
-              isFormInvalid
+              isFormInvalid || loading
                 ? "bg-neutral-800 border-neutral-700 text-neutral-500 cursor-not-allowed"
                 : "bg-[#1f1f1f] text-white border-[#333] hover:bg-[#3a3a3a] hover:border-[#666] cursor-pointer"
             }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 

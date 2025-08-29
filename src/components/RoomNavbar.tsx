@@ -284,7 +284,7 @@ export default function RoomNavbar({
           onClick={() => setShowUserList(!showUserList)}
         >
           {visibleUsers.map((user) => (
-            <UserAvatar user={user} />
+            <UserAvatar key={user.id} user={user} />
           ))}
           {overflowCount > 0 && (
             <div
