@@ -46,6 +46,8 @@ export default function CodeEditor({
   const socketRef = useRef<Socket | null>(null);
   const currentFileIdRef = useRef(fileId);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isApplyingRemoteRef = useRef(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Determine language based on file extension
   const getLanguageFromExtension = (fileName: string): string => {
@@ -72,6 +74,47 @@ export default function CodeEditor({
   }, [fileId]);
 
   useEffect(() => {
+    let isCurrent = true;
+    setFileLoading(true);
+    setLoadingError(false);
+
+    const loadFile = async () => {
+      try {
+        const res = await fetch(`/api/file/${fileId}`);
+        const data = await res.json();
+
+        if (!isCurrent) return;
+
+        if (editorRef.current) {
+          isApplyingRemoteRef.current = true;
+          const model = editorRef.current.getModel();
+          if (model) {
+            model.setValue(data.content || "// Start coding here");
+          }
+          isApplyingRemoteRef.current = false;
+        }
+
+        if (data.name) {
+          setLanguage(getLanguageFromExtension(data.name));
+        }
+      } catch {
+        if (isCurrent) {
+          setLoadingError(true);
+          toast.error("Failed to load file.");
+        }
+      } finally {
+        if (isCurrent) setFileLoading(false);
+      }
+    };
+
+    loadFile();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [fileId]);
+
+  useEffect(() => {
     if (!socketRef.current) {
       socketRef.current = io(process.env.NEXT_PUBLIC_BACKEND_URL, {
         path: "/api/socket",
@@ -94,61 +137,37 @@ export default function CodeEditor({
       if (senderId === socketRef.current?.id) return;
       if (currentFileIdRef.current !== incomingFileId) return;
 
+      if (!editorRef.current) return;
+
+      const model = editorRef.current.getModel();
+      if (!model) return;
+
+      const currentContent = model.getValue();
+
+      if (currentContent === incomingCode) return;
+      isApplyingRemoteRef.current = true;
       const editor = editorRef.current;
-      const model = editor?.getModel();
+      const selection = editor.getSelection();
 
-      if (!editor || !model) return;
+      model.pushEditOperations(
+        [],
+        [{ range: model.getFullModelRange(), text: incomingCode }],
+        () => null
+      );
 
-      if (code !== incomingCode) {
-        const selection = editor.getSelection();
-        model.pushEditOperations(
-          [],
-          [{ range: model.getFullModelRange(), text: incomingCode }],
-          () => null
-        );
-        editor.setSelection(selection);
-        setCode(incomingCode);
-      }
+      editor.setSelection(selection);
+      setTimeout(() => {
+        isApplyingRemoteRef.current = false;
+      }, 0);
     };
 
     sock.on("code-update", handleCodeUpdate);
 
     return () => {
       sock.off("code-update", handleCodeUpdate);
+      sock.off("connect", joinRoom);
     };
   }, [roomId, user]);
-
-  useEffect(() => {
-    let isCurrent = true;
-    setFileLoading(true);
-
-    const loadFile = async () => {
-      try {
-        const res = await fetch(`/api/file/${fileId}`);
-        const data = await res.json();
-
-        if (!isCurrent) return;
-
-        setCode(data.content || "// Start coding here");
-        if (data.name) {
-          setLanguage(getLanguageFromExtension(data.name));
-        }
-      } catch {
-        if (isCurrent) {
-          setLoadingError(true);
-          setCode("// Error loading file.");
-          toast.error("Failed to load file.");
-        }
-      } finally {
-        if (isCurrent) setFileLoading(false);
-      }
-    };
-
-    loadFile();
-    return () => {
-      isCurrent = false;
-    };
-  }, [fileId]);
 
   const emitCodeChange = useRef(
     debounce((updatedCode: string) => {
@@ -158,27 +177,39 @@ export default function CodeEditor({
         code: updatedCode,
         senderId: socketRef.current?.id,
       });
-    }, 200)
+    }, 250)
   ).current;
 
   const handleChange = (value: string | undefined) => {
     if (loadingError || fileLoading) return;
+    if (isApplyingRemoteRef.current) return;
 
-    const updatedCode = value || "";
-    setCode(updatedCode);
+    const newCode = value || "";
+    emitCodeChange(newCode);
+
     setIsTyping(true);
-    emitCodeChange(updatedCode);
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
   };
 
   // Auto-save after 2 seconds of inactivity
   useEffect(() => {
-    if (!fileId || code === null || loadingError || fileLoading) return;
+    if (loadingError || fileLoading) return;
+    if (!editorRef.current) return;
 
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
 
     saveTimeoutRef.current = setTimeout(async () => {
       setIsSaving(true);
       try {
+        const model = editorRef.current.getModel();
+        if (!model) return;
+
+        const currentContent = model.getValue();
+
         const res = await fetch(`/api/file/${fileId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -194,12 +225,11 @@ export default function CodeEditor({
         toast.error("Failed to auto-save.");
       } finally {
         setIsSaving(false);
-        setIsTyping(false);
       }
     }, 2000);
 
     return () => clearTimeout(saveTimeoutRef.current!);
-  }, [code, fileId, language, loadingError, fileLoading]);
+  }, [fileId, language, loadingError, fileLoading, setIsSaving]);
 
   return (
     <div className="h-full w-full flex flex-col bg-[#1e1e1e] text-white">
@@ -216,7 +246,6 @@ export default function CodeEditor({
             height="100%"
             theme={theme}
             language={language}
-            value={code}
             onChange={handleChange}
             beforeMount={defineMonacoThemes}
             onMount={(editor) => {
