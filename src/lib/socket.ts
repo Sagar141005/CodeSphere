@@ -7,7 +7,7 @@ const BACKEND_URL =
 
 export const getSocket = (): Socket => {
   if (!socket) {
-    socket = io(process.env.BACKEND_URL, {
+    socket = io(BACKEND_URL, {
       path: "/api/socket",
     });
   }

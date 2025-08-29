@@ -12,7 +12,7 @@ export default function ContactPage() {
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 mb-4">
             Contact
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-base sm:text-lg mx-auto max-w-md">
             Have questions, feedback, or ideas? We’d love to hear from you.
           </p>
         </header>

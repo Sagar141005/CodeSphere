@@ -67,7 +67,9 @@ export default function CodeEditor({
 
   useEffect(() => {
     if (!socketRef.current) {
-      socketRef.current = io({ path: "/api/socket" });
+      socketRef.current = io(process.env.BACKEND_URL, {
+        path: "/api/socket",
+      });
     }
 
     const sock = socketRef.current;

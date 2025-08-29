@@ -77,7 +77,7 @@ export default function LanguagesPage() {
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 mb-4">
             Supported Languages
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-base sm:text-lg mx-auto max-w-md">
             CodeSphere lets you code in your favorite languages. Compile, run,
             and collaborate with your team — all in one workspace.
           </p>

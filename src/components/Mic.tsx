@@ -45,7 +45,9 @@ const VoiceChatButton = ({
   useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
 
-    socketRef.current = io({ path: "/api/socket" });
+    socketRef.current = io(process.env.BACKEND_URL, {
+      path: "/api/socket",
+    });
 
     socketRef.current.on("connect", () => {
       socketRef.current?.emit("join-room", {
