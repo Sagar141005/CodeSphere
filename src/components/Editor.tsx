@@ -88,17 +88,19 @@ export default function CodeEditor({
       if (currentFileIdRef.current !== incomingFileId) return;
 
       const editor = editorRef.current;
-      const currentCode = editor?.getValue();
+      const model = editor?.getModel();
+      const currentCode = model?.getValue();
 
-      if (editor && currentCode !== incomingCode) {
-        const model = editor.getModel();
-        if (model) {
-          model.pushEditOperations(
-            [],
-            [{ range: model.getFullModelRange(), text: incomingCode }],
-            () => null
-          );
-        }
+      if (!editor || !model || currentCode === undefined) return;
+
+      if (currentCode !== incomingCode) {
+        const selection = editor.getSelection();
+        model.pushEditOperations(
+          [],
+          [{ range: model.getFullModelRange(), text: incomingCode }],
+          () => null
+        );
+        editor.setSelection(selection);
         setCode(incomingCode);
       }
     };
