@@ -277,25 +277,32 @@ export default function RoomNavbar({
         </button>
 
         {/* Avatars */}
-        <div
-          className="flex items-center -space-x-3"
-          aria-label={`${users.length} users online`}
-          role="group"
-          onClick={() => setShowUserList(!showUserList)}
-        >
-          {visibleUsers.map((user) => (
-            <UserAvatar key={user.id} user={user} />
-          ))}
-          {overflowCount > 0 && (
-            <div
-              className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
-              title={`${overflowCount} more users`}
-              aria-hidden="true"
-            >
-              +{overflowCount}
-            </div>
-          )}
-        </div>
+        {/* Avatars UI */}
+        {users.length > 0 ? (
+          <div
+            className="flex items-center -space-x-3"
+            aria-label={`${users.length} users online`}
+            role="group"
+            onClick={() => setShowUserList(!showUserList)}
+          >
+            {visibleUsers.map((user) => (
+              <UserAvatar key={user.id} user={user} />
+            ))}
+            {overflowCount > 0 && (
+              <div
+                className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
+                title={`${overflowCount} more users`}
+                aria-hidden="true"
+              >
+                +{overflowCount}
+              </div>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm text-gray-400">
+            Waiting for others to join...
+          </span>
+        )}
       </div>
 
       {showUserList && (
