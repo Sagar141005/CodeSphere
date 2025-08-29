@@ -91,11 +91,10 @@ export default function CodeEditor({
 
       const editor = editorRef.current;
       const model = editor?.getModel();
-      const currentCode = model?.getValue();
 
-      if (!editor || !model || currentCode === undefined) return;
+      if (!editor || !model === undefined) return;
 
-      if (currentCode !== incomingCode) {
+      if (code !== incomingCode) {
         const selection = editor.getSelection();
         model.pushEditOperations(
           [],
