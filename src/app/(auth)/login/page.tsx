@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      toast("👀 Already signed in — redirecting...");
+      router.push("/rooms");
+    }
+  }, [status, router]);
 
   const isPasswordInvalid = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -22,7 +31,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     const result = await signIn("credentials", {
       redirect: false,
@@ -34,8 +42,10 @@ export default function LoginPage() {
 
     if (result?.ok && !result.error) {
       router.push("/rooms");
+    } else if (result?.error === "CredentialsSignin") {
+      toast.error("❌ Invalid email or password");
     } else {
-      setError(result?.error || "Invalid email or password");
+      toast.error(result?.error || "Something went wrong");
     }
   };
 
@@ -52,7 +62,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-extrabold text-gray-800 text-center mb-6 select-none">
           Login
         </h1>
-        {error && <p className="text-red-500 text-center mb-2">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div>
             <label

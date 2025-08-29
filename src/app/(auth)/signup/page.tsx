@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function SignupPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      toast("👀 You're already logged in");
+      router.push("/rooms");
+    }
+  }, [status, router]);
 
   const isPasswordInvalid = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -23,7 +32,6 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     const res = await fetch("/api/auth/signup", {
       method: "POST",
@@ -32,11 +40,13 @@ export default function SignupPage() {
     });
 
     setLoading(false);
+
     if (res.ok) {
+      toast.success("🎉 Account created! Please log in.");
       router.push("/login");
     } else {
       const data = await res.json();
-      setError(data.error || "Signup failed");
+      toast.error(data.error || "❌ Signup failed");
     }
   };
 
@@ -53,7 +63,6 @@ export default function SignupPage() {
         <h1 className="text-3xl font-extrabold text-gray-800 text-center mb-6 select-none">
           Sign Up
         </h1>
-        {error && <p className="text-red-500 text-center mb-2">{error}</p>}
 
         <form onSubmit={handleSignup} className="space-y-6 mt-4">
           <div>
