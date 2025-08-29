@@ -164,7 +164,7 @@ export default function RoomPage({
     if (filename.endsWith(".cpp")) return "cpp";
     if (filename.endsWith(".c")) return "c";
     if (filename.endsWith(".java")) return "java";
-    return "javascript"; // default fallback
+    return "javascript";
   };
 
   function extractReferencedFiles(html: string) {
@@ -190,7 +190,6 @@ export default function RoomPage({
     const htmlData = await htmlRes.json();
     const htmlContent = htmlData.content;
 
-    // 🧠 Extract linked file names
     const { cssFiles, jsFiles } = extractReferencedFiles(htmlContent);
     const cssHref = cssFiles[0] ?? "";
     const jsSrc = jsFiles[0] ?? "";
@@ -229,7 +228,7 @@ export default function RoomPage({
       );
 
       if (jsFile && jsSrc) {
-        const jsExecRes = await fetch("/api/exec", {
+        const jsExecRes = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL!, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -253,7 +252,6 @@ export default function RoomPage({
         const packageContent = JSON.stringify(execData.packageJson, null, 2);
 
         if (existing) {
-          // Update case
           const updateRes = await fetch(`/api/file/${existing.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -264,7 +262,6 @@ export default function RoomPage({
             prev.map((f) => (f.id === existing.id ? updated : f))
           );
         } else {
-          // Create case
           const createRes = await fetch(`/api/room/${slug}/files`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -297,14 +294,13 @@ export default function RoomPage({
     if (!activeFile) return;
 
     if (!terminalExpanded) {
-      setTerminalHeight(220); // default expanded height
+      setTerminalHeight(220);
       setTerminalExpanded(true);
     }
 
-    terminalRef.current?.setRunning(true); //
+    terminalRef.current?.setRunning(true);
 
     try {
-      // Step 1: Gather all file contents from open tabs
       const filesToFetch = [...openTabs];
       const fileMap: Record<string, string> = {};
       let entry = activeFile.name;
@@ -321,8 +317,7 @@ export default function RoomPage({
         })
       );
 
-      // Step 2: Call the execution API
-      const execRes = await fetch("/api/exec", {
+      const execRes = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -346,8 +341,6 @@ export default function RoomPage({
       if (output) {
         terminalRef.current?.displayOutput(output, "success");
       }
-
-      // Step 4: Emit to other users
       const username = session?.user.name || "Unknown user";
       const timeStamp = new Date().toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -369,14 +362,14 @@ export default function RoomPage({
       terminalRef.current?.displayOutput("Execution failed.", "error");
       toast.error("Failed to run code.");
     } finally {
-      terminalRef.current?.setRunning(false); // ✅ Hide the running message
+      terminalRef.current?.setRunning(false);
     }
   };
 
   const fetchCommitDetails = async (commitId: string) => {
     const res = await fetch(`/api/room/${slug}/commit/${commitId}`);
     if (!res.ok) throw new Error("Cannot fetch commit");
-    return res.json(); // includes { id, message, createdAt, user }
+    return res.json();
   };
 
   const explainSelection = async () => {
@@ -441,7 +434,6 @@ export default function RoomPage({
       }
 
       const data = await res.json();
-      // Build diff
       setDiffs([
         {
           id: "ai-change",
@@ -452,7 +444,6 @@ export default function RoomPage({
         },
       ]);
 
-      // Store range and mark diff source
       setPendingApplyRange(selectionRange);
       setDiffSource("ai");
       setShowDiffModal(true);
@@ -487,12 +478,10 @@ export default function RoomPage({
 
       const data = await res.json();
       if (selection && selection.trim().length > 0) {
-        // replace only the selected code
         editor.executeEdits("", [
           { range: editor.getSelection(), text: data.result },
         ]);
       } else {
-        // replace entire file
         editor.setValue(data.result);
       }
     } catch (error) {
@@ -528,7 +517,6 @@ export default function RoomPage({
       }
 
       const data = await res.json();
-      // Build diff (oldContent=currentCode, content=AI fix)
       setDiffs([
         {
           id: "ai-error-fix",
@@ -539,7 +527,6 @@ export default function RoomPage({
         },
       ]);
 
-      // Store range (entire document) for apply
       const fullRange = editor.getModel()?.getFullModelRange();
       setPendingApplyRange(fullRange);
       setDiffSource("ai");
@@ -576,7 +563,6 @@ export default function RoomPage({
   };
 
   if (isSmallScreen === null) {
-    // Avoid hydration mismatch
     return null;
   }
 
@@ -626,7 +612,6 @@ export default function RoomPage({
             )
           }
           onPreview={async (commitId: string) => {
-            // explicitly type commitId as string
             try {
               const commitData = await fetchCommitDetails(commitId);
               setCurrentCommit(commitData);

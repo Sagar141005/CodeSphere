@@ -7,7 +7,13 @@ import { AlertTriangle } from "lucide-react";
 import { defineMonacoThemes } from "@/lib/monaco-themes";
 import toast from "react-hot-toast";
 
-const themes = ["vs-dark", "light", "vs", "hc-black", "vs-light"];
+function debounce<T extends (...args: any[]) => void>(fn: T, delay: number) {
+  let timer: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
 
 interface CodeEditorProps {
   roomId: string;
@@ -79,12 +85,21 @@ export default function CodeEditor({
       fileId: incomingFileId,
       code: incomingCode,
     }: any) => {
-      if (
-        currentFileIdRef.current === incomingFileId &&
-        incomingCode !== editorRef.current?.getValue()
-      ) {
+      if (currentFileIdRef.current !== incomingFileId) return;
+
+      const editor = editorRef.current;
+      const currentCode = editor?.getValue();
+
+      if (editor && currentCode !== incomingCode) {
+        const model = editor.getModel();
+        if (model) {
+          model.pushEditOperations(
+            [],
+            [{ range: model.getFullModelRange(), text: incomingCode }],
+            () => null
+          );
+        }
         setCode(incomingCode);
-        editorRef.current?.setValue(incomingCode);
       }
     };
 
@@ -93,7 +108,7 @@ export default function CodeEditor({
     return () => {
       sock.off("code-update", handleCodeUpdate);
     };
-  }, [roomId, fileId, code]);
+  }, [roomId, user]);
 
   useEffect(() => {
     let isCurrent = true;
@@ -117,27 +132,33 @@ export default function CodeEditor({
           toast.error("Failed to load file.");
         }
       } finally {
-        if (isCurrent) setFileLoading(false); // loading finished
+        if (isCurrent) setFileLoading(false);
       }
     };
 
     loadFile();
     return () => {
-      isCurrent = false; // Cancel this load if fileId changes
+      isCurrent = false;
     };
   }, [fileId]);
+
+  const emitCodeChange = useRef(
+    debounce((updatedCode: string) => {
+      socketRef.current?.emit("code-change", {
+        roomId,
+        fileId,
+        code: updatedCode,
+      });
+    }, 200)
+  ).current;
 
   const handleChange = (value: string | undefined) => {
     if (loadingError || fileLoading) return;
 
     const updatedCode = value || "";
     setCode(updatedCode);
-    setIsTyping(true); // User is typing
-    socketRef.current?.emit("code-change", {
-      roomId: roomId,
-      fileId,
-      code: updatedCode,
-    });
+    setIsTyping(true);
+    emitCodeChange(updatedCode);
   };
 
   // Auto-save after 2 seconds of inactivity
