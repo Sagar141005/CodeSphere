@@ -228,16 +228,19 @@ export default function RoomPage({
       );
 
       if (jsFile && jsSrc) {
-        const jsExecRes = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL!, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            language: "javascript",
-            entry: jsSrc,
-            files: jsFilesMap,
-            mode: "preview",
-          }),
-        });
+        const jsExecRes = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL!}/api/exec`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              language: "javascript",
+              entry: jsSrc,
+              files: jsFilesMap,
+              mode: "preview",
+            }),
+          }
+        );
 
         const execData = await jsExecRes.json();
 
@@ -317,16 +320,19 @@ export default function RoomPage({
         })
       );
 
-      const execRes = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL!, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: getLanguage(activeFile.name),
-          files: fileMap,
-          entry,
-          mode: "execute",
-        }),
-      });
+      const execRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL!}/api/exec`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            language: getLanguage(activeFile.name),
+            files: fileMap,
+            entry,
+            mode: "execute",
+          }),
+        }
+      );
 
       const data = await execRes.json();
       const output = data.stdout?.trim();
