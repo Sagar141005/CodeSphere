@@ -143,13 +143,10 @@ export default function RoomsPage() {
       });
 
       if (res.ok) {
-        const newRoom = await res.json();
         setRoomName("");
         toast.success("Room created");
 
         mutate("/api/rooms");
-
-        router.push(`/room/${newRoom.slug}`);
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to create room");
