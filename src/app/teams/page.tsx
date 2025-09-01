@@ -8,6 +8,7 @@ import { Users, ArrowRightCircle, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Loader } from "@/components/Loader";
 import toast from "react-hot-toast";
+import useSWR, { mutate } from "swr";
 
 interface TeamInvite {
   id: string;
@@ -25,37 +26,28 @@ interface Team {
   rooms: { id: string }[];
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function TeamsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [teams, setTeams] = useState<Team[]>([]);
   const [teamName, setTeamName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingTeams, setLoadingTeams] = useState(true);
-  const [invites, setInvites] = useState<TeamInvite[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [status]);
+  }, [status, router]);
 
-  useEffect(() => {
-    if (!session) return;
-    setLoadingTeams(true);
+  const { data, error, isLoading } = useSWR(
+    session ? "/api/team/my-teams" : null,
+    fetcher
+  );
 
-    fetch("/api/team/my-teams")
-      .then((res) => res.json())
-      .then((data) => {
-        setTeams(data?.teams ?? []);
-        setInvites(data?.teamInvites ?? []);
-      })
-      .catch((err) => {
-        console.error("[Team] Failed to fetch teams/invites:", err); // keep one important error log
-      })
-      .finally(() => setLoadingTeams(false));
-  }, [session]);
+  const teams: Team[] = data?.teams ?? [];
+  const invites: TeamInvite[] = data?.teamInvites ?? [];
 
   const createTeam = async () => {
     if (!teamName.trim()) {
@@ -63,6 +55,7 @@ export default function TeamsPage() {
       return;
     }
 
+    setLoading(true);
     try {
       const res = await fetch("/api/team/create", {
         method: "POST",
@@ -72,9 +65,14 @@ export default function TeamsPage() {
 
       if (res.ok) {
         const newTeam = await res.json();
-        setTeams((prev) => [...prev, newTeam]);
-        setTeamName("");
         toast.success("Team created successfully");
+        setTeamName("");
+
+        mutate(
+          "/api/team/my-teams",
+          { ...data, teams: [...teams, newTeam] },
+          false
+        );
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to create team");
@@ -97,10 +95,7 @@ export default function TeamsPage() {
 
       if (res.ok) {
         toast.success("Invite accepted");
-        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
-        const teamRes = await fetch("/api/team/my-teams");
-        const data = await teamRes.json();
-        setTeams(data?.teams ?? []);
+        mutate("/api/team/my-teams");
       } else {
         toast.error("Failed to accept invite");
       }
@@ -120,7 +115,7 @@ export default function TeamsPage() {
 
       if (res.ok) {
         toast.success("Invite rejected");
-        setInvites((prev) => prev.filter((i) => i.id !== inviteId));
+        mutate("/api/team/my-teams");
       } else {
         toast.error("Failed to reject invite");
       }
@@ -130,10 +125,11 @@ export default function TeamsPage() {
     }
   };
 
-  console.log(teams);
-
-  if (status === "loading") {
+  if (status === "loading" || isLoading) {
     return <Loader />;
+  }
+  if (error) {
+    return <div className="text-center text-red-500">Failed to load teams</div>;
   }
 
   return (
@@ -210,7 +206,7 @@ export default function TeamsPage() {
 
         {/* Teams List */}
         <section className="max-w-5xl mx-auto w-full space-y-8 px-2 sm:px-0">
-          {loadingTeams ? (
+          {isLoading ? (
             <ul className="space-y-3 sm:space-y-4 animate-pulse">
               {[1, 2, 3].map((i) => (
                 <li key={i} className="h-14 sm:h-16 bg-[#1f1f1f] rounded-xl" />

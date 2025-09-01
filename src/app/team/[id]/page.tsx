@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import useSWR, { mutate } from "swr";
+import toast from "react-hot-toast";
+import { Loader } from "@/components/Loader";
 import HomeNavbar from "@/components/HomeNavbar";
+import ConfirmModal from "@/components/ConfirmModal";
+import { RoomList } from "@/components/RoomList";
+import { UserAvatar } from "@/components/UserAvatar";
 import {
   User,
   Users,
@@ -14,12 +19,8 @@ import {
   DoorClosed,
   Loader2,
 } from "lucide-react";
-import ConfirmModal from "@/components/ConfirmModal";
-import { Loader } from "@/components/Loader";
 import { Room } from "@/types/Room";
-import { RoomList } from "@/components/RoomList";
-import toast from "react-hot-toast";
-import { UserAvatar } from "@/components/UserAvatar";
+import { useState, useEffect } from "react";
 
 interface TeamMember {
   id: string;
@@ -45,16 +46,22 @@ interface Team {
   invites: TeamInvite[];
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function TeamDetailsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
 
-  const [team, setTeam] = useState<Team | null>(null);
+  const {
+    data: team,
+    error,
+    isLoading,
+  } = useSWR<Team>(id && session ? `/api/team/${id}` : null, fetcher);
+
   const [newRoomName, setNewRoomName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
-  const [loading, setLoading] = useState(false);
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -71,23 +78,8 @@ export default function TeamDetailsPage() {
     }
   }, [status]);
 
-  // Fetch team details
-  useEffect(() => {
-    if (!id || !session) return;
-
-    setLoading(true);
-
-    fetch(`/api/team/${id}`)
-      .then((res) => res.json())
-      .then((data) => setTeam(data))
-      .catch(() => setTeam(null))
-      .finally(() => setLoading(false));
-  }, [id, session]);
-
-  // Invite Member
   const inviteMember = async () => {
     if (!inviteEmail.trim()) return;
-
     setInviting(true);
     try {
       const res = await fetch(`/api/team/${id}/invite`, {
@@ -99,6 +91,7 @@ export default function TeamDetailsPage() {
       if (res.ok) {
         toast.success("Invitation sent");
         setInviteEmail("");
+        mutate(`/api/team/${id}`);
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to invite member");
@@ -111,7 +104,6 @@ export default function TeamDetailsPage() {
     }
   };
 
-  // Remove Member
   const removeMember = async (memberId: string) => {
     try {
       const res = await fetch(`/api/team/${id}/remove-member`, {
@@ -121,15 +113,8 @@ export default function TeamDetailsPage() {
       });
 
       if (res.ok) {
-        setTeam((prev) =>
-          prev
-            ? {
-                ...prev,
-                members: prev.members.filter((m) => m.id !== memberId),
-              }
-            : prev
-        );
         toast.success("Member removed successfully");
+        mutate(`/api/team/${id}`);
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to remove member");
@@ -140,10 +125,8 @@ export default function TeamDetailsPage() {
     }
   };
 
-  // Create Room
   const createRoom = async () => {
     if (!newRoomName.trim()) return;
-
     setCreatingRoom(true);
     try {
       const res = await fetch(`/api/team/${id}/room/create`, {
@@ -153,12 +136,9 @@ export default function TeamDetailsPage() {
       });
 
       if (res.ok) {
-        const newRoom = await res.json();
-        setTeam((prev) =>
-          prev ? { ...prev, rooms: [...prev.rooms, newRoom] } : prev
-        );
-        setNewRoomName("");
         toast.success("Room created");
+        setNewRoomName("");
+        mutate(`/api/team/${id}`);
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to create room");
@@ -171,7 +151,6 @@ export default function TeamDetailsPage() {
     }
   };
 
-  // Leave Team
   const leaveTeam = async () => {
     try {
       const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
@@ -188,23 +167,12 @@ export default function TeamDetailsPage() {
     }
   };
 
-  // Delete Room
   const handleDeleteRoom = async (slug: string) => {
     try {
-      const res = await fetch(`/api/room/${slug}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/room/${slug}`, { method: "DELETE" });
       if (res.ok) {
-        setTeam((prev) =>
-          prev
-            ? {
-                ...prev,
-                rooms: prev.rooms.filter((room) => room.slug !== slug),
-              }
-            : prev
-        );
         toast.success("Room deleted successfully");
+        mutate(`/api/team/${id}`);
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to delete room");
@@ -215,13 +183,9 @@ export default function TeamDetailsPage() {
     }
   };
 
-  // Delete Team
   const handleDeleteTeam = async (id: string) => {
     try {
-      const res = await fetch(`/api/team/${id}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
       if (res.ok) {
         toast.success("Team deleted successfully");
         router.push("/teams");
@@ -235,11 +199,11 @@ export default function TeamDetailsPage() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || isLoading) {
     return <Loader />;
   }
 
-  if (!team) {
+  if (error || !team) {
     return <p className="text-center mt-10">Team not found.</p>;
   }
 

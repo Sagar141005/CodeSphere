@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useSWR, { mutate } from "swr";
 import {
   ChevronDown,
   DoorClosed,
@@ -26,11 +27,16 @@ interface Invite {
   invitedBy: { id: string; name: string | null };
 }
 
+const fetcher = (url: string) =>
+  fetch(url, { credentials: "include" }).then((res) => {
+    if (!res.ok) throw new Error("Failed to fetch");
+    return res.json();
+  });
+
 export default function RoomsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [rooms, setRooms] = useState<Room[]>([]);
   const [roomName, setRoomName] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
@@ -39,51 +45,37 @@ export default function RoomsPage() {
   const [selectedRoomSlug, setSelectedRoomSlug] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [pendingInvites, setPendingInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);
   const [roomToLeave, setRoomToLeave] = useState<Room | null>(null);
 
-  const loadRoomsAndInvites = async () => {
-    try {
-      const [roomRes, inviteRes] = await Promise.all([
-        fetch("/api/rooms", { credentials: "include" }),
-        fetch("api/invite", { credentials: "include" }),
-      ]);
+  const {
+    data: rooms = [],
+    isLoading: roomsLoading,
+    error: roomsError,
+  } = useSWR<Room[]>(status === "authenticated" ? "/api/rooms" : null, fetcher);
 
-      const roomsData = await roomRes.json();
-      const invitesData = await inviteRes.json();
+  const {
+    data: pendingInvites = [],
+    isLoading: invitesLoading,
+    error: invitesError,
+  } = useSWR<Invite[]>(
+    status === "authenticated" ? "/api/invite" : null,
+    fetcher
+  );
 
-      setRooms(Array.isArray(roomsData) ? roomsData : []);
-      setPendingInvites(Array.isArray(invitesData) ? invitesData : []);
-    } catch (error) {
-      toast.error("Failed to load rooms or invites");
-      setRooms([]);
-      setPendingInvites([]);
-    }
-  };
+  if (status === "unauthenticated") {
+    router.push("/login");
+  }
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status]);
-
-  useEffect(() => {
-    loadRoomsAndInvites();
-  }, []);
-
-  useEffect(() => {
-    if (!showInviteModal) {
-      loadRoomsAndInvites();
-    }
-  }, [showInviteModal]);
+  if (status === "loading" || roomsLoading || invitesLoading) {
+    return <Loader />;
+  }
 
   const sendInvite = async () => {
     if (!selectedRoomSlug) {
       toast.error("Please select a room to invite to");
       return;
     }
-
     if (!inviteEmail.trim()) {
       toast.error("Please enter an email to invite");
       return;
@@ -107,7 +99,8 @@ export default function RoomsPage() {
       toast.success("Invite sent successfully");
       setInviteEmail("");
       setSelectedRoomSlug("");
-      loadRoomsAndInvites();
+
+      mutate("/api/invite");
     } catch (error: any) {
       toast.error(error.message || "Something went wrong while sending invite");
     }
@@ -124,7 +117,8 @@ export default function RoomsPage() {
         body: JSON.stringify({ action }),
       });
 
-      loadRoomsAndInvites();
+      mutate("/api/rooms");
+      mutate("/api/invite");
     } catch (err) {
       console.error(err);
       toast.error("Failed to respond to invite");
@@ -150,9 +144,11 @@ export default function RoomsPage() {
 
       if (res.ok) {
         const newRoom = await res.json();
-        setRooms((prev) => [...prev, { ...newRoom, owned: true }]);
         setRoomName("");
         toast.success("Room created");
+
+        mutate("/api/rooms");
+
         router.push(`/room/${newRoom.slug}`);
       } else {
         const error = await res.json();
@@ -173,8 +169,8 @@ export default function RoomsPage() {
       });
 
       if (res.ok) {
-        setRooms((prev) => prev.filter((room) => room.slug !== slug));
         toast.success("Room deleted successfully");
+        mutate("/api/rooms");
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to delete room");
@@ -192,8 +188,8 @@ export default function RoomsPage() {
       });
 
       if (res.ok) {
-        setRooms((prev) => prev.filter((room) => room.slug !== slug));
-        toast.success("Room leaved successfully");
+        toast.success("Room left successfully");
+        mutate("/api/rooms");
       } else {
         const error = await res.json();
         toast.error(error.error || "Failed to leave room");
@@ -203,10 +199,6 @@ export default function RoomsPage() {
       toast.error("Something went wrong while leaving the room");
     }
   };
-
-  if (status === "loading") {
-    return <Loader />;
-  }
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white">

@@ -43,7 +43,7 @@ export default function LoginPage() {
     if (result?.ok && !result.error) {
       router.push("/rooms");
     } else if (result?.error === "CredentialsSignin") {
-      toast.error("❌ Invalid email or password");
+      toast.error("Invalid email or password");
     } else {
       toast.error(result?.error || "Something went wrong");
     }

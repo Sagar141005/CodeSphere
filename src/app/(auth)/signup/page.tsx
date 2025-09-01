@@ -46,7 +46,7 @@ export default function SignupPage() {
       router.push("/login");
     } else {
       const data = await res.json();
-      toast.error(data.error || "❌ Signup failed");
+      toast.error(data.error || "Signup failed");
     }
   };
 

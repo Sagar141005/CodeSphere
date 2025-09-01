@@ -33,6 +33,7 @@
     "remixicon-react": "^1.0.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
+    "swr": "^2.3.6",
     "vm2": "^3.9.19",
     "vscode-icons-js": "^11.6.1"
   },
