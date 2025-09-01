@@ -1,59 +1,51 @@
-CodeSphere
-
+🚀 CodeSphere
 CodeSphere is a real-time collaborative coding platform built with Next.js, TypeScript, and PostgreSQL. It brings together features of an online IDE, Git version control, and AI-powered coding assistance — all in the browser.
-
 Think of it as a VS Code in your browser, with real-time collaboration, presence indicators, AI coding assistant, and even voice chat.
-
-⸻
-
-🚀 Features
-	Authentication
-	  •	Google login with NextAuth.js
-	  •	Secure session handling
-	Real-time Collaboration
-	  •	Multi-user code editing powered by Monaco Editor
-	  •	Presence indicators (see who’s online in a room)
-	  •	Local undo/redo per file
-	File & Room Management
-	  •	Room-based collaboration spaces
-	  •	File explorer with folder nesting
-	  •	Full CRUD operations (add, rename, delete files/folders)
-	  •	File icons (VS Code–style)
-	Dependencies & Preview
-	  •	Add external dependencies (Lodash, DayJs, UUID, etc.) per room
-	  •	Live preview with injected dependencies
-	  •	Support for multiple languages and file types
-	Version Control (Git-style)
-	  •	Commit changes with messages
-	  •	Browse commit history & details
-	  •	Revert to specific commits
-	  •	Sidebar UI with dedicated Version Control tab
-	AI Integration
-	  •	AI-powered code assistant using OpenAI API
-	  •	Context-aware code explanations
-	  •	Code refactor
-	  •	Debug errors
-	  •	Add useful comments
-	Communication
-	  •	Built-in voice chat for real-time collaboration
-	Other Enhancements
-	  •	Syntax highlighting with language switch
-	  •	Side-by-side Markdown rendering
-	  •	Different amazing themes ready
-	  •	Deployed on Vercel (frontend)
-
-⸻
-
+✨ Features
+🔐 Authentication
+Google login with NextAuth.js
+Secure session handling
+👥 Real-time Collaboration
+Multi-user code editing powered by Monaco Editor
+Presence indicators (see who’s online in a room)
+Local undo/redo per file
+🗂 File & Room Management
+Room-based collaboration spaces
+File explorer with folder nesting
+Full CRUD operations (add, rename, delete files/folders)
+File icons (VS Code–style)
+📦 Dependencies & Preview
+Add external dependencies (Lodash, DayJs, UUID, etc.) per room
+Live preview with injected dependencies
+Support for multiple languages and file types
+🕓 Version Control (Git-style)
+Commit changes with messages
+Browse commit history & details
+Revert to specific commits
+Sidebar UI with dedicated Version Control tab
+🤖 AI Integration
+AI-powered code assistant using OpenAI API
+Context-aware code explanations
+Code refactor
+Debug errors
+Add useful comments
+🗣 Communication
+Built-in voice chat for real-time collaboration
+🎨 Other Enhancements
+Syntax highlighting with language switch
+Side-by-side Markdown rendering
+Multiple beautiful themes
+Deployed on Vercel (frontend)
 🛠️ Tech Stack
-	•	Frontend: Next.js + TypeScript
-	•	Database: PostgreSQL with Prisma ORM
-	•	Authentication: NextAuth.js with Google Provider
-	•	Editor: Monaco Editor
-	•	Collaboration: Socket.IO
-	•	AI: OpenAI API
-	•	UI/UX: TailwindCSS, shadcn/ui, lucide-react
-	•	Deployment: Vercel, Docker
-	•	Download full project as ZIP or package.json with dependencies.
+Frontend: Next.js + TypeScript
+Database: PostgreSQL with Prisma ORM
+Authentication: NextAuth.js with Google Provider
+Editor: Monaco Editor
+Collaboration: Socket.IO
+AI: OpenAI API
+UI/UX: TailwindCSS, shadcn/ui, lucide-react
+Deployment: Vercel, Docker
+Download full project as ZIP or use package.json with dependencies
 
 ⸻
 
