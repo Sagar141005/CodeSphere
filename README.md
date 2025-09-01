@@ -139,3 +139,10 @@ npm run dev
 ## 🤝 Contributing
 
 This project was built solo as a **portfolio project**, but **contributions, feedback, and ideas are welcome**!
+
+## 📇 Contact
+
+Want to collaborate or give feedback?
+
+- 🐦 Twitter: [@not_sagar1410](https://x.com/not_sagar1410)  
+- 💼 LinkedIn: [Sagar Saini](https://www.linkedin.com/in/sagar-saini-9b45a52b2/)
