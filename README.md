@@ -124,7 +124,7 @@ npm run dev
 - In-room video calls (alongside voice chat)
 
 ### 🧑‍💻 More Language Runtimes
-- Add runtime support for **Python**, **Java**, **C/C++**
+- Add runtime support for **Rust**, **Ruby**, **Go**
 
 ### 💬 Collaboration Enhancements
 - Inline code commenting system  
