@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight, Terminal } from "lucide-react";
+import Marquee from "react-fast-marquee";
 
 const companies = [
   "Google",
@@ -17,7 +18,7 @@ const companies = [
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full min-h-screen flex flex-col justify-center px-6 lg:px-10 bg-neutral-950 overflow-hidden selection:bg-[var(--neutral-800)] selection:text-[var(--neutral-50)]">
+    <div className="relative w-full min-h-screen flex flex-col justify-center px-6 lg:px-10 bg-neutral-950 overflow-hidden selection:bg-neutral-800 selection:text-neutral-50">
       <div
         className="absolute inset-0 z-0 opacity-20"
         style={{
@@ -42,7 +43,7 @@ export default function HeroSection() {
                   delay: i * 0.15,
                   ease: [0.2, 0.65, 0.3, 0.9],
                 }}
-                className="text-6xl sm:text-8xl lg:text-9xl font-bold tracking-tighter text-[var(--neutral-100)] leading-[0.9]"
+                className="text-6xl sm:text-8xl lg:text-9xl font-bold tracking-tighter bg-gradient-to-b text-transparent bg-clip-text from-white via-neutral-50 to-neutral-600 leading-[0.9]"
               >
                 {word}
               </motion.h1>
@@ -53,7 +54,7 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
-            className="mt-8 text-lg sm:text-xl text-[var(--neutral-400)] max-w-xl leading-relaxed"
+            className="mt-8 text-lg sm:text-xl text-neutral-400 max-w-xl leading-relaxed"
           >
             The open-source collaborative code editor built for teams who care
             about speed. Real-time sync, zero latency, infinite possibilities.
@@ -69,14 +70,12 @@ export default function HeroSection() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative h-12 px-8 rounded-lg bg-[var(--neutral-50)] text-[var(--neutral-950)] font-semibold text-sm overflow-hidden"
+                className="group relative px-6 py-3 rounded-lg bg-neutral-50 text-neutral-950 font-semibold text-sm overflow-hidden"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   Start Coding
                   <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </span>
-                {/* Button Shine Effect */}
-                <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-0" />
               </motion.button>
             </Link>
 
@@ -87,9 +86,9 @@ export default function HeroSection() {
                   backgroundColor: "rgba(255,255,255,0.05)",
                 }}
                 whileTap={{ scale: 0.98 }}
-                className="h-12 px-8 rounded-lg border border-[var(--neutral-800)] text-[var(--neutral-200)] font-medium text-sm transition-colors flex items-center gap-2"
+                className="px-6 py-3 rounded-lg border border-neutral-800 text-neutral-200 font-medium text-sm transition-colors flex items-center gap-2"
               >
-                <Terminal className="w-4 h-4 text-[var(--neutral-500)]" />
+                <Terminal className="w-4 h-4 text-neutral-500" />
                 Open Sandbox
               </motion.button>
             </Link>
@@ -102,35 +101,30 @@ export default function HeroSection() {
           transition={{ delay: 1, duration: 1 }}
           className="mt-24 lg:mt-32 w-full"
         >
-          <p className="text-center text-xs font-semibold text-[var(--neutral-500)] uppercase tracking-widest mb-8">
+          <p className="text-center text-xs font-semibold text-neutral-500 uppercase tracking-widest mb-8">
             Trusted by engineering teams at
           </p>
 
           <div className="relative flex overflow-hidden mask-fade-sides">
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[var(--neutral-950)] to-transparent z-20" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[var(--neutral-950)] to-transparent z-20" />
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-neutral-950 to-transparent z-20" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-neutral-950 to-transparent z-20" />
 
-            <div className="flex gap-16 min-w-full">
-              {[...companies, ...companies].map((company, i) => (
-                <motion.div
-                  key={`${company}-${i}`}
-                  initial={{ x: 0 }}
-                  animate={{ x: "-100%" }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="flex-shrink-0 flex items-center justify-center"
-                >
-                  <img
-                    src={`/${company}.svg`}
-                    alt={company}
-                    className="h-6 w-auto opacity-30 grayscale hover:opacity-100 transition-opacity"
-                  />
-                </motion.div>
-              ))}
-            </div>
+            <Marquee speed={40} gradient={false} autoFill className="w-full">
+              <div className="flex gap-16 pr-16">
+                {companies.map((company, i) => (
+                  <div
+                    key={`${company}-${i}`}
+                    className="flex-shrink-0 flex items-center justify-center"
+                  >
+                    <img
+                      src={`/${company}.svg`}
+                      alt={company}
+                      className="h-6 w-auto opacity-30 grayscale hover:opacity-100 transition-opacity"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Marquee>
           </div>
         </motion.div>
       </div>
