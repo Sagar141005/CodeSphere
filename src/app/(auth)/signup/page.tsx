@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import { Mail, Lock, User, Loader2, ArrowRight } from "lucide-react";
 
 export default function SignupPage() {
   const { data: session, status } = useSession();
@@ -24,7 +26,7 @@ export default function SignupPage() {
 
   const isPasswordInvalid = () => {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    return !passwordRegex.test(password);
+    return password.length > 0 && !passwordRegex.test(password);
   };
 
   const isFormInvalid = !name || !email || !password || isPasswordInvalid();
@@ -42,7 +44,7 @@ export default function SignupPage() {
     setLoading(false);
 
     if (res.ok) {
-      toast.success("🎉 Account created! Please log in.");
+      toast.success("Account created");
       router.push("/login");
     } else {
       const data = await res.json();
@@ -50,124 +52,174 @@ export default function SignupPage() {
     }
   };
 
-  const inputClass = (hasError: boolean) =>
-    `w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-      hasError
-        ? "border-red-500 focus:ring-red-500"
-        : "border-gray-500 focus:ring-blue-500"
-    }`;
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-black p-4 bg-animated-gradient">
-      <div className="w-full max-w-96 min-h-96 bg-white shadow-md rounded-3xl px-8 py-10">
-        <h1 className="text-3xl font-extrabold text-gray-800 text-center mb-6 select-none">
-          Sign Up
-        </h1>
-
-        <form onSubmit={handleSignup} className="space-y-6 mt-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1 select-none"
-            >
-              Full Name <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
+    <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md"
+      >
+        <div className="bg-neutral-900 border border-neutral-800 shadow-xl rounded-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold tracking-tight mb-2 text-white">
+              Create an account
+            </h1>
+            <p className="text-neutral-400 text-sm">
+              Enter your details to get started with CodeSphere
+            </p>
           </div>
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1 select-none"
-            >
-              Email <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="email"
-              placeholder="example@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1 select-none"
-            >
-              Password <span className="text-red-600">*</span>
-            </label>
-            <input
-              type="password"
-              placeholder="At least 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass(!!password && isPasswordInvalid())}
-              required
-            />
-            {password && isPasswordInvalid() && (
-              <p className="text-red-500 text-xs mt-1">
-                Must be 8+ characters, with uppercase, lowercase, number, and
-                symbol.
-              </p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isFormInvalid || loading}
-            className={`w-full py-3 rounded-xl font-semibold text-lg border transition-all duration-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2
-              ${
-                isFormInvalid || loading
-                  ? "bg-neutral-800 border-neutral-700 text-neutral-500 cursor-not-allowed"
-                  : "bg-[#1f1f1f] text-white border-[#333] hover:bg-[#3a3a3a] hover:border-[#666] cursor-pointer"
-              }`}
-          >
-            {loading ? "Creating..." : "Create Account"}
-          </button>
-        </form>
-
-        <div className="mt-10 text-center">
-          <p className="text-sm text-gray-700 mb-4 font-semibold select-none">
-            Or sign up with
-          </p>
-          <div className="flex justify-center gap-6">
-            {[
-              { src: "/Google-icon.svg", alt: "Google" },
-              { src: "/Github-icon.svg", alt: "GitHub" },
-            ].map(({ src, alt }) => (
-              <button
-                onClick={() => signIn(`${alt.toLowerCase()}`)}
-                key={alt}
-                className="p-3 rounded-full border border-gray-300 bg-white/80 hover:shadow-lg hover:scale-110 active:scale-95
-                           transition-transform cursor-pointer"
-                aria-label={`Sign up with ${alt}`}
+          <form onSubmit={handleSignup} className="space-y-5">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="name"
+                className="text-xs font-medium text-neutral-400 ml-1"
               >
-                <img src={src} alt={alt} className="w-6 h-6" />
-              </button>
-            ))}
-          </div>
-        </div>
+                Full Name
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-4 w-4 text-neutral-500 group-focus-within:text-neutral-200 transition-colors" />
+                </div>
+                <input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all placeholder:text-neutral-600 text-sm"
+                  required
+                />
+              </div>
+            </div>
 
-        <p className="text-sm text-gray-600 text-center mt-6 select-none">
-          Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-blue-700 hover:underline cursor-pointer"
-          >
-            Login
-          </Link>
-        </p>
-      </div>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="email"
+                className="text-xs font-medium text-neutral-400 ml-1"
+              >
+                Email Address
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-neutral-500 group-focus-within:text-neutral-200 transition-colors" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl focus:outline-none focus:border-neutral-500 focus:ring-1 focus:ring-neutral-500 transition-all placeholder:text-neutral-600 text-sm"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="password"
+                className="text-xs font-medium text-neutral-400 ml-1"
+              >
+                Password
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-neutral-500 group-focus-within:text-neutral-200 transition-colors" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-neutral-950 border rounded-xl focus:outline-none focus:ring-1 transition-all placeholder:text-neutral-600 text-sm ${
+                    isPasswordInvalid()
+                      ? "border-red-900/50 focus:border-red-500/50 focus:ring-red-900/20 text-red-200"
+                      : "border-neutral-800 focus:border-neutral-500 focus:ring-neutral-500"
+                  }`}
+                  required
+                />
+              </div>
+              {isPasswordInvalid() && (
+                <p className="text-neutral-500 text-[10px] ml-1">
+                  Min 8 chars, uppercase, lowercase, number & symbol required.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isFormInvalid || loading}
+              className={`w-full py-2.5 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center gap-2
+                ${
+                  isFormInvalid || loading
+                    ? "bg-neutral-800 text-neutral-500 cursor-not-allowed border border-neutral-800"
+                    : "bg-white text-black hover:bg-neutral-200 border border-white active:scale-[0.98]"
+                }`}
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  Create Account <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-neutral-800" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-neutral-900 px-2 text-neutral-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => signIn("google")}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl hover:bg-neutral-800 hover:text-white transition-all duration-200 active:scale-95"
+            >
+              <img
+                src="/Google-icon.svg"
+                alt="Google"
+                className="w-4 h-4 opacity-80 group-hover:opacity-100"
+              />
+              <span className="text-sm font-medium text-neutral-400">
+                Google
+              </span>
+            </button>
+            <button
+              onClick={() => signIn("github")}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-neutral-950 border border-neutral-800 rounded-xl hover:bg-neutral-800 hover:text-white transition-all duration-200 active:scale-95"
+            >
+              <img
+                src="/Github-icon.svg"
+                alt="GitHub"
+                className="w-4 h-4 invert opacity-80"
+              />
+              <span className="text-sm font-medium text-neutral-400">
+                GitHub
+              </span>
+            </button>
+          </div>
+
+          <p className="text-center text-xs text-neutral-500 mt-8">
+            Already have an account?{" "}
+            <Link
+              href="/login"
+              className="text-neutral-300 hover:text-white hover:underline transition-colors"
+            >
+              Log in
+            </Link>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
