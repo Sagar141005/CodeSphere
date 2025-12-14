@@ -1,4 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -13,50 +17,85 @@ interface ConfirmModalProps {
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({
   isOpen,
-  title = "Are you sure?",
+  title = "Confirm Action",
   message,
-  confirmLabel = "Confirm Delete",
+  confirmLabel = "Delete",
   cancelLabel = "Cancel",
   onConfirm,
   onCancel,
   className = "",
 }) => {
-  if (!isOpen) return null;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onCancel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4 sm:px-0">
-      <div
-        className={`relative w-full max-w-sm sm:max-w-md bg-[#1a1a1a] border border-white/10 rounded-2xl p-6 shadow-2xl text-white space-y-6 ${className}`}
-      >
-        {/* Subtle background glow */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-600/10 to-red-800/10 blur-lg opacity-80 pointer-events-none" />
-
-        <div className="relative z-10 space-y-4 text-center">
-          {title && (
-            <h2 className="text-lg sm:text-xl font-semibold">{title}</h2>
-          )}
-          <div className="text-xs sm:text-sm text-gray-400 leading-relaxed">
-            {message}
-          </div>
-        </div>
-
-        {/* Buttons - stack on small screens */}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onCancel}
-            className="px-4 sm:px-5 py-2.5 text-sm font-medium text-white/80 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition cursor-pointer"
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+          />
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative w-full max-w-md bg-[#0F0F0F] border border-neutral-800 rounded-xl shadow-2xl overflow-hidden ${className}`}
           >
-            {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 sm:px-5 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition cursor-pointer"
-          >
-            {confirmLabel}
-          </button>
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={onCancel}
+                className="p-1 text-neutral-500 hover:text-neutral-200 transition-colors rounded-md hover:bg-neutral-800"
+              >
+                <X className="w-4 h-4" />
+                <span className="sr-only">Close</span>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="flex-1 pt-1">
+                  <h3 className="text-base font-semibold text-neutral-100 leading-none mb-3">
+                    {title}
+                  </h3>
+                  <div className="text-sm text-neutral-400 leading-relaxed">
+                    {message}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-neutral-900/50 border-t border-neutral-800 px-6 py-4 flex items-center justify-end gap-3">
+              <button
+                onClick={onCancel}
+                className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors border border-transparent"
+              >
+                {cancelLabel}
+              </button>
+              <button
+                onClick={onConfirm}
+                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg shadow-sm border border-red-500 transition-all"
+              >
+                {confirmLabel}
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
 

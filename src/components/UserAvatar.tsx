@@ -1,71 +1,97 @@
-const getColorFromString = (str: string) => {
-  const colors = [
-    "bg-gradient-to-r from-gray-700 via-gray-900 to-black",
-    "bg-gradient-to-r from-indigo-800 via-purple-900 to-indigo-800",
-    "bg-gradient-to-r from-slate-700 via-slate-900 to-slate-800",
-    "bg-gradient-to-r from-blue-900 via-gray-800 to-gray-900",
-    "bg-gradient-to-r from-teal-800 via-gray-900 to-cyan-900",
-    "bg-gradient-to-r from-zinc-800 via-gray-800 to-neutral-900",
-    "bg-gradient-to-r from-purple-800 via-black to-purple-900",
-    "bg-gradient-to-r from-emerald-800 via-gray-900 to-emerald-900",
-  ];
+"use client";
 
-  const index = str.charCodeAt(0) % colors.length;
-  return colors[index];
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+
+const AVATAR_VARIANTS = [
+  "bg-gradient-to-br from-neutral-700 to-neutral-900 text-neutral-200",
+  "bg-gradient-to-br from-slate-700 to-slate-900 text-slate-200",
+  "bg-gradient-to-br from-zinc-700 to-zinc-900 text-zinc-200",
+  "bg-gradient-to-br from-stone-700 to-stone-900 text-stone-200",
+  "bg-gradient-to-br from-blue-900/80 to-neutral-900 text-blue-200",
+  "bg-gradient-to-br from-emerald-900/80 to-neutral-900 text-emerald-200",
+  "bg-gradient-to-br from-purple-900/80 to-neutral-900 text-purple-200",
+];
+
+const getColorClass = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % AVATAR_VARIANTS.length;
+  return AVATAR_VARIANTS[index];
 };
 
 type UserAvatarProps = {
   user: {
     name: string;
-    image?: string;
+    image?: string | null;
   };
   className?: string;
-  size?: "sm" | "md" | "lg" | "full";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
 };
 
-const sizeClasses = {
-  sm: "w-9 h-9 text-sm",
-  md: "w-16 h-16 text-2xl",
-  lg: "w-full h-full text-[3rem] sm:text-[4rem]",
-  full: "w-full h-full text-sm sm:text-md md:text-lg",
+const sizeConfig = {
+  xs: "w-6 h-6 text-[10px]",
+  sm: "w-8 h-8 text-xs",
+  md: "w-10 h-10 text-sm",
+  lg: "w-16 h-16 text-xl",
+  xl: "w-24 h-24 text-3xl",
+  full: "w-full h-full text-base",
 };
 
 export const UserAvatar = ({
   user,
   size = "sm",
-  className,
+  className = "",
 }: UserAvatarProps) => {
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const [imageError, setImageError] = useState(false);
 
-  const combinedClasses = `${
-    sizeClasses[size]
-  } rounded-full flex items-center justify-center text-white font-semibold border-2 border-gray-900 shadow-sm ${className} ${getColorFromString(
-    user.name
-  )}`;
+  const initials = useMemo(() => {
+    return (user.name || "Anonymous")
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }, [user.name]);
 
-  if (user.image) {
-    return (
-      <img
-        src={user.image}
-        alt={user.name}
-        title={user.name}
-        className={`${sizeClasses[size]} rounded-full border-2 border-gray-900 object-cover shadow-sm ${className}`}
-        referrerPolicy="no-referrer"
-        onError={(e) => {
-          (e.currentTarget as HTMLImageElement).src = "/default-avatar.jpg";
-        }}
-      />
-    );
-  }
+  const colorClass = useMemo(
+    () => getColorClass(user.name || "mid"),
+    [user.name]
+  );
+  const sizeClass = sizeConfig[size];
 
   return (
-    <div className={combinedClasses} title={user.name}>
-      {initials}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`relative w-full h-full rounded-full ${className}`}
+    >
+      <div
+        className={`
+          ${sizeClass} 
+          relative flex items-center justify-center 
+          rounded-full overflow-hidden 
+          ring-1 ring-white/10 shadow-sm
+          ${!user.image || imageError ? colorClass : "bg-neutral-900"}
+        `}
+      >
+        {user.image && !imageError ? (
+          <img
+            src={user.image}
+            alt={user.name}
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <span className="font-mono font-semibold tracking-tighter leading-none select-none">
+            {initials}
+          </span>
+        )}
+      </div>
+    </motion.div>
   );
 };
