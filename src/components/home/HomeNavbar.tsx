@@ -53,7 +53,9 @@ const HomeNavbar = () => {
                 >
                   <span
                     className={`relative z-10 transition-colors ${
-                      isActive ? "text-neutral-50" : "text-neutral-400"
+                      isActive
+                        ? "text-neutral-50"
+                        : "text-neutral-400 hover:text-neutral-100"
                     }`}
                   >
                     {label}

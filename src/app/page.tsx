@@ -9,7 +9,7 @@ import CTASection from "@/components/home/CTA";
 
 export default function Home() {
   return (
-    <div className="w-full bg-neutral-950 text-neutral-50 selection:bg-neutral-800 selection:text-neutral-50">
+    <div className="w-full bg-neutral-950 text-neutral-50">
       <HomeNavbar />
 
       <HeroSection />

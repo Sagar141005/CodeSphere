@@ -18,7 +18,7 @@ const companies = [
 
 export default function HeroSection() {
   return (
-    <div className="relative w-full min-h-screen flex flex-col justify-center px-6 lg:px-10 bg-neutral-950 overflow-hidden selection:bg-neutral-800 selection:text-neutral-50">
+    <div className="relative w-full min-h-screen flex flex-col justify-center px-6 lg:px-10 bg-neutral-950 overflow-hidden">
       <div
         className="absolute inset-0 z-0 opacity-20"
         style={{

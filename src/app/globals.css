@@ -37,31 +37,19 @@
   --foreground: #171717;
 }
 
-@keyframes gradientBackground {
-  0% {
-    background-position: 0% 50%;
+body {
+  & *::selection {
+    background-color: #262626;
   }
-  50% {
-    background-position: 100% 50%;
+  &::selection {
+    background-color: #262626;
   }
-  100% {
-    background-position: 0% 50%;
+  & *::selection {
+    color: #fafafa;
   }
-}
-
-.bg-animated-gradient {
-  background: linear-gradient(
-    -45deg,
-    #0a0a0a,
-    #1b0036,
-    #004080,
-    #7bbacc,
-    #6fbcb5,
-    #8a2be2,
-    #0a0a0a
-  );
-  background-size: 400% 400%;
-  animation: gradientBackground 15s ease infinite;
+  &::selection {
+    color: #fafafa;
+  }
 }
 
 .cursor-blob {
@@ -121,27 +109,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "JetBrains Mono", monospace;
-}
-
-.scroll-wrapper {
-  overflow: hidden;
-  width: 100%;
-  position: relative;
-}
-
-.scroll-horizontal {
-  display: flex;
-  width: max-content;
-  animation: scroll-horizontal 20s linear infinite;
-}
-
-@keyframes scroll-horizontal {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
 }
 
 .logo-img {
