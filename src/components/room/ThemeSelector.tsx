@@ -61,14 +61,14 @@ export default function ThemeSelector({ theme, setTheme }: Props) {
     <div className="relative text-sm" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 px-3 py-1.5 border border-[#333] bg-[#1e1e1e] text-gray-300 hover:bg-[#2a2a2a] transition-colors rounded-md"
+        className="flex items-center gap-2 px-3 py-1.5 border border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors rounded-lg"
       >
         {THEME_ICONS[current?.id ?? "vs-dark"]}
         <span>{current?.label || "Theme"}</span>
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-44 bg-[#1a1a1a] border border-[#333] shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-44 bg-neutral-900 border border-neutral-800 shadow-xl z-50 rounded-md overflow-hidden">
           {THEMES.map((t) => (
             <button
               key={t.id}
@@ -76,8 +76,10 @@ export default function ThemeSelector({ theme, setTheme }: Props) {
                 setTheme(t.id);
                 setOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-[#2a2a2a] cursor-pointer ${
-                t.id === theme ? "text-blue-400" : "text-gray-300"
+              className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-neutral-800 transition-colors cursor-pointer ${
+                t.id === theme
+                  ? "text-blue-500 font-medium"
+                  : "text-neutral-400 hover:text-neutral-200"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -85,7 +87,7 @@ export default function ThemeSelector({ theme, setTheme }: Props) {
                 <span>{t.label}</span>
               </div>
               <div
-                className="w-3 h-3 rounded-sm border border-gray-600"
+                className="w-3 h-3 rounded-sm border border-neutral-700 shadow-sm"
                 style={{ backgroundColor: t.color }}
               />
             </button>

@@ -33,31 +33,35 @@ export default function TabbedSidebar({
   const [activeTab, setActiveTab] = useState<"explorer" | "git">("explorer");
 
   return (
-    <div className="w-64 flex h-full">
-      {/* Vertical Activity Bar (like VSCode) */}
-      <div className="w-12 bg-[#1e1e1e] border-r border-gray-700 flex flex-col items-center py-2 space-y-2">
+    <div className="w-full flex h-full bg-neutral-950 border-r border-neutral-800">
+      <div className="w-12 bg-neutral-950 border-r border-neutral-800 flex flex-col items-center py-3 space-y-3">
         <button
           onClick={() => setActiveTab("explorer")}
+          title="Explorer"
           className={clsx(
-            "p-2 rounded-md hover:bg-[#2a2a2a] transition",
-            activeTab === "explorer" && "bg-[#333333] text-white"
+            "p-2 rounded-lg transition-colors duration-200",
+            activeTab === "explorer"
+              ? "bg-neutral-800 text-neutral-50"
+              : "text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300"
           )}
         >
           <Files className="w-5 h-5" />
         </button>
         <button
           onClick={() => setActiveTab("git")}
+          title="Source Control"
           className={clsx(
-            "p-2 rounded-md hover:bg-[#2a2a2a] transition",
-            activeTab === "git" && "bg-[#333333] text-white"
+            "p-2 rounded-lg transition-colors duration-200",
+            activeTab === "git"
+              ? "bg-neutral-800 text-neutral-50"
+              : "text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300"
           )}
         >
           <GitGraph className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Active Sidebar Panel */}
-      <div className="w-[216px] bg-[#1e1e1e] border-r border-gray-700 overflow-y-auto">
+      <div className="flex-1 bg-neutral-950 overflow-y-auto no-scrollbar">
         {activeTab === "explorer" ? (
           <EditorFilePanel
             files={files}

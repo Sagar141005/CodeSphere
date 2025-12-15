@@ -172,8 +172,8 @@ export default function EditorFilePanel({
             className={clsx(
               "flex items-center text-md rounded-md cursor-pointer transition-colors py-2",
               file.id === activeFileId
-                ? "bg-[#2d2d2d] text-white font-medium"
-                : "hover:bg-[#2a2a2a] text-gray-300"
+                ? "bg-neutral-800 text-neutral-50 font-medium"
+                : "hover:bg-neutral-900 text-neutral-400"
             )}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -188,7 +188,7 @@ export default function EditorFilePanel({
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleRename(file.id)}
                 onBlur={() => handleRename(file.id)}
-                className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full"
+                className="bg-neutral-900 px-2 py-1 text-sm text-neutral-50 border border-neutral-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 w-full"
                 autoFocus
               />
             ) : (
@@ -201,9 +201,9 @@ export default function EditorFilePanel({
               >
                 {file.type === "folder" ? (
                   expanded[file.id] ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-neutral-500" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-neutral-500" />
                   )
                 ) : (
                   <span className="w-4 h-4" />
@@ -211,9 +211,9 @@ export default function EditorFilePanel({
 
                 {file.type === "folder" ? (
                   expanded[file.id] ? (
-                    <FolderOpen className="w-4 h-4 text-yellow-400" />
+                    <FolderOpen className="w-4 h-4 text-amber-400" />
                   ) : (
-                    <Folder className="w-4 h-4 text-yellow-400" />
+                    <Folder className="w-4 h-4 text-amber-400" />
                   )
                 ) : (
                   getFileIcon(file.name)
@@ -232,7 +232,7 @@ export default function EditorFilePanel({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && createItem(file.id)}
-                  className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-2"
+                  className="bg-neutral-900 px-2 py-1 text-sm text-neutral-50 border border-neutral-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 w-full mb-2"
                   autoFocus
                 />
               )}
@@ -244,13 +244,13 @@ export default function EditorFilePanel({
   };
 
   return (
-    <aside className="bg-[#1e1e1e] text-gray-200 p-3 overflow-y-auto border-r border-gray-700 relative">
+    <aside className="bg-neutral-950 text-neutral-300 p-3 overflow-y-auto relative h-full border-r border-neutral-800">
       <div className="flex justify-between items-center mb-3 px-1">
-        <h2 className="font-semibold text-xs uppercase tracking-wide text-gray-400 select-none">
+        <h2 className="font-semibold text-[10px] uppercase tracking-widest text-neutral-500 select-none">
           Explorer
         </h2>
         <button
-          className="hover:bg-[#2a2a2a] p-1.5 rounded transition"
+          className="hover:bg-neutral-900 p-1.5 rounded transition text-neutral-400 hover:text-neutral-50"
           onClick={() => setCreatingInFolder("root")}
           aria-label="Add new file or folder"
           type="button"
@@ -266,7 +266,7 @@ export default function EditorFilePanel({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && createItem(null)}
-          className="bg-[#2a2a2a] px-2 py-1 text-sm text-white border border-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full mb-3"
+          className="bg-neutral-900 px-2 py-1 text-sm text-neutral-50 border border-neutral-800 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 w-full mb-3"
           autoFocus
           aria-label="New file or folder name"
         />
@@ -278,7 +278,7 @@ export default function EditorFilePanel({
         <div
           ref={menuRef}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed bg-[#1f1f1f] text-white rounded-md shadow-lg w-48 z-50 border border-gray-700"
+          className="fixed bg-neutral-900 text-neutral-200 rounded-md shadow-xl w-48 z-50 border border-neutral-800"
           role="menu"
           aria-orientation="vertical"
           tabIndex={-1}
@@ -288,11 +288,11 @@ export default function EditorFilePanel({
               setCreatingInFolder(contextMenu.fileId || "root");
               setContextMenu(null);
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-neutral-800 transition text-sm"
             role="menuitem"
             type="button"
           >
-            <Plus className="w-4 h-4 text-green-400" />
+            <Plus className="w-4 h-4 text-emerald-500" />
             New File / Folder
           </button>
           <button
@@ -302,11 +302,11 @@ export default function EditorFilePanel({
               setNewName(current?.name || "");
               setContextMenu(null);
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-[#2a2a2a] transition text-sm"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-neutral-800 transition text-sm"
             role="menuitem"
             type="button"
           >
-            <Edit3 className="w-4 h-4 text-yellow-400" />
+            <Edit3 className="w-4 h-4 text-amber-400" />
             Rename
           </button>
           <button
@@ -314,7 +314,7 @@ export default function EditorFilePanel({
               handleDelete(contextMenu.fileId!);
               setContextMenu(null);
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-600 hover:text-white transition text-sm text-red-400"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-red-900/20 hover:text-white transition text-sm text-red-400"
             role="menuitem"
             type="button"
           >

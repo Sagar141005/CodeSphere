@@ -5,36 +5,30 @@ import { useSession } from "next-auth/react";
 import useSWR, { mutate } from "swr";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/Loader";
-import HomeNavbar from "@/components/HomeNavbar";
+import HomeNavbar from "@/components/home/HomeNavbar";
 import ConfirmModal from "@/components/ConfirmModal";
-import { RoomList } from "@/components/RoomList";
+import { RoomList } from "@/components/room/RoomList";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
-  User,
   Users,
   Trash2,
   LogOut,
   Crown,
-  UserPlus,
   DoorClosed,
   Loader2,
+  Plus,
+  Mail,
+  Shield,
 } from "lucide-react";
 import { Room } from "@/types/Room";
 import { useState, useEffect } from "react";
+import Footer from "@/components/Footer";
 
 interface TeamMember {
   id: string;
   name: string | null;
   email: string;
-  profilePic?: string;
   image?: string;
-}
-
-interface TeamInvite {
-  id: string;
-  email: string;
-  status: "PENDING" | "ACCEPTED" | "REJECTED";
-  invitedAt: string;
 }
 
 interface Team {
@@ -43,7 +37,6 @@ interface Team {
   createdById: string;
   members: TeamMember[];
   rooms: Room[];
-  invites: TeamInvite[];
 }
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -64,6 +57,7 @@ export default function TeamDetailsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [inviting, setInviting] = useState(false);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteTeamConfirm, setShowDeleteTeamConfirm] = useState(false);
   const [selectedRoomToDelete, setSelectedRoomToDelete] = useState<Room | null>(
@@ -76,54 +70,7 @@ export default function TeamDetailsPage() {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [status]);
-
-  const inviteMember = async () => {
-    if (!inviteEmail.trim()) return;
-    setInviting(true);
-    try {
-      const res = await fetch(`/api/team/${id}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteEmail }),
-      });
-
-      if (res.ok) {
-        toast.success("Invitation sent");
-        setInviteEmail("");
-        mutate(`/api/team/${id}`);
-      } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to invite member");
-      }
-    } catch (err) {
-      console.error("Invite failed:", err);
-      toast.error("Something went wrong while inviting");
-    } finally {
-      setInviting(false);
-    }
-  };
-
-  const removeMember = async (memberId: string) => {
-    try {
-      const res = await fetch(`/api/team/${id}/remove-member`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: memberId }),
-      });
-
-      if (res.ok) {
-        toast.success("Member removed successfully");
-        mutate(`/api/team/${id}`);
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to remove member");
-      }
-    } catch (err) {
-      console.error("Remove member failed:", err);
-      toast.error("Something went wrong while removing member");
-    }
-  };
+  }, [status, router]);
 
   const createRoom = async () => {
     if (!newRoomName.trim()) return;
@@ -144,10 +91,80 @@ export default function TeamDetailsPage() {
         toast.error(err.error || "Failed to create room");
       }
     } catch (err) {
-      console.error("Room creation failed:", err);
-      toast.error("Something went wrong while creating the room.");
+      toast.error("Something went wrong");
     } finally {
       setCreatingRoom(false);
+    }
+  };
+
+  const inviteMember = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      const res = await fetch(`/api/team/${id}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+
+      if (res.ok) {
+        toast.success("Invitation sent");
+        setInviteEmail("");
+        mutate(`/api/team/${id}`);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to invite member");
+      }
+    } catch (err) {
+      toast.error("Something went wrong");
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const removeMember = async (memberId: string) => {
+    try {
+      const res = await fetch(`/api/team/${id}/remove-member`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: memberId }),
+      });
+      if (res.ok) {
+        toast.success("Member removed");
+        mutate(`/api/team/${id}`);
+      } else {
+        toast.error("Failed to remove member");
+      }
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleDeleteRoom = async (slug: string) => {
+    try {
+      const res = await fetch(`/api/room/${slug}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Room deleted");
+        mutate(`/api/team/${id}`);
+      } else {
+        toast.error("Failed to delete room");
+      }
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleDeleteTeam = async (id: string) => {
+    try {
+      const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Team deleted");
+        router.push("/teams");
+      } else {
+        toast.error("Failed to delete team");
+      }
+    } catch (err) {
+      toast.error("Something went wrong");
     }
   };
 
@@ -156,351 +173,241 @@ export default function TeamDetailsPage() {
       const res = await fetch(`/api/team/${id}/leave`, { method: "DELETE" });
       if (res.ok) {
         router.push("/teams");
-        toast.success("Room leaved successfully");
+        toast.success("Left team successfully");
       } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to leave team");
+        toast.error("Failed to leave team");
       }
     } catch (err) {
-      console.error("Leave team failed:", err);
-      toast.error("Something went wrong while leaving the team");
+      toast.error("Something went wrong");
     }
   };
 
-  const handleDeleteRoom = async (slug: string) => {
-    try {
-      const res = await fetch(`/api/room/${slug}`, { method: "DELETE" });
-      if (res.ok) {
-        toast.success("Room deleted successfully");
-        mutate(`/api/team/${id}`);
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to delete room");
-      }
-    } catch (err) {
-      console.error("Delete room failed:", err);
-      toast.error("Something went wrong while deleting the room");
-    }
-  };
-
-  const handleDeleteTeam = async (id: string) => {
-    try {
-      const res = await fetch(`/api/team/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        toast.success("Team deleted successfully");
-        router.push("/teams");
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to delete team");
-      }
-    } catch (err) {
-      console.error("Delete team failed:", err);
-      toast.error("Something went wrong while deleting the team");
-    }
-  };
-
-  if (status === "loading" || isLoading) {
-    return <Loader />;
-  }
-
-  if (error || !team) {
-    return <p className="text-center mt-10">Team not found.</p>;
-  }
+  if (status === "loading" || isLoading) return <Loader />;
+  if (error || !team)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-500">
+        Team not found.
+      </div>
+    );
 
   const isOwner = session?.user?.id === team.createdById;
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-black via-[#111111] to-gray-900 text-white font-sans">
+    <div className="min-h-screen bg-neutral-950 text-neutral-50">
       <HomeNavbar />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-10 sm:py-16 md:py-20 space-y-16 sm:space-y-20">
-        {/* Header */}
-        <section className="max-w-5xl mx-auto bg-black/60 border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-xl space-y-6 sm:space-y-8">
-          {/* Top Row: Team Info + Delete Button */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 relative">
-            {/* Team Name & Creator */}
-            <div className="space-y-2 text-center md:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight capitalize break-words">
+      <main className="max-w-7xl mx-auto px-6 lg:px-8 py-20 relative">
+        <div className="relative z-10 space-y-12">
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-neutral-800 pb-8">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-neutral-900 border border-neutral-800">
+                  <Users className="w-5 h-5 text-neutral-400" />
+                </div>
+                <span className="font-mono text-xs font-medium text-neutral-500 uppercase tracking-widest">
+                  Team Dashboard
+                </span>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-neutral-50 capitalize">
                 {team.name}
               </h1>
-              <p className="text-xs sm:text-sm text-gray-400 flex flex-wrap items-center justify-center md:justify-start gap-1">
-                <User className="w-4 h-4 text-gray-500" />
-                Created by:
-                <code className="ml-1 px-1 py-0.5 bg-gray-900 text-white rounded text-[10px] sm:text-xs break-all">
-                  {team.createdById}
-                </code>
+              <p className="mt-2 text-neutral-400 text-sm flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                Team Workspace
+                <span className="text-neutral-600 px-2">|</span>
+                <span className="font-mono text-neutral-500">
+                  ID: {team.id}
+                </span>
               </p>
             </div>
 
-            {/* Delete Button (if owner) */}
-            {isOwner && (
-              <>
-                {/* For small screens: absolute top-right */}
+            <div className="flex items-center gap-3">
+              {isOwner && (
                 <button
                   onClick={() => setShowDeleteTeamConfirm(true)}
-                  className="absolute top-0 right-0 sm:hidden flex items-center justify-center gap-1 
-                   text-xs text-red-500 hover:text-white hover:bg-red-600 
-                   border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-900/30 text-red-500 hover:bg-red-950/20 hover:border-red-900/50 transition-colors text-sm font-medium"
                 >
                   <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete Team</span>
                 </button>
+              )}
 
-                {/* For md+ screens: inline button */}
+              {!isOwner && (
                 <button
-                  onClick={() => setShowDeleteTeamConfirm(true)}
-                  className="hidden sm:flex items-center justify-center gap-1 
-                   text-xs sm:text-sm text-red-500 hover:text-white hover:bg-red-600 
-                   border border-red-600 px-3 py-1.5 rounded-lg transition cursor-pointer w-full md:w-auto"
+                  onClick={() => setConfirmLeaveTeam(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-800 text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 transition-colors text-sm font-medium"
                 >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
+                  <LogOut className="w-4 h-4" />
+                  <span>Leave Team</span>
                 </button>
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          </header>
 
-          {/* Members Section */}
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-semibold flex items-center gap-2 sm:gap-3 text-white mb-4 sm:mb-6">
-              <Users className="w-6 h-6 sm:w-7 sm:h-7 text-neutral-400" />
-              Members
-            </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="lg:col-span-1 space-y-6">
+              <div className="rounded-xl border border-neutral-800 bg-neutral-900/30 overflow-hidden">
+                <div className="p-4 border-b border-neutral-800 bg-neutral-900/50 flex justify-between items-center">
+                  <h3 className="text-sm font-semibold text-neutral-300">
+                    Team Members
+                  </h3>
+                  <span className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-400 text-xs font-mono">
+                    {team.members.length}
+                  </span>
+                </div>
 
-            <ul className="space-y-3 sm:space-y-4 mb-6 max-h-[300px] sm:max-h-[400px] overflow-y-auto">
-              {team.members.map((member) => {
-                const isTeamOwner = member.id === team.createdById;
-                return (
-                  <li
-                    key={member.id}
-                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 rounded-xl px-4 sm:px-6 py-3 sm:py-4 bg-[#111111] hover:bg-white/5 transition cursor-default"
-                  >
-                    <div className="flex items-center gap-3 sm:gap-5 w-full sm:w-auto">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-md">
-                        <UserAvatar
-                          user={{
-                            name: member.name ?? "Anonymous",
-                            image: member.image ?? undefined,
-                          }}
-                          size="full"
+                <ul className="divide-y divide-neutral-800 max-h-[400px] overflow-y-auto">
+                  {team.members.map((member) => {
+                    const isTeamOwner = member.id === team.createdById;
+                    return (
+                      <li
+                        key={member.id}
+                        className="p-4 flex items-center justify-between group hover:bg-neutral-900/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="w-8 h-8 shrink-0">
+                            <UserAvatar
+                              user={{
+                                name: member.name ?? "Anonymous",
+                                image: member.image,
+                              }}
+                              size="full"
+                            />
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-neutral-200 truncate">
+                                {member.name || "Unknown"}
+                              </span>
+                              {isTeamOwner && (
+                                <Crown className="w-3 h-3 text-yellow-500" />
+                              )}
+                            </div>
+                            <span className="text-xs text-neutral-500 truncate block max-w-[300px]">
+                              {member.email}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isOwner && member.email !== session?.user?.email && (
+                          <button
+                            onClick={() => setMemberToRemove(member)}
+                            className="opacity-0 group-hover:opacity-100 p-2 text-neutral-500 hover:text-red-500 transition-all rounded hover:bg-red-950/20"
+                            title="Remove member"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+
+                {isOwner && (
+                  <div className="p-4 border-t border-neutral-800 bg-neutral-900/20">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        inviteMember();
+                      }}
+                      className="flex flex-col gap-3"
+                    >
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 w-4 h-4 text-neutral-500" />
+                        <input
+                          type="email"
+                          value={inviteEmail}
+                          onChange={(e) => setInviteEmail(e.target.value)}
+                          placeholder="Invite by email..."
+                          className="w-full bg-neutral-950 border border-neutral-800 rounded-lg py-2 pl-9 pr-3 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 transition-colors"
                         />
                       </div>
-
-                      <div className="flex flex-col max-w-[150px] sm:max-w-xs">
-                        <span className="font-semibold truncate">
-                          {member.name || member.email}
-                        </span>
-                        <span className="text-xs text-gray-400 truncate">
-                          {member.email}
-                        </span>
-                      </div>
-
-                      {isTeamOwner && (
-                        <span
-                          className="flex items-center gap-1 bg-yellow-400 text-gray-900 text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full select-none"
-                          title="Team Owner"
-                        >
-                          <Crown className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Owner
-                        </span>
-                      )}
-                    </div>
-
-                    {isOwner &&
-                      member.email !== session?.user?.email &&
-                      !isTeamOwner && (
-                        <button
-                          onClick={() => setMemberToRemove(member)}
-                          className="flex items-center justify-center gap-1 text-xs sm:text-sm text-red-500 hover:text-red-600 transition font-semibold focus:outline-none rounded cursor-pointer"
-                          aria-label={`Remove ${member.name || member.email}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Remove
-                        </button>
-                      )}
-                  </li>
-                );
-              })}
-            </ul>
-
-            {/* Invite Member Form */}
-            {isOwner && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  inviteMember();
-                }}
-                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
-              >
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="Invite member by email"
-                  className="flex-1 rounded-lg bg-black/60 border border-white/20 px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
-                  aria-label="Email to invite"
-                  required
-                  spellCheck={false}
-                  autoComplete="off"
-                />
-                <button
-                  type="submit"
-                  disabled={inviting}
-                  className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-medium rounded-lg transition duration-200 cursor-pointer w-full sm:w-auto
-                    ${
-                      inviting
-                        ? "bg-gray-500 cursor-not-allowed text-white/70"
-                        : "bg-white/5 text-white/80 hover:bg-white/10 hover:text-white border border-white/10"
-                    }
-                  `}
-                >
-                  {inviting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                      Sending{" "}
-                      <span className="animate-pulse -ml-2 text-white">
-                        ...
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      Invite
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-          </div>
-        </section>
-        {/* Rooms Section */}
-        <section className="max-w-5xl mx-auto">
-          {isOwner && (
-            <section className="relative max-w-5xl mx-auto mb-6">
-              <div
-                className="group relative cursor-pointer rounded-2xl border border-white/20 
-                   bg-gradient-to-br from-black/70 to-black/90
-                   hover:border-blue-300 hover:shadow-xl transition-all duration-300 
-                   shadow-lg backdrop-blur-md p-6"
-              >
-                <div
-                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 
-                        transition-all duration-500 pointer-events-none 
-                        bg-gradient-to-br from-cyan-500/10 to-indigo-500/10 blur-md"
-                />
-
-                <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  {/* Left: Title */}
-                  <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-lg font-semibold text-white group-hover:text-cyan-200 transition-colors mb-1">
-                      Create a New Room
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      Give your room a name and start collaborating instantly.
-                    </p>
+                      <button
+                        type="submit"
+                        disabled={inviting || !inviteEmail}
+                        className="w-full py-2 bg-neutral-100 hover:bg-white disabled:bg-neutral-800 disabled:text-neutral-600 text-neutral-950 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                      >
+                        {inviting ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          "Send Invite"
+                        )}
+                      </button>
+                    </form>
                   </div>
+                )}
+              </div>
+            </div>
 
-                  {/* Right: Input + Button */}
-                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center w-full sm:w-auto">
+            <div className="lg:col-span-2 space-y-6">
+              {isOwner && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex-1 relative">
                     <input
                       type="text"
+                      placeholder="Create new team room..."
                       value={newRoomName}
                       onChange={(e) => setNewRoomName(e.target.value)}
-                      placeholder="Enter room name"
-                      className="px-4 py-2.5 rounded-lg bg-black/70 text-white border border-white/20 
-                         placeholder-gray-500 focus:outline-none focus:ring-2 
-                         focus:ring-blue-300 text-sm w-full sm:w-64"
-                      aria-label="Room name input"
-                      spellCheck={false}
-                      autoComplete="off"
+                      className="w-full h-10 bg-neutral-900 border border-neutral-800 rounded-lg px-4 text-sm text-neutral-200 placeholder:text-neutral-600 focus:outline-none focus:border-neutral-600 focus:ring-1 focus:ring-neutral-600 transition-all"
                     />
-                    <button
-                      onClick={createRoom}
-                      disabled={creatingRoom}
-                      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-150 
-                         ${
-                           creatingRoom
-                             ? "bg-gray-500 text-white cursor-not-allowed"
-                             : "bg-gradient-to-r from-indigo-300 to-cyan-300 text-black hover:brightness-105 active:scale-95"
-                         }
-              `}
-                    >
-                      {creatingRoom ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Creating{" "}
-                          <span className="animate-pulse -ml-2 text-white">
-                            ...
-                          </span>
-                        </div>
-                      ) : (
-                        "Create Room"
-                      )}
-                    </button>
                   </div>
+                  <button
+                    onClick={createRoom}
+                    disabled={creatingRoom || !newRoomName.trim()}
+                    className="h-10 px-4 rounded-lg bg-neutral-50 hover:bg-white disabled:bg-neutral-800 disabled:text-neutral-600 text-neutral-950 text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    {creatingRoom ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    <span>Create</span>
+                  </button>
                 </div>
-              </div>
-            </section>
-          )}
+              )}
 
-          {/* Rooms Heading if user is NOT owner */}
-          {!isOwner && team.rooms.length > 0 && (
-            <h2 className="text-2xl font-semibold flex items-center gap-3 text-white mb-6">
-              <DoorClosed className="w-6 h-6 text-neutral-400" />
-              Rooms
-            </h2>
-          )}
-
-          {team.rooms.length === 0 ? (
-            <div className="text-center mt-20">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-white/5 ring-1 ring-white/10 mb-6">
-                <DoorClosed className="w-8 h-8 text-gray-400" />
+              <div className="flex items-center justify-between pt-4">
+                <div className="flex items-center gap-2">
+                  <DoorClosed className="w-4 h-4 text-neutral-500" />
+                  <h2 className="text-sm font-semibold text-neutral-300 uppercase tracking-widest">
+                    Active Rooms
+                  </h2>
+                </div>
+                <span className="text-xs text-neutral-500 font-mono">
+                  {team.rooms.length} TOTAL
+                </span>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                No Rooms Yet
-              </h3>
-              <p className="text-gray-500 italic max-w-xs mx-auto">
-                Start by creating one above.
-              </p>
+
+              {team.rooms.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 border border-neutral-800 rounded-xl bg-neutral-900/20">
+                  <Shield className="w-8 h-8 text-neutral-700 mb-3" />
+                  <p className="text-neutral-500 font-medium">No rooms yet</p>
+                  {isOwner && (
+                    <p className="text-neutral-600 text-sm">
+                      Create one above to get started.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <RoomList
+                    rooms={team.rooms.map((r) => ({ ...r, owned: isOwner }))}
+                    onDelete={(room) => {
+                      setSelectedRoomToDelete(room);
+                      setShowDeleteConfirm(true);
+                    }}
+                  />
+                </ul>
+              )}
             </div>
-          ) : (
-            <RoomList
-              rooms={team.rooms.map((room) => ({
-                ...room,
-                owned: room.ownerId === session?.user?.id,
-              }))}
-              onDelete={(room) => {
-                setSelectedRoomToDelete(room);
-                setShowDeleteConfirm(true);
-              }}
-            />
-          )}
-        </section>
-        {/* Leave Team Button */}
-        {!isOwner && (
-          <div className="max-w-5xl mx-auto text-right">
-            <button
-              onClick={() => setConfirmLeaveTeam(true)}
-              className="flex items-center gap-2 text-gray-400 hover:text-red-500 underline text-sm transition focus:outline-none focus:ring-2 focus:ring-gray-400 rounded"
-              aria-label="Leave team"
-            >
-              <LogOut className="w-5 h-5" />
-              Leave Team
-            </button>
           </div>
-        )}
-        {/* Modals */}
-        {/* Room Deletion */}
+        </div>
+
         <ConfirmModal
           isOpen={showDeleteConfirm && !!selectedRoomToDelete}
-          title="Are you sure you want to delete this room?"
-          message={
-            <>
-              <strong className="text-white">
-                {selectedRoomToDelete?.name}
-              </strong>{" "}
-              will be permanently removed. This action cannot be undone.
-            </>
-          }
+          title="Delete Room?"
+          message={`Are you sure you want to delete "${selectedRoomToDelete?.name}"?`}
+          confirmLabel="Delete"
           onCancel={() => {
             setShowDeleteConfirm(false);
             setSelectedRoomToDelete(null);
@@ -511,59 +418,44 @@ export default function TeamDetailsPage() {
             setSelectedRoomToDelete(null);
           }}
         />
-        {/* Team Deletion */}
+
         <ConfirmModal
           isOpen={showDeleteTeamConfirm}
-          title="Are you sure you want to delete this team?"
+          title="Delete Team?"
           message={
-            <>
-              <strong className="text-white">{team?.name}</strong> and all its
-              rooms and members will be permanently removed. This action cannot
-              be undone.
-            </>
+            <span className="text-red-400">
+              Warning: This will permanently delete the team, its rooms, and
+              remove all members.
+            </span>
           }
+          confirmLabel="Delete Forever"
           onCancel={() => setShowDeleteTeamConfirm(false)}
           onConfirm={async () => {
-            await handleDeleteTeam(team!.id);
+            await handleDeleteTeam(team.id);
             setShowDeleteTeamConfirm(false);
           }}
         />
-        {/* Remove Member */}
+
         <ConfirmModal
           isOpen={!!memberToRemove}
-          title="Remove Team Member"
-          message={
-            <>
-              Are you sure you want to remove{" "}
-              <strong className="text-white">
-                {memberToRemove?.name || memberToRemove?.email}
-              </strong>{" "}
-              from the team?
-            </>
-          }
+          title="Remove Member?"
+          message={`Remove ${
+            memberToRemove?.name || memberToRemove?.email
+          } from the team?`}
           confirmLabel="Remove"
-          cancelLabel="Cancel"
           onCancel={() => setMemberToRemove(null)}
           onConfirm={async () => {
-            if (memberToRemove) {
-              await removeMember(memberToRemove.id);
-              setMemberToRemove(null);
-            }
+            if (memberToRemove) await removeMember(memberToRemove.id);
+            setMemberToRemove(null);
           }}
         />
-        {/* Leave Room */}
+
         <ConfirmModal
           isOpen={confirmLeaveTeam}
-          title="Leave Team"
-          message={
-            <>
-              Are you sure you want to leave{" "}
-              <strong className="text-white">{team?.name}</strong>? You will
-              lose access to all rooms and team data.
-            </>
-          }
-          confirmLabel="Leave Team"
-          cancelLabel="Stay"
+          title="Leave Team?"
+          message="Are you sure you want to leave this team? You will lose access to all rooms."
+          confirmLabel="Leave"
+          cancelLabel="Cancel"
           onCancel={() => setConfirmLeaveTeam(false)}
           onConfirm={async () => {
             await leaveTeam();
@@ -571,6 +463,7 @@ export default function TeamDetailsPage() {
           }}
         />
       </main>
+      <Footer />
     </div>
   );
 }

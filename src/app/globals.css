@@ -37,43 +37,19 @@
   --foreground: #171717;
 }
 
-@keyframes gradientBackground {
-  0% {
-    background-position: 0% 50%;
+body {
+  & *::selection {
+    background-color: #262626;
   }
-  50% {
-    background-position: 100% 50%;
+  &::selection {
+    background-color: #262626;
   }
-  100% {
-    background-position: 0% 50%;
+  & *::selection {
+    color: #fafafa;
   }
-}
-
-.bg-animated-gradient {
-  background: linear-gradient(
-    -45deg,
-    #0a0a0a,
-    #1b0036,
-    #004080,
-    #7bbacc,
-    #6fbcb5,
-    #8a2be2,
-    #0a0a0a
-  );
-  background-size: 400% 400%;
-  animation: gradientBackground 15s ease infinite;
-}
-
-.cursor-blob {
-  @apply fixed rounded-full pointer-events-none z-[9999] transition-transform;
-  width: 24px;
-  height: 24px;
-  background-color: rgba(255, 255, 255, 0.1);
-  top: 0;
-  left: 0;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: difference;
-  transition: transform 0.15s ease;
+  &::selection {
+    color: #fafafa;
+  }
 }
 
 @keyframes fade-in {
@@ -91,25 +67,6 @@
   animation: fade-in 0.25s ease-out;
 }
 
-@keyframes scaleIn {
-  0% {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.25s ease-out;
-}
-
-body.disable-cursor-blob .cursor-blob {
-  display: none !important;
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -121,27 +78,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "JetBrains Mono", monospace;
-}
-
-.scroll-wrapper {
-  overflow: hidden;
-  width: 100%;
-  position: relative;
-}
-
-.scroll-horizontal {
-  display: flex;
-  width: max-content;
-  animation: scroll-horizontal 20s linear infinite;
-}
-
-@keyframes scroll-horizontal {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
 }
 
 .logo-img {

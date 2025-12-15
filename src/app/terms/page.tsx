@@ -1,106 +1,149 @@
+"use client";
+
 import Footer from "@/components/Footer";
-import HomeNavbar from "@/components/HomeNavbar";
+import HomeNavbar from "@/components/home/HomeNavbar";
+import { motion } from "framer-motion";
 
 export default function TermsPage() {
   return (
-    <div className="w-full bg-black text-white">
+    <div className="min-h-screen bg-neutral-950 text-neutral-50">
       <HomeNavbar />
 
-      <main className="max-w-5xl mx-auto px-6 md:px-12 py-20 space-y-16">
-        <header className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r text-transparent bg-clip-text from-indigo-300 to-cyan-300 mb-4">
-            Terms & Conditions
-          </h1>
-          <p className="text-gray-400 text-base sm:text-lg mx-auto max-w-md">
-            Please read these terms carefully before using CodeSphere. By
-            accessing or using our platform, you agree to these conditions.
-          </p>
-        </header>
+      <main className="relative pt-24 pb-32">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 relative z-10">
+          <header className="mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-6"
+            >
+              <span className="font-mono text-xs text-neutral-500 uppercase tracking-widest">
+                Effective Date: August 2025
+              </span>
+            </motion.div>
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">1. Acceptance of Terms</h2>
-          <p className="text-gray-400 leading-relaxed">
-            By signing up or using CodeSphere, you agree to be bound by these
-            Terms & Conditions and our Privacy Policy. If you disagree, please
-            stop using our services.
-          </p>
-        </section>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl md:text-6xl font-bold tracking-tighter text-center text-neutral-50 mb-6"
+            >
+              Terms & Conditions
+            </motion.h1>
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">2. Use of the Platform</h2>
-          <p className="text-gray-400 leading-relaxed">
-            CodeSphere provides online code collaboration tools. You agree not
-            to misuse the platform for illegal, harmful, or unauthorized
-            activities, including attempts to hack, overload, or disrupt the
-            service.
-          </p>
-        </section>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-neutral-400 text-center leading-relaxed"
+            >
+              <p>
+                Please read these terms carefully before deploying on
+                CodeSphere. By accessing or using our platform, you agree to be
+                bound by these conditions.
+              </p>
+            </motion.div>
+          </header>
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">3. User Accounts</h2>
-          <p className="text-gray-400 leading-relaxed">
-            You are responsible for maintaining the confidentiality of your
-            account and password, and for all activity under your account.
-          </p>
-        </section>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="space-y-12"
+          >
+            <TermSection
+              number="01"
+              title="Acceptance of Terms"
+              content="By creating an account or using CodeSphere, you formally agree to these Terms & Conditions and our Privacy Policy. If you do not agree, you must discontinue use of our services immediately."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">4. User Content</h2>
-          <p className="text-gray-400 leading-relaxed">
-            You retain ownership of your code and files. By uploading content,
-            you grant CodeSphere a limited license to store, process, and
-            display it for collaboration and platform features.
-          </p>
-        </section>
+            <TermSection
+              number="02"
+              title="Use of the Platform"
+              content="CodeSphere is a professional tool for code collaboration. You agree not to misuse the platform for illegal activities, malware distribution, or unauthorized system disruption (DDoS). We reserve the right to monitor usage for security purposes."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">5. Intellectual Property</h2>
-          <p className="text-gray-400 leading-relaxed">
-            The CodeSphere name, logo, and platform features are owned by us.
-            You may not copy, resell, or exploit any part of the service without
-            permission.
-          </p>
-        </section>
+            <TermSection
+              number="03"
+              title="User Accounts"
+              content="You are responsible for safeguarding your access credentials. CodeSphere is not liable for any loss or damage arising from your failure to protect your account information."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">6. Termination</h2>
-          <p className="text-gray-400 leading-relaxed">
-            We may suspend or terminate your account if you violate these terms
-            or misuse the platform. You may also delete your account at any
-            time.
-          </p>
-        </section>
+            <TermSection
+              number="04"
+              title="User Content & IP"
+              content="You retain full ownership of the code you write on CodeSphere. However, you grant us a limited, worldwide license to host, run, and display your content solely for the purpose of providing the service."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">7. Limitation of Liability</h2>
-          <p className="text-gray-400 leading-relaxed">
-            CodeSphere is provided "as is." We do not guarantee uninterrupted
-            service or error-free operation. We are not liable for any data
-            loss, downtime, or damages arising from using the service.
-          </p>
-        </section>
+            <TermSection
+              number="05"
+              title="Platform Intellectual Property"
+              content="The CodeSphere interface, logos, and proprietary code execution engine are the exclusive property of CodeSphere Inc. You may not reverse engineer or resell any part of the service."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">8. Changes to Terms</h2>
-          <p className="text-gray-400 leading-relaxed">
-            We may update these Terms from time to time. Continued use of the
-            platform after updates means you accept the new terms.
-          </p>
-        </section>
+            <TermSection
+              number="06"
+              title="Termination"
+              content="We reserve the right to suspend or terminate your access immediately, without prior notice, if you breach these Terms. You may also voluntarily terminate your account via settings at any time."
+            />
 
-        <section className="space-y-6">
-          <h2 className="text-2xl font-bold">9. Governing Law</h2>
-          <p className="text-gray-400 leading-relaxed">
-            These Terms are governed by applicable laws of your jurisdiction.
-            Any disputes will be resolved under those laws.
-          </p>
-        </section>
+            <TermSection
+              number="07"
+              title="Limitation of Liability"
+              content='THE SERVICE IS PROVIDED "AS IS". CODESPHERE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED. WE ARE NOT LIABLE FOR DATA LOSS, DOWNTIME, OR DAMAGES RESULTING FROM THE USE OF OUR PLATFORM.'
+            />
 
-        <section className="text-center text-gray-500 text-sm mt-12">
-          Last updated: August 2025
-        </section>
+            <TermSection
+              number="08"
+              title="Modifications"
+              content="We may revise these Terms from time to time. The most current version will always be posted on this page. By continuing to use the App after revisions become effective, you agree to be bound by the revised Terms."
+            />
+
+            <TermSection
+              number="09"
+              title="Governing Law"
+              content="These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which CodeSphere Inc. is registered, without regard to its conflict of law provisions."
+            />
+          </motion.div>
+
+          <div className="mt-24 pt-10 border-t border-neutral-900 text-center">
+            <p className="text-neutral-500 text-sm">
+              Legal inquiries?{" "}
+              <a
+                href="mailto:legal@codesphere.com"
+                className="text-neutral-300 hover:text-white hover:underline decoration-neutral-700 underline-offset-4 transition-colors"
+              >
+                legal@codesphere.com
+              </a>
+            </p>
+          </div>
+        </div>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function TermSection({
+  number,
+  title,
+  content,
+}: {
+  number: string;
+  title: string;
+  content: string;
+}) {
+  return (
+    <div className="group">
+      <h2 className="text-xl font-bold text-neutral-50 mb-4 flex items-center gap-3">
+        <span className="font-mono text-sm text-neutral-600 group-hover:text-neutral-400 transition-colors">
+          {number}.
+        </span>
+        {title}
+      </h2>
+      <p className="text-neutral-400 leading-7 text-base md:text-lg">
+        {content}
+      </p>
     </div>
   );
 }
