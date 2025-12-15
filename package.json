@@ -23,7 +23,7 @@
     "monaco-editor": "^0.52.2",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "motion": "^12.23.26",
-    "next": "15.4.1",
+    "next": "15.4.10",
     "next-auth": "^4.24.11",
     "openai": "^5.13.1",
     "python-shell": "^5.0.0",
