@@ -70,7 +70,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
       const latestEntry = log[log.length - 1];
       const content = latestEntry.error || latestEntry.output || "";
 
-      // Extract only the part starting with "Top 10 words:"
       const startIndex = content.indexOf("Top 10 words:");
       const textToCopy =
         startIndex !== -1 ? content.slice(startIndex).trim() : content.trim();
@@ -156,30 +155,29 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
     return (
       <div
         style={{ height }}
-        className="relative w-full flex flex-col bg-[#1e1e1e] group"
+        className="relative w-full flex flex-col bg-neutral-950 group"
       >
-        {/* Drag Handle */}
         <div
           onMouseDown={(e) => handleResize(e, height, setHeight, 40, 500)}
           className="absolute top-0 left-0 w-full h-2 cursor-row-resize bg-transparent z-10"
           title="Drag to resize terminal"
         />
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[#2c2c2c] bg-[#1f1f1f]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-800 bg-neutral-900">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 flex items-center justify-center bg-[#242424] rounded-md">
-              <TerminalIcon className="w-4 h-4 text-neutral-400 group-hover:text-blue-400" />
+            <div className="w-6 h-6 flex items-center justify-center bg-neutral-800 rounded-lg">
+              <TerminalIcon className="w-4 h-4 text-neutral-400 group-hover:text-blue-600" />
             </div>
-            <span className="text-sm font-medium text-gray-300">Terminal</span>
+            <span className="text-sm font-medium text-neutral-300">
+              Terminal
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Clear Button */}
             {log.length > 0 && (
               <button
                 onClick={clearLog}
-                className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-neutral-700 transition"
                 title="Clear terminal output"
               >
                 <Eraser className="w-3 h-3" />
@@ -187,11 +185,10 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
               </button>
             )}
 
-            {/* Copy Button */}
             {(output || error) && (
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-neutral-800 border border-neutral-700 transition"
               >
                 {isCopied ? (
                   <>
@@ -207,20 +204,18 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
           </div>
         </div>
 
-        {/* Output Area */}
-        {/* Show full output if expanded or output/error exists, else show collapsed */}
         {isExpanded || log.length > 0 ? (
           <div
             ref={scrollRef}
-            className="relative bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244] 
+            className="relative bg-neutral-950/50 backdrop-blur-sm border-t border-neutral-800 
             p-4 flex-1 overflow-auto text-sm"
           >
             {isRunning ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
+              <div className="h-full flex flex-col items-center justify-center text-neutral-500">
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-2 animate-spin">
-                  <Loader className="w-6 h-6 text-blue-400" />
+                  <Loader className="w-6 h-6 text-blue-500" />
                 </div>
-                <p className="text-sm text-gray-400">Running your code...</p>
+                <p className="text-sm text-neutral-400">Running your code...</p>
               </div>
             ) : log.length > 0 ? (
               log.map(({ output, error, ranBy, timeStamp }, i) => {
@@ -234,25 +229,24 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                     className={`mb-4 last:mb-0 p-4 rounded-lg border text-sm transition-all duration-200 animate-fade-in
                     ${
                       isError
-                        ? "border-red-500/20 bg-[#2b1a1a]"
-                        : "border-emerald-500/20 bg-[#1a2b1a]"
+                        ? "border-red-900/50 bg-red-950/20"
+                        : "border-emerald-900/50 bg-emerald-950/20"
                     }`}
                   >
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-2 text-xs text-gray-400 italic">
+                    <div className="flex items-center justify-between mb-2 text-xs text-neutral-400 italic">
                       <div className="flex items-center gap-2">
                         <span>
                           Ran by{" "}
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-neutral-200">
                             {ranBy}
                           </span>
                         </span>
-                        {/* Pill Badge */}
+
                         <span
                           className={`px-2 py-0.5 text-[10px] rounded-full font-bold uppercase tracking-wide ${
                             isError
-                              ? "bg-red-600/20 text-red-400 border border-red-400/40"
-                              : "bg-emerald-600/20 text-emerald-400 border border-emerald-400/40"
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                           }`}
                         >
                           {isError ? "Error" : "Success"}
@@ -261,7 +255,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                       <span>{timeStamp}</span>
                     </div>
 
-                    {/* Output/Error Content */}
                     <div className="flex items-start gap-2 whitespace-pre-wrap break-words">
                       {isError ? (
                         <AlertTriangle className="text-red-400 w-4 h-4 mt-1" />
@@ -287,7 +280,6 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                       </pre>
                     </div>
 
-                    {/* Show More Toggle */}
                     {isLongOutput && (
                       <div className="mt-2 text-right">
                         <button
@@ -302,24 +294,23 @@ const Terminal = forwardRef<TerminalRef, TerminalProps>(
                 );
               })
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                <div className="w-12 h-12 bg-[#2c2c2c] rounded-lg flex items-center justify-center mb-2">
+              <div className="h-full flex flex-col items-center justify-center text-neutral-500">
+                <div className="w-12 h-12 bg-neutral-900 rounded-lg flex items-center justify-center mb-2">
                   <Clock className="w-6 h-6" />
                 </div>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-neutral-400">
                   Run your code to see output here
                 </p>
               </div>
             )}
           </div>
         ) : (
-          // Collapsed minimal view
-          <div className="flex flex-col items-center justify-center flex-1 px-4 pb-3 pt-2 text-gray-400 text-sm">
+          <div className="flex flex-col items-center justify-center flex-1 px-4 pb-3 pt-2 text-neutral-400 text-sm">
             <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 bg-[#2c2c2c] rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-neutral-900 rounded-lg flex items-center justify-center">
                 <Clock className="w-6 h-6" />
               </div>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-neutral-500">
                 Run your code to see output here
               </p>
             </div>

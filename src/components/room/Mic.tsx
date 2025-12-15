@@ -1,7 +1,10 @@
+"use client";
+
 import { Mic, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "motion/react";
 
 type RemoteAudio = {
   peerId: string;
@@ -280,19 +283,45 @@ const VoiceChatButton = ({
 
   return (
     <>
-      <button
+      <motion.button
         onClick={toggleMic}
+        whileTap={{ scale: 0.95 }}
         title={isMuted ? "Unmute Mic" : "Mute Mic"}
-        className={`flex items-center gap-2 p-2 rounded-full text-sm font-medium
-        border border-white/10 transition-colors duration-200 cursor-pointer
-        ${
-          isMuted
-            ? "text-gray-400 hover:text-white hover:bg-white/5"
-            : "text-green-400 bg-white/5 hover:bg-white/10"
-        }`}
+        className={`
+          relative flex items-center justify-center w-9 h-9 rounded-lg border transition-all duration-300
+          ${
+            isMuted
+              ? "bg-neutral-900 border-neutral-800 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-[0_0_10px_-4px_rgba(16,185,129,0.5)]"
+          }
+        `}
       >
-        {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-      </button>
+        <AnimatePresence mode="wait" initial={false}>
+          {isMuted ? (
+            <motion.div
+              key="muted"
+              initial={{ scale: 0.5, opacity: 0, rotate: -20 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              exit={{ scale: 0.5, opacity: 0, rotate: 20 }}
+              transition={{ duration: 0.15 }}
+            >
+              <MicOff className="w-4 h-4" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="unmuted"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="relative"
+            >
+              <Mic className="w-4 h-4" />
+              <span className="absolute -inset-3 rounded-full border border-emerald-500/30 opacity-0 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
 
       {remoteAudios.map(({ peerId, stream }) => (
         <RemoteAudioPlayer key={peerId} stream={stream} />

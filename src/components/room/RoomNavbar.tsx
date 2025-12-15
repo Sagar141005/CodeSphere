@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import VoiceChatButton from "./Mic";
 import toast from "react-hot-toast";
-import { UserAvatar } from "./UserAvatar";
+import { UserAvatar } from "../UserAvatar";
 
 interface UserPresence {
   id: string;
@@ -108,7 +108,6 @@ export default function RoomNavbar({
     };
   }, [roomId, session, status]);
 
-  // Split avatars + overflow count
   const visibleUsers = users.slice(0, MAX_VISIBLE_AVATARS);
   const overflowCount = users.length - visibleUsers.length;
 
@@ -158,25 +157,22 @@ export default function RoomNavbar({
     <nav
       role="navigation"
       aria-label="Room navigation bar"
-      className="sticky top-0 left-0 right-0 z-50 h-14 px-6 flex items-center justify-between bg-white/5 backdrop-blur-md border-b border-white/10"
+      className="sticky top-0 left-0 right-0 z-50 h-14 px-6 flex items-center justify-between bg-neutral-950/80 backdrop-blur-md border-b border-neutral-800"
     >
-      {/* Left: Room name */}
-      <div className="flex items-center gap-3 text-white min-w-0">
+      <div className="flex items-center gap-3 text-neutral-200 min-w-0">
         <Users
-          className="w-6 h-6 text-neutral-400 flex-shrink-0"
+          className="w-5 h-5 text-neutral-500 flex-shrink-0"
           aria-hidden="true"
         />
         <h1
-          className="text-lg font-semibold truncate select-text"
+          className="text-sm font-mono font-medium truncate select-text text-neutral-300"
           title={`Room: ${roomName}`}
         >
           {roomName}
         </h1>
       </div>
 
-      {/* Right: User avatars + AI Assist */}
-      <div className="flex items-center gap-6">
-        {/* Mic */}
+      <div className="flex items-center gap-4">
         {session?.user && (
           <VoiceChatButton
             roomId={roomId}
@@ -184,32 +180,31 @@ export default function RoomNavbar({
           />
         )}
 
-        {/* AI Assist Dropdown */}
         <div className="relative">
           <button
             type="button"
             aria-haspopup="true"
             aria-expanded={open}
             onClick={() => setOpen(!open)}
-            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium
-               text-white bg-[#1a1a1a] border border-white/10
-               hover:bg-white hover:text-black transition-colors duration-200 cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider
+               text-neutral-300 bg-neutral-900 border border-neutral-800
+               hover:bg-neutral-50 hover:text-neutral-950 transition-colors duration-200 cursor-pointer"
           >
             {AILoading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 {AILoadingAction === "explain" && "Explaining"}
                 {AILoadingAction === "refactor" && "Refactoring"}
                 {AILoadingAction === "comments" && "Adding"}
                 {AILoadingAction === "fix" && "Fixing"}
-                <span className="animate-pulse -ml-1 text-white">...</span>
+                <span className="animate-pulse -ml-1">...</span>
               </>
             ) : (
               <>
-                <WandSparkles className="w-5 h-5" />
-                AI Assist
+                <WandSparkles className="w-4 h-4" />
+                AI Actions
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform ${
+                  className={`w-3 h-3 transition-transform ${
                     open ? "rotate-180" : "rotate-0"
                   }`}
                 />
@@ -219,80 +214,78 @@ export default function RoomNavbar({
 
           {open && (
             <div
-              className="absolute right-0 mt-2 w-56 rounded-md border border-white/10 bg-[#1a1a1a] shadow-xl z-50 animate-fadeIn"
+              className="absolute right-0 mt-2 w-56 rounded-lg border border-neutral-800 bg-neutral-900 shadow-2xl z-50 overflow-hidden"
               role="menu"
             >
               <button
                 onClick={() => handleAIAction("explain", handleExplain)}
-                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                className="w-full px-4 py-2.5 text-sm text-left text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50 flex items-center gap-3 transition cursor-pointer"
                 role="menuitem"
               >
-                <MessageSquareQuote className="w-4 h-4 text-blue-300" />
+                <MessageSquareQuote className="w-4 h-4 text-blue-400" />
                 Explain Selection
               </button>
               <button
                 onClick={() => handleAIAction("refactor", handleRefactor)}
-                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                className="w-full px-4 py-2.5 text-sm text-left text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50 flex items-center gap-3 transition cursor-pointer"
                 role="menuitem"
               >
-                <Wrench className="w-4 h-4 text-indigo-300" />
+                <Wrench className="w-4 h-4 text-purple-400" />
                 Refactor Selection
               </button>
               <button
                 onClick={() => handleAIAction("comments", handleComments)}
-                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                className="w-full px-4 py-2.5 text-sm text-left text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50 flex items-center gap-3 transition cursor-pointer"
                 role="menuitem"
               >
-                <StickyNote className="w-4 h-4 text-yellow-300" />
+                <StickyNote className="w-4 h-4 text-amber-400" />
                 Add Comments
               </button>
+              <div className="h-px bg-neutral-800 my-1 mx-2" />
               <button
                 onClick={() => handleAIAction("fix", handleFix)}
-                className="w-full px-4 py-2 text-sm text-left text-white hover:bg-white/10 flex items-center gap-2 transition cursor-pointer"
+                className="w-full px-4 py-2.5 text-sm text-left text-neutral-300 hover:bg-neutral-800 hover:text-neutral-50 flex items-center gap-3 transition cursor-pointer"
                 role="menuitem"
               >
                 <Bug className="w-4 h-4 text-red-400" />
-                Fix Errors in File
+                Fix Errors
               </button>
             </div>
           )}
         </div>
 
-        {/* Download Button */}
         <button
           onClick={handleZIPDownload}
           disabled={zipLoading}
           title="Download Project as ZIP"
-          className="px-3 py-2 rounded-md text-sm font-medium
-        text-white bg-[#1a1a1a] border border-white/10
-        hover:bg-white/10 hover:text-white transition-colors duration-200 cursor-pointer"
+          className="p-2 rounded-md text-neutral-400 bg-neutral-900 border border-neutral-800
+        hover:bg-neutral-800 hover:text-neutral-50 transition-colors duration-200 cursor-pointer"
         >
           {zipLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-            </>
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <>
-              <Download className="w-4 h-4" />
-            </>
+            <Download className="w-4 h-4" />
           )}
         </button>
 
-        {/* Avatars */}
-        {/* Avatars UI */}
         {users.length > 0 ? (
           <div
-            className="flex items-center -space-x-3"
+            className="flex items-center -space-x-3 pl-2"
             aria-label={`${users.length} users online`}
             role="group"
             onClick={() => setShowUserList(!showUserList)}
           >
             {visibleUsers.map((user) => (
-              <UserAvatar key={user.id} user={user} />
+              <div
+                key={user.id}
+                className="ring-2 ring-neutral-950 rounded-full"
+              >
+                <UserAvatar user={user} />
+              </div>
             ))}
             {overflowCount > 0 && (
               <div
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-800 text-white flex items-center justify-center text-sm font-medium border-2 border-gray-900 shadow-md"
+                className="w-9 h-9 rounded-full bg-neutral-800 text-neutral-400 flex items-center justify-center text-xs font-bold border-2 border-neutral-950 shadow-sm cursor-pointer hover:bg-neutral-700 hover:text-neutral-200 transition-colors"
                 title={`${overflowCount} more users`}
                 aria-hidden="true"
               >
@@ -301,33 +294,32 @@ export default function RoomNavbar({
             )}
           </div>
         ) : (
-          <span className="text-sm text-gray-400">
-            Waiting for others to join...
+          <span className="text-xs text-neutral-600 animate-pulse">
+            Connecting...
           </span>
         )}
       </div>
 
       {showUserList && (
-        <div className="absolute right-4 top-14 w-64 rounded-md border border-white/10 bg-[#1a1a1a] shadow-xl z-50">
-          <div className="p-3 text-white text-sm font-medium">
-            Users in Room
+        <div className="absolute right-4 top-14 w-64 rounded-lg border border-neutral-800 bg-neutral-900 shadow-2xl z-50 overflow-hidden">
+          <div className="px-4 py-3 text-neutral-500 text-xs font-bold uppercase tracking-widest bg-neutral-950/50 border-b border-neutral-800">
+            Online Users ({users.length})
           </div>
-          <ul className="max-h-60 overflow-y-auto divide-y divide-white/10">
+          <ul className="max-h-60 overflow-y-auto divide-y divide-neutral-800">
             {users.map((user) => (
               <li
                 key={user.id}
-                className="flex items-center gap-2 px-3 py-2 text-white"
+                className="flex items-center gap-3 px-4 py-2.5 text-neutral-300 hover:bg-neutral-800 transition-colors"
               >
-                <UserAvatar user={user} />
-                <span className="truncate flex-1">{user.name}</span>
+                <UserAvatar user={user} size="xs" />
+                <span className="truncate flex-1 text-sm">{user.name}</span>
 
-                {/* Mic status icon - e.g. muted/unmuted */}
                 {micStatuses[user.id] === "muted" ? (
-                  <MicOff className="w-4 h-4 text-gray-400" />
+                  <MicOff className="w-3.5 h-3.5 text-neutral-600" />
                 ) : micStatuses[user.id] === "unmuted" ? (
-                  <Mic className="w-4 h-4 text-green-400" />
+                  <Mic className="w-3.5 h-3.5 text-emerald-500" />
                 ) : (
-                  <MicOff className="w-4 h-4 text-gray-500 opacity-50" /> // fallback for unknown
+                  <MicOff className="w-3.5 h-3.5 text-neutral-700" />
                 )}
               </li>
             ))}

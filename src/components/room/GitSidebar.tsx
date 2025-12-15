@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeftToLine, GitCommit, History } from "lucide-react";
+import { Undo2, GitCommit, History } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import clsx from "clsx";
 import { useSession } from "next-auth/react";
@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 interface GitSidebarProps {
   roomId: string;
   onPreview?: (commitId: string) => void;
+  onRevert?: () => void;
 }
 
 interface Commit {
@@ -31,7 +32,11 @@ interface CommitFile {
   oldContent?: string;
 }
 
-export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
+export default function GitSidebar({
+  roomId,
+  onPreview,
+  onRevert,
+}: GitSidebarProps) {
   const [commits, setCommits] = useState<Commit[]>([]);
   const [message, setMessage] = useState("");
   const [roomFiles, setRoomFiles] = useState<RoomFile[]>([]);
@@ -61,7 +66,6 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
         );
         if (commitRes.ok) {
           const commitData = await commitRes.json();
-          // Ensure fileId is present & matches roomFiles IDs
           setLastCommitFiles(
             commitData.files.map((f: any) => ({
               fileId: f.fileId,
@@ -157,6 +161,7 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       if (!res.ok) throw new Error("Failed to create commit");
 
       setMessage("");
+      setSelectedFiles([]);
       await fetchCommits();
       toast.success("Commit created");
     } catch (err) {
@@ -176,6 +181,12 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
       if (!res.ok) throw new Error("Failed to revert commit");
 
       await fetchCommits();
+      await fetchRoomFiles();
+
+      if (onRevert) {
+        onRevert();
+      }
+
       toast.success("Commit reverted");
     } catch (err) {
       console.error("Failed to revert commit:", err);
@@ -192,64 +203,77 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
   }
 
   return (
-    <div className="text-sm text-gray-200 p-3 space-y-6 overflow-y-auto h-full">
-      {/* Header */}
-      <h2 className="text-xs uppercase tracking-wide text-gray-400 flex items-center gap-2 font-semibold">
-        <History className="w-4 h-4" /> Version Control
+    <div className="text-sm text-neutral-300 p-3 space-y-6 overflow-y-auto h-full bg-neutral-950 border-l border-neutral-800">
+      <h2 className="text-[10px] uppercase tracking-widest text-neutral-500 flex items-center gap-2 font-bold select-none">
+        <History className="w-3 h-3" /> Version Control
       </h2>
 
-      {/* Commit Form */}
       <div>
-        <label className="block text-xs text-gray-400 mb-1">
+        <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5">
           Commit Message
         </label>
         <input
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Describe your changes"
-          className="w-full px-2 py-1.5 bg-[#252526] border border-[#3a3a3a] text-white rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Describe changes..."
+          className="w-full px-3 py-2 bg-neutral-900 border border-neutral-800 text-neutral-200 rounded-md text-xs placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition-colors"
         />
         <button
           onClick={createCommit}
           disabled={loading || !message.trim()}
-          className="mt-2 w-full flex items-center justify-center gap-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded disabled:opacity-50 transition cursor-pointer"
+          className="mt-3 w-full flex items-center justify-center gap-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md disabled:bg-neutral-800 disabled:text-neutral-500 transition-colors"
         >
-          <GitCommit className="w-4 h-4" /> Commit Changes
+          {loading ? (
+            <span className="animate-spin w-3 h-3 border-2 border-white/20 border-t-white rounded-full" />
+          ) : (
+            <GitCommit className="w-3.5 h-3.5" />
+          )}
+          Commit Changes
         </button>
       </div>
 
-      <ul className="space-y-1 max-h-48 overflow-auto">
+      <ul className="space-y-0.5 max-h-48 overflow-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-800">
         {roomFiles.length === 0 ? (
-          <li className="text-gray-500 italic">No files found</li>
+          <li className="text-neutral-600 text-xs italic text-center py-4">
+            No files found
+          </li>
         ) : (
           roomFiles.map((file) => {
             const status = getFileStatus(file);
+
             const statusStyles = {
-              new: "bg-green-600 text-green-100",
-              modified: "bg-yellow-500 text-yellow-900",
-              unchanged: "bg-gray-700 text-gray-300",
+              new: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
+              modified:
+                "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+              unchanged:
+                "bg-neutral-800 text-neutral-500 border border-neutral-800",
             };
+
+            const isSelected = selectedFiles.includes(file.id);
+
             return (
               <li
                 key={file.id}
-                className="flex items-center justify-between gap-2 px-2 py-1 rounded cursor-pointer select-none hover:bg-[#2e2e2e]"
+                className={clsx(
+                  "flex items-center justify-between gap-2 px-2 py-1.5 rounded-md cursor-pointer select-none transition-colors",
+                  isSelected ? "bg-neutral-900" : "hover:bg-neutral-900"
+                )}
                 onClick={() => toggleFileSelection(file.id)}
               >
-                <div className="flex items-center gap-2">
-                  {/* Custom checkbox */}
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div
                     className={clsx(
-                      "w-4 h-4 flex items-center justify-center border rounded-sm",
-                      selectedFiles.includes(file.id)
+                      "w-3.5 h-3.5 flex items-center justify-center border rounded transition-all",
+                      isSelected
                         ? "bg-blue-600 border-blue-600"
-                        : "border-gray-600"
+                        : "border-neutral-600 bg-transparent hover:border-neutral-400"
                     )}
                   >
-                    {selectedFiles.includes(file.id) && (
+                    {isSelected && (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="w-3 h-3 text-white"
+                        className="w-2.5 h-2.5 text-white"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -257,26 +281,34 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          strokeWidth={3}
+                          strokeWidth={4}
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
                     )}
                   </div>
 
-                  <span className="truncate text-sm text-white">
+                  <span
+                    className={clsx(
+                      "truncate text-xs transition-colors",
+                      isSelected ? "text-neutral-200" : "text-neutral-400"
+                    )}
+                  >
                     {file.name}
                   </span>
                 </div>
 
-                {/* Status badge */}
                 <span
                   className={clsx(
-                    "text-[10px] font-semibold px-2 py-[2px] rounded-full select-none",
+                    "text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider",
                     statusStyles[status]
                   )}
                 >
-                  {status === "new" ? "N" : status === "modified" ? "M" : "U"}
+                  {status === "new"
+                    ? "NEW"
+                    : status === "modified"
+                    ? "MOD"
+                    : "Ub"}
                 </span>
               </li>
             );
@@ -284,38 +316,41 @@ export default function GitSidebar({ roomId, onPreview }: GitSidebarProps) {
         )}
       </ul>
 
-      {/* Commit History */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-400 mb-1">History</h3>
-        <ul className="space-y-2 max-h-72 overflow-auto">
+        <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
+          Timeline
+        </h3>
+        <ul className="space-y-3 max-h-72 overflow-auto pr-1 relative border-l border-neutral-800 ml-1.5 pl-4">
           {commits.length === 0 ? (
-            <li className="text-gray-500 italic">No commits yet</li>
+            <li className="text-neutral-600 text-xs italic">No commits yet</li>
           ) : (
             commits.map((commit) => (
-              <li
-                key={commit.id}
-                className="bg-[#252526] px-3 py-2 rounded hover:bg-[#2e2e2e] flex justify-between items-start"
-              >
-                <div
-                  className="cursor-pointer flex-1"
-                  onClick={() => previewCommit(commit.id)}
-                >
-                  <div className="text-white text-sm truncate">
-                    {commit.message}
+              <li key={commit.id} className="group relative">
+                <div className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-neutral-900 border border-neutral-700 group-hover:border-blue-500 group-hover:bg-blue-500/20 transition-colors" />
+
+                <div className="flex justify-between items-start gap-2">
+                  <div
+                    className="cursor-pointer flex-1"
+                    onClick={() => previewCommit(commit.id)}
+                  >
+                    <div className="text-neutral-300 text-xs font-medium truncate group-hover:text-blue-400 transition-colors">
+                      {commit.message}
+                    </div>
+                    <div className="text-[10px] text-neutral-600 mt-0.5">
+                      {formatDistanceToNow(new Date(commit.createdAt), {
+                        addSuffix: true,
+                      })}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(commit.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </div>
+
+                  <button
+                    onClick={() => revertCommit(commit.id)}
+                    title="Revert to this commit"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-red-400 hover:bg-red-950/30 rounded transition-all"
+                  >
+                    <Undo2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => revertCommit(commit.id)}
-                  title="Revert"
-                  className="text-red-400 hover:text-red-500 text-xs flex items-center gap-1 cursor-pointer"
-                >
-                  <ArrowLeftToLine className="w-4 h-4" />
-                </button>
               </li>
             ))
           )}
