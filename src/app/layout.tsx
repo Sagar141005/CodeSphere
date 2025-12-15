@@ -4,36 +4,40 @@ import ClientProviders from "./providers";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://codesphere.sagarsaini.com"),
-  title: "CodeSphere – Real-time Code Collaboration",
+  title: "CodeSphere – Real-time Code Collaboration & AI Editor",
   description:
-    "CodeSphere is a collaborative code editor with AI assistance, voice calling, version control, and team features — all in one workspace.",
+    "Experience the future of coding with CodeSphere. A unified workspace featuring real-time collaboration, AI pair programming, voice chat, and version control for seamless teamwork.",
   keywords: [
-    "Code Collaboration",
-    "Online IDE",
-    "Real-time Editor",
+    "real-time code collaboration",
+    "online IDE",
+    "collaborative code editor",
+    "AI pair programmer",
     "CodeSphere",
-    "AI Pair Programmer",
+    "remote coding interview",
+    "web-based code editor",
+    "developer productivity tools",
+    "shared coding workspace",
+    "pair programming software",
   ],
   authors: [{ name: "Sagar Saini", url: "https://sagarsaini.com" }],
+  creator: "Sagar Saini",
+  publisher: "Sagar Saini",
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/apple-touch-icon.png", rel: "apple-touch-icon" },
+    icon: [{ url: "/favicon.ico" }],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
   openGraph: {
-    title: "CodeSphere – Real-time Code Collaboration",
+    title: "CodeSphere – Real-time Code Collaboration & AI Editor",
     description:
-      "Collaborate on code in real-time with AI assistance, voice calling, version control, and more.",
-    url: "https://codesphere.sagarsaini.com",
+      "Collaborate on code in real-time with AI assistance, integrated voice calling, and version control. The ultimate environment for remote development teams.",
     siteName: "CodeSphere",
     images: [
       {
-        url: "/banner.webp",
+        url: "/og-banner.png",
         width: 1200,
-        height: 630,
+        height: 600,
         alt: "CodeSphere Preview",
       },
     ],
@@ -41,10 +45,17 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "CodeSphere – Real-time Code Collaboration",
+    title: "CodeSphere – Real-time Code Collaboration & AI Editor",
     description:
-      "Collaborate on code in real-time with AI assistance, voice calling, version control, and more.",
-    images: ["/banner.webp"],
+      "Collaborate on code in real-time with AI assistance, integrated voice calling, and version control. The ultimate environment for remote development teams.",
+    images: [
+      {
+        url: "/og-banner.png",
+        width: 1200,
+        height: 600,
+        alt: "CodeSphere Dashboard Preview",
+      },
+    ],
     creator: "@not_sagar1410",
   },
 };
@@ -56,29 +67,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        {/* Manual fallback links for better Safari support */}
-        <link rel="icon" href="/favicon.ico" />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="/apple-touch-icon.png"
-        />
-        <meta name="theme-color" content="#000000" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-      </head>
       <body>
         <ClientProviders>{children}</ClientProviders>
       </body>
