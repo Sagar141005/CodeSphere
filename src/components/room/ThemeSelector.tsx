@@ -61,7 +61,7 @@ export default function ThemeSelector({ theme, setTheme }: Props) {
     <div className="relative text-sm" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 px-3 py-1.5 border border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors rounded-md"
+        className="flex items-center gap-2 px-3 py-1.5 border border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-neutral-100 transition-colors rounded-lg"
       >
         {THEME_ICONS[current?.id ?? "vs-dark"]}
         <span>{current?.label || "Theme"}</span>

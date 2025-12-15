@@ -1,19 +1,31 @@
 "use client";
 
 import { use } from "react";
-import CodeEditor from "@/components/Editor";
-import Navbar from "@/components/RoomNavbar";
-import TabbedSidebar from "@/components/TabbedSidebar";
-import Tabs from "@/components/Tabs";
-import Terminal, { TerminalRef } from "@/components/Terminal";
+import CodeEditor from "@/components/room/Editor";
+import Navbar from "@/components/room/RoomNavbar";
+import TabbedSidebar from "@/components/room/TabbedSidebar";
+import Tabs from "@/components/room/Tabs";
+import Terminal, { TerminalRef } from "@/components/room/Terminal";
 import { getSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useRef } from "react";
+import clsx from "clsx";
 import type { FileData } from "@/types/FileData";
-import ThemeSelector from "@/components/ThemeSelector";
-import LivePreviewModal from "@/components/LivePreviewModal";
-import { MessageSquareQuote, MonitorDot, Redo, Undo, X } from "lucide-react";
-import DiffView from "@/components/DiffView";
+import ThemeSelector from "@/components/room/ThemeSelector";
+import LivePreviewPane from "@/components/room/LivePreviewModal";
+import {
+  Check,
+  Loader2,
+  Maximize2,
+  MessageSquareQuote,
+  Minimize2,
+  MonitorDot,
+  Play,
+  Redo,
+  Undo,
+  X,
+} from "lucide-react";
+import DiffView from "@/components/room/DiffView";
 import { useRouter } from "next/navigation";
 import MobileBlocker from "@/components/MobileBlocker";
 import { Loader } from "@/components/Loader";
@@ -73,8 +85,10 @@ export default function RoomPage({
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [execError, setExecError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const terminalRef = useRef<TerminalRef>(null);
   const editorRef = useRef<any>(null);
+  const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -137,6 +151,18 @@ export default function RoomPage({
     loadRoomAndFiles();
   }, [slug]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setIsSidebarOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const openFile = async (file: FileData) => {
     if (!openTabs.find((f) => f.id === file.id)) {
       setOpenTabs((prev) => [...prev, file]);
@@ -181,116 +207,172 @@ export default function RoomPage({
     };
   }
 
+  const handleEditorChange = (newCode: string) => {
+    if (!previewOpen || !activeFile) return;
+
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+
+    previewDebounceRef.current = setTimeout(() => {
+      if (activeFile.name.endsWith(".html")) {
+        setHtmlCode(newCode);
+      } else if (activeFile.name.endsWith(".css")) {
+        setCssCode(newCode);
+      } else if (activeFile.name.endsWith(".js")) {
+        setJsCode(newCode);
+      }
+    }, 1000);
+  };
+
   const handlePreview = async () => {
     const htmlFile = openTabs.find((f) => f.name.endsWith(".html"));
-    if (!htmlFile) return;
-    setExecuting(true);
-
-    const htmlRes = await fetch(`/api/file/${htmlFile.id}`);
-    const htmlData = await htmlRes.json();
-    const htmlContent = htmlData.content;
-
-    const { cssFiles, jsFiles } = extractReferencedFiles(htmlContent);
-    const cssHref = cssFiles[0] ?? "";
-    const jsSrc = jsFiles[0] ?? "";
-
-    setCssFileName(cssHref);
-    setJsFileName(jsSrc);
-
-    const cssFile = openTabs.find((f) => cssHref.endsWith(f.name));
-    const jsFile = openTabs.find((f) => jsSrc.endsWith(f.name));
-
-    let cssContent = "";
-    let jsContent = "";
-
-    try {
-      if (cssFile) {
-        const cssRes = await fetch(`/api/file/${cssFile.id}`);
-        const cssData = await cssRes.json();
-        cssContent = cssData.content || "";
-      }
-
-      if (jsFile) {
-        const jsRes = await fetch(`/api/file/${jsFile.id}`);
-        const jsData = await jsRes.json();
-        jsContent = jsData.content || "";
-      }
-
-      const jsFilesMap: Record<string, string> = {};
-      await Promise.all(
-        openTabs
-          .filter((f) => f.name.endsWith(".js"))
-          .map(async (f) => {
-            const res = await fetch(`/api/file/${f.id}`);
-            const data = await res.json();
-            jsFilesMap[f.name] = data.content || "";
-          })
-      );
-
-      if (jsFile && jsSrc) {
-        const jsExecRes = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL!}/api/exec`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              language: "javascript",
-              entry: jsSrc,
-              files: jsFilesMap,
-              mode: "preview",
-            }),
-          }
-        );
-
-        const execData = await jsExecRes.json();
-
-        if (execData.error) {
-          setExecError(execData.error);
-          toast.error(`Execution error: ${execData.error}`);
-        } else {
-          setExecError(null);
-        }
-
-        const existing = files.find((f) => f.name === "package.json");
-        const packageContent = JSON.stringify(execData.packageJson, null, 2);
-
-        if (existing) {
-          const updateRes = await fetch(`/api/file/${existing.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: packageContent }),
-          });
-          const updated = await updateRes.json();
-          setFiles((prev) =>
-            prev.map((f) => (f.id === existing.id ? updated : f))
-          );
-        } else {
-          const createRes = await fetch(`/api/room/${slug}/files`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: "package.json",
-              content: packageContent,
-              type: "file",
-              parentId: null,
-              roomSlug: slug,
-            }),
-          });
-          const newFile = await createRes.json();
-          setFiles((prev) => [...prev, newFile]);
-          setOpenTabs((prev) => [...prev, newFile]);
-        }
-      }
-    } catch (error) {
-      console.warn("Failed to load linked files:", error);
-      toast.error("Failed to load linked files.");
+    if (!htmlFile) {
+      toast.error("No HTML file found to preview.");
+      return;
     }
 
-    setHtmlCode(htmlContent);
-    setCssCode(cssContent);
-    setJsCode(jsContent);
-    setPreviewOpen(true);
-    setExecuting(false);
+    setExecuting(true);
+
+    try {
+      const htmlRes = await fetch(`/api/file/${htmlFile.id}`);
+      if (!htmlRes.ok) throw new Error("Failed to fetch HTML file");
+      const htmlData = await htmlRes.json();
+      const htmlContent = htmlData.content || "";
+
+      let cssContent = "";
+      let jsContent = "";
+      let foundCssName = "";
+      let foundJsName = "";
+
+      try {
+        const { cssFiles, jsFiles } = extractReferencedFiles(htmlContent);
+        const cssHref = cssFiles[0] ?? "";
+        const jsSrc = jsFiles[0] ?? "";
+
+        foundCssName = cssHref;
+        foundJsName = jsSrc;
+
+        const cssFile = openTabs.find((f) => cssHref.endsWith(f.name));
+        const jsFile = openTabs.find((f) => jsSrc.endsWith(f.name));
+
+        if (cssFile) {
+          const cssRes = await fetch(`/api/file/${cssFile.id}`);
+          if (cssRes.ok) {
+            const cssData = await cssRes.json();
+            cssContent = cssData.content || "";
+          }
+        }
+
+        if (jsFile && jsSrc) {
+          const jsRes = await fetch(`/api/file/${jsFile.id}`);
+          if (jsRes.ok) {
+            const jsData = await jsRes.json();
+            jsContent = jsData.content || "";
+          }
+
+          const jsFilesMap: Record<string, string> = {};
+          await Promise.all(
+            openTabs
+              .filter((f) => f.name.endsWith(".js"))
+              .map(async (f) => {
+                try {
+                  const res = await fetch(`/api/file/${f.id}`);
+                  if (res.ok) {
+                    const data = await res.json();
+                    jsFilesMap[f.name] = data.content || "";
+                  }
+                } catch (e) {
+                  console.warn(`Skipping file ${f.name} in bundler:`, e);
+                }
+              })
+          );
+
+          try {
+            const jsExecRes = await fetch(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL!}/api/exec`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  language: "javascript",
+                  entry: jsSrc,
+                  files: jsFilesMap,
+                  mode: "preview",
+                }),
+              }
+            );
+
+            if (jsExecRes.ok) {
+              const execData = await jsExecRes.json();
+              if (execData.error) {
+                console.error("Bundler error:", execData.error);
+                setExecError(execData.error);
+              } else {
+                setExecError(null);
+
+                if (execData.packageJson) {
+                  updatePackageJson(
+                    execData.packageJson,
+                    slug,
+                    files,
+                    setFiles
+                  ).catch((err) =>
+                    console.warn("Failed to update package.json", err)
+                  );
+                }
+              }
+            }
+          } catch (bundleErr) {
+            console.error("Bundling request failed:", bundleErr);
+          }
+        }
+      } catch (linkedFileError) {
+        console.warn("Soft error loading linked files:", linkedFileError);
+      }
+
+      setHtmlCode(htmlContent);
+      setCssCode(cssContent);
+      setJsCode(jsContent);
+      setCssFileName(foundCssName);
+      setJsFileName(foundJsName);
+      setPreviewOpen(true);
+    } catch (criticalError) {
+      console.error("Critical preview error:", criticalError);
+      toast.error("Failed to load preview.");
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  const updatePackageJson = async (
+    packageJsonContent: any,
+    roomSlug: string,
+    currentFiles: FileData[],
+    updateFilesState: any
+  ) => {
+    const contentStr = JSON.stringify(packageJsonContent, null, 2);
+    const existing = currentFiles.find((f) => f.name === "package.json");
+
+    if (existing) {
+      await fetch(`/api/file/${existing.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: contentStr }),
+      });
+    } else {
+      const createRes = await fetch(`/api/room/${roomSlug}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "package.json",
+          content: contentStr,
+          type: "file",
+          parentId: null,
+          roomSlug: roomSlug,
+        }),
+      });
+      const newFile = await createRes.json();
+      updateFilesState((prev: any[]) => [...prev, newFile]);
+    }
   };
 
   const runCode = async () => {
@@ -583,7 +665,7 @@ export default function RoomPage({
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#1a1a1a] text-white">
+    <div className="flex flex-col h-screen bg-neutral-950 text-neutral-50 overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Header/Navbar */}
       <Navbar
         roomSlug={slug}
@@ -597,41 +679,48 @@ export default function RoomPage({
 
       {/* Main Body */}
       <div className="flex flex-1 overflow-hidden">
-        {/* File Panel */}
-        <TabbedSidebar
-          files={files}
-          onFileClick={openFile}
-          slug={slug}
-          roomId={roomId}
-          activeFileId={activeFile?.id || null}
-          onFileAdded={(file) =>
-            setFiles((prev) =>
-              prev.find((f) => f.id === file.id) ? prev : [...prev, file]
-            )
-          }
-          onFileDeleted={(id) =>
-            setFiles((prev) => prev.filter((f) => f.id !== id))
-          }
-          onFileRenamed={(id, newName) =>
-            setFiles((prev) =>
-              prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
-            )
-          }
-          onPreview={async (commitId: string) => {
-            try {
-              const commitData = await fetchCommitDetails(commitId);
-              setCurrentCommit(commitData);
-              setDiffs(commitData.files);
-              setDiffSource("commit");
-              setShowDiffModal(true);
-            } catch (err) {
-              console.error("Failed to fetch commit:", err);
+        <div
+          className={clsx(
+            "flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out",
+            isSidebarOpen ? "w-64 opacity-100" : "w-0 opacity-0"
+          )}
+        >
+          {/* File Panel */}
+          <TabbedSidebar
+            files={files}
+            onFileClick={openFile}
+            slug={slug}
+            roomId={roomId}
+            activeFileId={activeFile?.id || null}
+            onFileAdded={(file) =>
+              setFiles((prev) =>
+                prev.find((f) => f.id === file.id) ? prev : [...prev, file]
+              )
             }
-          }}
-        />
+            onFileDeleted={(id) =>
+              setFiles((prev) => prev.filter((f) => f.id !== id))
+            }
+            onFileRenamed={(id, newName) =>
+              setFiles((prev) =>
+                prev.map((f) => (f.id === id ? { ...f, name: newName } : f))
+              )
+            }
+            onPreview={async (commitId: string) => {
+              try {
+                const commitData = await fetchCommitDetails(commitId);
+                setCurrentCommit(commitData);
+                setDiffs(commitData.files);
+                setDiffSource("commit");
+                setShowDiffModal(true);
+              } catch (err) {
+                console.error("Failed to fetch commit:", err);
+              }
+            }}
+          />
+        </div>
 
         {/* Code Editor Section */}
-        <div className="flex flex-col flex-1 overflow-hidden border-l border-gray-700">
+        <div className="flex flex-col flex-1 overflow-hidden border-l border-neutral-800">
           {/* Tabs */}
           <Tabs
             tabs={openTabs}
@@ -641,31 +730,35 @@ export default function RoomPage({
           />
 
           {/* Editor Toolbar */}
-          <div className="flex items-center justify-between bg-[#1e1e1e] px-4 py-2 border-b border-[#333] shadow-inner">
+          <div className="flex items-center justify-between bg-neutral-900 px-4 py-2 border-b border-neutral-800 shadow-sm h-12">
             {/* Status & History Controls */}
             <div className="flex items-center gap-4">
               {/* Save Status */}
-              <div className="text-xs">
+              <div className="text-xs w-16">
                 {isTyping || isSaving ? (
-                  <span className="text-green-400 animate-pulse">
-                    Saving...
+                  <span className="text-blue-400 animate-pulse flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Saving
                   </span>
                 ) : (
-                  <span className="text-gray-500">Saved</span>
+                  <span className="text-neutral-500 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Saved
+                  </span>
                 )}
               </div>
 
               {/* Undo / Redo */}
               <div className="flex items-center gap-1">
                 <button
-                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition cursor-pointer"
+                  className="flex items-center gap-1 text-sm font-medium text-neutral-400 hover:text-neutral-100 bg-neutral-800 hover:bg-neutral-700 p-1.5 rounded transition cursor-pointer"
                   onClick={() => editorRef.current?.trigger("", "undo", null)}
+                  title="Undo"
                 >
                   <Undo className="w-4 h-4" />
                 </button>
                 <button
-                  className="flex items-center gap-1 text-sm font-medium text-white bg-neutral-800 hover:bg-neutral-700 px-2 py-1.5 rounded-md shadow transition cursor-pointer"
+                  className="flex items-center gap-1 text-sm font-medium text-neutral-400 hover:text-neutral-100 bg-neutral-800 hover:bg-neutral-700 p-1.5 rounded transition cursor-pointer"
                   onClick={() => editorRef.current?.trigger("", "redo", null)}
+                  title="Redo"
                 >
                   <Redo className="w-4 h-4" />
                 </button>
@@ -680,25 +773,25 @@ export default function RoomPage({
                 <button
                   onClick={handlePreview}
                   disabled={executing}
-                  className={`flex items-center gap-2 bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 
-                  active:scale-[0.96] text-sm font-semibold px-4 py-1.5 rounded-md shadow-md transition-transform duration-150 cursor-pointer
+                  className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white
+                  text-xs font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm
                   ${executing ? "opacity-50 cursor-not-allowed" : ""}
                 `}
                 >
                   {executing ? (
-                    <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <MonitorDot className="w-4 h-4" />
+                    <MonitorDot className="w-3.5 h-3.5" />
                   )}
                   Preview
                 </button>
               ) : (
                 <button
                   onClick={runCode}
-                  className="flex items-center gap-2 text-white bg-green-600 hover:bg-green-700 active:bg-green-800
-                  px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer"
+                  className="flex items-center gap-2 text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700
+                  px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-sm"
                 >
-                  ▶ Run
+                  <Play className="w-3.5 h-3.5 fill-current" /> Run
                 </button>
               )}
             </div>
@@ -708,7 +801,7 @@ export default function RoomPage({
           <div className="flex flex-col flex-1 overflow-hidden">
             {/* Editor View */}
             <div
-              className="flex-1 overflow-auto bg-[#1e1e1e]"
+              className="flex-1 overflow-hidden bg-neutral-950"
               style={{ height: "calc(100% - 40px)", pointerEvents: "auto" }}
             >
               {session && activeFile ? (
@@ -724,20 +817,21 @@ export default function RoomPage({
                   setIsSaving={setIsSaving}
                   setIsTyping={setIsTyping}
                   editorRef={editorRef}
+                  onCodeChange={handleEditorChange}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-                  Select or create a file to start coding
+                <div className="flex items-center justify-center h-full text-neutral-500 text-sm italic">
+                  Select a file to start coding
                 </div>
               )}
             </div>
 
-            {/* Terminal */}
-            <div className="relative border-t border-gray-700">
+            {/* Terminal / AI Output */}
+            <div className="relative border-t border-neutral-800 bg-neutral-950">
               {aiOutput ? (
                 <div
                   style={{ height: aiExpanded ? aiHeight : 40 }}
-                  className="relative w-full flex flex-col bg-[#1e1e1e] group border-t border-[#2c2c2c]"
+                  className="relative w-full flex flex-col bg-neutral-950 group border-t border-neutral-800"
                 >
                   {/* Drag Handle */}
                   {aiExpanded && (
@@ -745,41 +839,45 @@ export default function RoomPage({
                       onMouseDown={(e) =>
                         handleResize(e, aiHeight, setAiHeight, 40, 500)
                       }
-                      className="absolute top-0 left-0 w-full h-2 cursor-row-resize bg-transparent z-10"
-                      title="Drag to resize AI explanation"
+                      className="absolute top-0 left-0 w-full h-1 cursor-row-resize bg-transparent hover:bg-blue-500/50 z-10 transition-colors"
+                      title="Drag to resize"
                     />
                   )}
 
                   {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-[#2c2c2c] bg-[#1f1f1f]">
+                  <div className="flex items-center justify-between px-4 h-10 border-b border-neutral-800 bg-neutral-900">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 flex items-center justify-center bg-[#242424] rounded-md">
-                        <MessageSquareQuote className="w-4 h-4 text-blue-300" />
+                      <div className="p-1 bg-neutral-800 rounded text-neutral-400">
+                        <MessageSquareQuote className="w-3.5 h-3.5 text-blue-400" />
                       </div>
-                      <span className="text-sm font-medium text-gray-300">
-                        AI Explanation
+                      <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider">
+                        AI Assistant
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setAiExpanded(!aiExpanded)}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                        className="p-1 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 transition"
                       >
-                        {aiExpanded ? "Collapse" : "Expand"}
+                        {aiExpanded ? (
+                          <Minimize2 className="w-3.5 h-3.5" />
+                        ) : (
+                          <Maximize2 className="w-3.5 h-3.5" />
+                        )}
                       </button>
                       <button
                         onClick={() => setAiOutput(null)}
-                        className="flex items-center gap-1.5 text-xs px-3 py-1 rounded-md text-gray-400 hover:text-white hover:bg-[#2c2c2c] border border-[#333] transition"
+                        className="p-1 rounded text-neutral-500 hover:text-red-400 hover:bg-neutral-800 transition"
                       >
-                        Close
+                        <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
 
                   {/* Content */}
                   {aiExpanded && (
-                    <div className="p-4 overflow-auto flex-1 text-sm text-gray-200 bg-[#1e1e2e]/50 backdrop-blur-sm border border-[#313244]">
+                    <div className="p-4 overflow-auto flex-1 text-sm text-neutral-300 bg-neutral-950 font-mono leading-relaxed">
                       <pre className="whitespace-pre-wrap break-words">
                         {aiOutput}
                       </pre>
@@ -799,51 +897,61 @@ export default function RoomPage({
             </div>
           </div>
         </div>
-      </div>
-      {previewOpen && (
-        <LivePreviewModal
-          html={htmlCode}
-          css={cssCode}
-          js={jsCode}
-          cssFileName={cssFileName}
-          jsFileName={jsFileName}
-          error={execError}
-          onClose={() => setPreviewOpen(false)}
-        />
-      )}
 
+        <div
+          className={clsx(
+            "flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out bg-neutral-950",
+            previewOpen
+              ? "w-[40%] opacity-100 border-l border-neutral-800"
+              : "w-0 opacity-0 border-l-0"
+          )}
+        >
+          {/* We keep the component mounted but hidden when width is 0 */}
+          <div className="w-full h-full min-w-[300px]">
+            <LivePreviewPane
+              html={htmlCode}
+              css={cssCode}
+              js={jsCode}
+              cssFileName={cssFileName}
+              jsFileName={jsFileName}
+              error={execError}
+              onClose={() => setPreviewOpen(false)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Diff Modal */}
       {showDiffModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4 sm:px-6">
-          <div className="relative bg-[#1e1e1e] w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl border border-white/10 flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4 sm:px-6">
+          <div className="relative bg-neutral-900 w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-xl shadow-2xl border border-neutral-800 flex flex-col">
             {/* Header */}
-            <div className="sticky top-0 z-20 bg-[#1e1e1e] border-b border-white/10 flex justify-between items-start sm:items-center px-6 py-4">
+            <div className="sticky top-0 z-20 bg-neutral-900 border-b border-neutral-800 flex justify-between items-center px-6 py-3">
               <div>
-                <h2 className="text-white text-lg font-semibold">
-                  Preview Changes
+                <h2 className="text-neutral-100 text-sm font-bold uppercase tracking-wider">
+                  Review Changes
                 </h2>
                 {diffSource === "commit" && currentCommit && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    Committed by{" "}
-                    <span className="text-white font-medium">
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Commit by{" "}
+                    <span className="text-neutral-300">
                       {currentCommit.user?.name || "Unknown"}
-                    </span>{" "}
-                    on {new Date(currentCommit.createdAt).toLocaleString()}
+                    </span>
                   </p>
                 )}
               </div>
               <button
                 onClick={() => setShowDiffModal(false)}
-                className="text-gray-400 hover:text-white text-xl transition-colors rounded cursor-pointer"
-                aria-label="Close"
+                className="p-1.5 text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 rounded transition"
               >
-                <X />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Diffs */}
-            <div className="overflow-y-auto flex-grow px-6 py-4 space-y-6">
+            <div className="overflow-y-auto flex-grow px-6 py-4 space-y-6 bg-neutral-950/50">
               {diffs.length === 0 ? (
-                <p className="text-gray-400 text-sm italic">
+                <p className="text-neutral-500 text-sm italic text-center py-10">
                   No changes to display.
                 </p>
               ) : (
@@ -861,7 +969,7 @@ export default function RoomPage({
 
             {/* Footer Actions for AI Diffs */}
             {diffSource === "ai" && (
-              <div className="border-t border-white/10 px-6 py-4 flex justify-end gap-3 bg-[#1e1e1e] sticky bottom-0 z-10">
+              <div className="border-t border-neutral-800 px-6 py-4 flex justify-end gap-3 bg-neutral-900 sticky bottom-0 z-10">
                 <button
                   onClick={() => {
                     setShowDiffModal(false);
@@ -869,9 +977,9 @@ export default function RoomPage({
                     setDiffs([]);
                     setDiffSource(null);
                   }}
-                  className="px-5 py-2 rounded-md bg-neutral-700 text-white hover:bg-neutral-600 transition font-medium cursor-pointer"
+                  className="px-4 py-2 rounded text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-800 transition"
                 >
-                  Cancel
+                  Discard
                 </button>
                 <button
                   onClick={() => {
@@ -888,7 +996,7 @@ export default function RoomPage({
                     setDiffSource(null);
                     setDiffs([]);
                   }}
-                  className="px-5 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white transition font-medium shadow cursor-pointer"
+                  className="px-4 py-2 rounded text-sm font-bold bg-green-600 hover:bg-green-500 text-white shadow-sm transition"
                 >
                   Apply Changes
                 </button>
