@@ -3,7 +3,7 @@
 import Link from "next/link";
 import HomeNavbar from "@/components/home/HomeNavbar";
 import Footer from "@/components/Footer";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Send, Mail, User, MessageSquare } from "lucide-react";
 
 export default function ContactPage() {

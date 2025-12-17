@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import HomeNavbar from "@/components/home/HomeNavbar";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 const faqs = [
   {

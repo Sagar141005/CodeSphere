@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation";
 import { Loader } from "@/components/Loader";
 import toast from "react-hot-toast";
 import useSWR, { mutate } from "swr";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import Footer from "@/components/Footer";
 
 interface TeamInvite {

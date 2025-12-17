@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import toast from "react-hot-toast";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Mail, Lock, User, Loader2, ArrowRight } from "lucide-react";
 
 export default function SignupPage() {

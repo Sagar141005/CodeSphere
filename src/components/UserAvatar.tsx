@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 const AVATAR_VARIANTS = [
   "bg-gradient-to-br from-neutral-700 to-neutral-900 text-neutral-200",

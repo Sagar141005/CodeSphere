@@ -2,7 +2,7 @@
 
 import Footer from "@/components/Footer";
 import HomeNavbar from "@/components/home/HomeNavbar";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { CheckCircle2, CircleDashed, Clock, GitCommit } from "lucide-react";
 
 const roadmap = [

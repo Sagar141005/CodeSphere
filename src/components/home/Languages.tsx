@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Rocket, TerminalSquare, Users, Zap, Lock, Cpu } from "lucide-react";
 
 export default function EnhancedHero() {

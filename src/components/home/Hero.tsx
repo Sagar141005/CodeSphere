@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { ArrowRight, Terminal } from "lucide-react";
 import Marquee from "react-fast-marquee";

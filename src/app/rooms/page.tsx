@@ -21,7 +21,7 @@ import { RoomList } from "@/components/room/RoomList";
 import { Room } from "@/types/Room";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/Loader";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import Footer from "@/components/Footer";
 
 interface Invite {
