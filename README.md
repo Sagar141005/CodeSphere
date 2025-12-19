@@ -53,15 +53,6 @@ This project was built to tackle the complexities of **real-time state synchroni
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js + TypeScript  
-- **Database**: PostgreSQL with Prisma ORM  
-- **Authentication**: NextAuth.js with Google Provider  
-- **Editor**: Monaco Editor  
-- **Collaboration**: Socket.IO  
-- **AI**: OpenAI API  
-- **UI/UX**: TailwindCSS, shadcn/ui, lucide-react  
-- **Deployment**: Vercel, Docker
-
 | Layer        | Tools / Stack                                       |
 |--------------|------------------------------------------------------|
 | Frontend     | Next.js, TypeScript, Tailwind CSS                    |
